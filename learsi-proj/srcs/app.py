@@ -10,12 +10,12 @@ with app.app_context():
     session['id'] = None
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = '159235'#'SArok480685141S'
-app.config['MYSQL_DB'] = 'learsi'
+app.config['MYSQL_PASSWORD'] = ''
+app.config['MYSQL_DB'] = ''
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 
-app.secret_key = 'BAD_SECRET_KEY'
+app.secret_key = ''
 
 #Session(app) 
 mysql = MySQL(app)
