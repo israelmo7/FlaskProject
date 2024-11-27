@@ -32,10 +32,11 @@ def rand_str(len):
 def display_signes():
 
     ret= rand_str(1)        
-    print(session['mvars'])
-    if session.get('mvars') and session['mvars']['buffer']['used'] == 0:
+    print("Before: {}\n".format(session['mvars']))
+    if session.get('mvars') and session.get('mvars')['buffer']['used'] == 0:
         session['mvars']['buffer']['used'] = 1
-        print(session['mvars'])
+        
+        print("After: {}\n".format(session['mvars']))
         ret = session['mvars']['buffer']['output'][-1]
     else:
         print("11")
@@ -66,7 +67,7 @@ def knock_knock(tav):
         if similar_ans: #if some part of the begining is simillar
             #print("Rs: {}".format(reg_seq))
             
-            da_same = keys_c.find_key_by_seq(session['mvars']['buffer']['input'],same=True)
+            da_same = keys_c.find_key_by_seq(session['mvars']['buffer']['input'])
 
             
             if len(da_same) > 0 and da_same[0] in similar_ans:
@@ -88,24 +89,16 @@ def send_seq():
 
     resp = ""
     
-    if session.get('mvars'):
+    if session.get('mvars') and len(request.args) == 1:
         data_p = request.args.get(session['mvars']['user']['seq'])
-        print(session['mvars']['user']['seq']   )
+        
     else:
         data_p = None
         print("data_p = None")
         
-    if data_p and 10 > len(data_p) > 0:
-        print(data_p)
-    else:
-        print("Error: not valid")
-        data_p = ''
-        
     print(session) 
+    if data_p == '1' and session['mvars']['user']['id'] != 0:
         
-    if session.get('mvars') and session['mvars']['user']['id'] != 0 and data_p == session['mvars']['user']['seq']:
-        
-        print("[{}] == [{}]".format(data_p,session['mvars']['user']['seq']))
         valid = rand_str(8)
         
         ans = keys_c.find_keys(session['mvars']['user']['id'])
@@ -115,10 +108,10 @@ def send_seq():
             print("CheckAns: {}\n".format(ans))
             
             if not valid in ans.split("."):
-                ans += "." + valid + "."
+                ans += valid + "."
                 
                 print("Update it\n")
-                keys_c.add_keys(ans,session['mvars']['user']['id'])
+                keys_c.add_keys(session['mvars']['user']['id'],ans)
                 
                 if guests_c.add_guest(valid) == 1:
                     resp = make_response(render_template('hello.html', room =session['mvars']['user']['id'], code = valid))

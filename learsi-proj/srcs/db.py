@@ -98,12 +98,14 @@ class Keys_c(Database):
         
         with self.get_cur() as _cur:
             _cur.execute("""select sessions from keys_t where id = '{}' """.format(kid))
-            
-            kses = "".join(_cur.fetchall())
-            
+            print("Kid: {}\n".format(kid))
+            kses = _cur.fetchall()
+            ses=str(ses)
+            print("Kses: {}\n".format(kses))
+            print("Ses: {}\n".format(ses))
             if kses == '' or ses not in kses.split('.'):
                 kses += ses + '.'
-                cur.execute("""update keys_t set sessions = "{}" where id = '{}'""".format(kses,kid))
+                _cur.execute("""update keys_t set sessions = '{)' where id = '{}'""".format(kses,kid))
                 self._mysql.connection.commit()
                 
    ##-->        
@@ -121,7 +123,7 @@ class Keys_c(Database):
     def find_key_by_seq(self,ses):
         ans=0
         with self.get_cur() as _cur:
-            print("Parms:\nses: {}\n_cur: {}\n".format(len(ses),_cur))
+            print("Parms:\nses: {}\n_cur: {}\n".format(ses,_cur))
             
             _cur.execute("""select * from keys_t where seq like '{}' """.format(ses))
             ans = _cur.fetchall()
