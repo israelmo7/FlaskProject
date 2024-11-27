@@ -2,13 +2,19 @@
 import string
 import random
 from flask import Blueprint, render_template,redirect,request,session
-from srcs import db
 
 
 SIZE_LIMIT = 8
 
 core_bp = Blueprint('core_bp', __name__, template_folder = 'templates',static_folder = 'static')
 
+rooms_c, keys_c, guests_c = 0, 0, 0
+
+def init_db(r,k,g):
+    global rooms_c, keys_c, guests_c
+    print("Init:\nR: {}\nK: {}\nG: {}\n".format(r,k,g))
+    rooms_c, keys_c, guests_c = r, k, g
+    
 def init_session():
     session.clear()
     print("It really Init(ed)")
@@ -33,9 +39,7 @@ def display_signes():
         ret = session['mvars']['buffer']['output'][-1]
     else:
         print("11")
-        #session.clear()
-        session['mvars'] = {'user':{'id': "",'seq': "",'used':1}, 'buffer':{'input': "", 'output': "",'used': 1}}
-    
+        init_session()
 
     return ret
 
@@ -49,7 +53,7 @@ def knock_knock(tav):
     if type(tav) == str and len(tav) == 1 and (tav >= 'a' and tav <= 'z'):
                     
         if not session.get('mvars') or len(session['mvars']['buffer']['input']) >= SIZE_LIMIT or not session.get('user_id'):
-           session['user_id'] = rand_str(32)
+           #session['user_id'] = rand_str(32)
            session['mvars'] = {'user':{'id': "",'seq': "",'used': 1}, 'buffer':{'input': "", 'output': "",'used': 1}}
             
             
@@ -57,11 +61,12 @@ def knock_knock(tav):
         session['mvars']['buffer']['output'] += rand_str(1)[0]#code_r
         session['mvars']['buffer']['used'] = 0
         
-        similar_ans = db.find_key_by_seq(session['mvars']['buffer']['input'])
+        similar_ans = keys_c.find_key_by_seq(session['mvars']['buffer']['input'])
+        
         if similar_ans: #if some part of the begining is simillar
             #print("Rs: {}".format(reg_seq))
             
-            da_same = db.find_key_by_seq(session['mvars']['buffer']['input'],same=True)
+            da_same = keys_c.find_key_by_seq(session['mvars']['buffer']['input'],same=True)
 
             
             if len(da_same) > 0 and da_same[0] in similar_ans:
@@ -74,9 +79,8 @@ def knock_knock(tav):
 
 
     else:
-        #session.clear()
-        session['mvars'] = {'user':{'id': "",'seq': ""}, 'buffer':{'input': "", 'output': "",'used': 1}}
-
+        init_session()
+        
     return redirect("/data/")
     #GV
 @core_bp.route('/POST',methods=['GET'])
@@ -104,7 +108,7 @@ def send_seq():
         print("[{}] == [{}]".format(data_p,session['mvars']['user']['seq']))
         valid = rand_str(8)
         
-        ans = db.find_keys(session['mvars']['user']['id'])
+        ans = keys_c.find_keys(session['mvars']['user']['id'])
         if len(ans) > 0:
         
             ans = "".join(ans[0])
@@ -114,15 +118,14 @@ def send_seq():
                 ans += "." + valid + "."
                 
                 print("Update it\n")
-                db.add_keys(ans,session['mvars']['user']['id'])
+                keys_c.add_keys(ans,session['mvars']['user']['id'])
                 
-                if db.add_guest(valid) == 1:
+                if guests_c.add_guest(valid) == 1:
                     resp = make_response(render_template('hello.html', room =session['mvars']['user']['id'], code = valid))
 
     else:
         print("--Not found\n")
-        session['mvars'] = {'user':{'id': "",'seq': "",'used':1}, 'buffer':{'input': "", 'output': "",'used': 1}}
-    
-    #session['glob'] = session['mvars']
+        init_session()
+        
     return resp
     

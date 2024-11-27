@@ -4,10 +4,11 @@ import random
 from srcs import create_app
 from flask import Flask,jsonify,redirect,render_template,Blueprint,request,make_response, session
 from flask_mysqldb import MySQL
-from srcs import db
+
 import json
+from srcs.db import get_package
 from srcs.rooms.routes import rooms_bp
-from srcs.core.routes import core_bp,init_session
+from srcs.core.routes import core_bp, init_db
 
 app = create_app()
 #session.clear()
@@ -24,15 +25,17 @@ with open(config_f) as config_file:
     app.config["SESSION_PERMANENT"] = data_conf['ses']['PERMANENT']
     app.config["SESSION_TYPE"] = data_conf['ses']['TYPE']
     app.secret_key = data_conf['oth']['SECRET_KEY']
-
+    print("[CONFIG] = True")
 app.register_blueprint(rooms_bp, url_prefix = '/room')
 app.register_blueprint(core_bp, url_prefix = "/data")
+print("[BP] = True\n")
 
-
-#Session(app) 
+#SIZE_LIMIT = 8
 mysql = MySQL(app)
-#                                              user_knocks_code   server_signs_display
-SIZE_LIMIT = 8
+
+rooms_c, keys_c, guests_c = get_package(app,mysql)
+print("Recived:\nR: {}\nK: {}\nG: {}\n".format(rooms_c,keys_c,guests_c))
+init_db(rooms_c, keys_c, guests_c)
 
 def rand_str(len):
 

@@ -1,108 +1,180 @@
 
 from flask import Flask
-from flask_mysqldb import MySQL
 
-app = Flask(__name__)
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = '159235'#'SArok480685141S'
-app.config['MYSQL_DB'] = 'learsi'
+class Database:
 
-app.secret_key = 'BAD_SECRET_KEY'
-
-#Session(app) 
-mysql = MySQL(app)
-
-
-def add_guest(gid,s):
-    cur = mysql.connection.cursor()
+    #Variables
+    ########################################
     
-    cur.execute("""select * from guests where session = '{}' """.format(gid))
-    ans = cur.fetchall()
-    print("AddGuest: and= {}\n".format(ans))
-    if len(ans) == 0:            
-        cur.execute("""insert into guests(session,pocket) values ('{}','.{}.')""".format(gid,s))
-        mysql.connection.commit()
-        ans = cur.fetchall()
-        ans = 1
-    else:
-        ans = 0
+    #_mysql = None
+    #_cur = None
     
-    cur.close()
-    return ans
+    
+    
+    #Inner-Functions
+    ########################################
+
+    def __init__(self,app, mysql):
+        with app.app_context():
+            print(app)
+            self._mysql = mysql
+            #self._cur = mysql.connection.cursor()
+                
+    def get_cur(self):
+        return self._mysql.connection.cursor()
+    """        
+    def __del__(self):
+        if self._cur:       
+            self._cur.close()
+    """
+
+    #Global-Functions
+    ########################################
+    
+    def push_data(self, table, data):
+    
+        data = ",".join(data)
+        self._cur.execute("""insert into {} values ('{}')""".format(table,data))
+        ans = self._cur.fetchall()
         
-def push_data(table, data):
-    cur = mysql.connection.cursor()
-    data = ",".join(data)
-    cur.execute("""insert into {} values ('{}')""".format(table,data))
-    ans = cur.fetchall()
-    
-    cur.close()
-    return ans
-    
-    
-def check_room(r, column):
-    cur = mysql.connection.cursor()
-    cur.execute("""select id from rooms where {} like '%.{}.%'""".format(column,r))
-    ans = cur.fetchall()
-    
-    cur.close()
-    return ans if len(ans)>0 else 0
-    
-def open_lock(rid, gid):
+        return ans
+        
+        
 
-    ans = check_guest(gid)
+            ####--- Classes ---####        
+    ########################################
+    ########################################
     
-    res = 0
-    if ans:
-        cur = mysql.connection.cursor()
-        cur.execute("""select id from keys_t where sessions like '%.{}.%'""".format(ans))
-        ans = cur.fetchall()
-        cur.close()
-        ans = "".join(ans)
+    
+####--- ROOMS ---####        
+class Rooms_c(Database): 
+    
+    def __init__(self,app,mysql):
+        super().__init__(app,mysql)
+   ##-->
+      
+    def check_room(self, r, column):
+
+        ans=0
+        with self.get_cur() as _cur:
+
+            _cur.execute("""select id from rooms where {} like '%.{}.%'""".format(column,r))
+            ans = _cur.fetchall()
+
+        return ans if len(ans)>0 else 0
+   
+   
+   ##-->
+    
+    def open_lock(self, rid, gid):
+
+    
+        ans = check_guest(gid)
+        
+        res = 0
         if ans:
-            if check_room(ans,'doors') == rid:
-                #logged in
-                res = 1
-    return res
-def add_keys(kid,ses):
+            with self.get_cur() as _cur:
 
-    cur = mysql.connection.cursor()
-    
-    cur.execute("""select sessions from keys_t where id = '{}' """.format(kid))
-    
-    kses = "".join(cur.fetchall())
-    
-    if kses == '' or ses not in kses.split('.'):
-        kses += ses + '.'
-        cur.execute("""update keys_t set sessions = "{}" where id = '{}'""".format(kses,kid))
-        mysql.connection.commit()
+                _cur.execute("""select id from keys_t where sessions like '%.{}.%'""".format(ans))
+                ans = _cur.fetchall()
+                
+                ans = "".join(ans)
+                if ans:
+                    if check_room(ans,'doors') == rid:
+                        #logged in
+                        res = 1
+        return res
+
+####################
+####--- KEYS ---####
+class Keys_c(Database):
+
+
+    def __init__(self,app,mysql):
+        super().__init__(app,mysql)
+   ##-->  
+   
+    def add_keys(self,kid,ses):
         
-    cur.close()
-    
-def find_keys(kid):
+        with self.get_cur() as _cur:
+            _cur.execute("""select sessions from keys_t where id = '{}' """.format(kid))
+            
+            kses = "".join(_cur.fetchall())
+            
+            if kses == '' or ses not in kses.split('.'):
+                kses += ses + '.'
+                cur.execute("""update keys_t set sessions = "{}" where id = '{}'""".format(kses,kid))
+                self._mysql.connection.commit()
+                
+   ##-->        
+   
+    def find_keys(self,kid):
+        ans=0
+        with self.get_cur() as _cur:
 
-    cur = mysql.connection.cursor()
-    cur.execute("""select sessions from keys_t where id = '{}' """.format(kid))
-    ans = cur.fetchall()
-    cur.close()
+            _cur.execute("""select sessions from keys_t where id = '{}' """.format(kid))
+            ans = _cur.fetchall()
+            
+        return ans
+   ##-->
+    
+    def find_key_by_seq(self,ses):
+        ans=0
+        with self.get_cur() as _cur:
+            print("Parms:\nses: {}\n_cur: {}\n".format(len(ses),_cur))
+            
+            _cur.execute("""select * from keys_t where seq like '{}' """.format(ses))
+            ans = _cur.fetchall()
+            print("ANS: {}\n".format(ans))
+                
+        return ans
         
-    return ans
-def find_key_by_seq(ses, same = False):
-
-    ses += ('.' if same else '')
-    cur = mysql.connection.cursor()
-    cur.execute("""SELECT * FROM keys_t WHERE seq LIKE '%.{}%' """.format(ses))
-    ans = cur.fetchall()
-    cur.close()
         
-    return ans
-    
-def check_guest(gid):
-    
-    cur = mysql.connection.cursor()
-    cur.execute("""select pocket from guests where session = '{}'""".format(gid))
-    ans = cur.fetchall()
+######################
+####--- GUESTS ---####        
+class Guests_c(Database):
 
-    cur.close()    
-    return ans if len(ans) > 0 else 0
+
+    def __init__(self,app,mysql):
+        super().__init__(app,mysql)
+        
+   ##-->
+
+    def add_guest(self,gid,s):
+        ans=0
+        with self.get_cur() as _cur:
+
+            _cur.execute("""select * from guests where session = '{}' """.format(gid))
+            ans = _cur.fetchall()
+            print("AddGuest: and= {}\n".format(ans))
+            if len(ans) == 0:            
+                _cur.execute("""insert into guests(session,pocket) values ('{}','.{}.')""".format(gid,s))
+                self._mysql.connection.commit()
+                ans = _cur.fetchall()
+                ans = 1
+            else:
+                ans = 0
+            
+        return ans
+   
+   ##-->
+
+    def check_guest(self,gid):
+        ans=0
+        with self.get_cur() as _cur:
+    
+            _cur.execute("""select pocket from guests where session = '{}'""".format(gid))
+            ans = _cur.fetchall()
+
+        return ans if len(ans) > 0 else 0        
+
+
+
+def get_package(app, mysql):
+
+    print("Send Package:\napp: {}\nmysql: {}\n".format(app,mysql))
+    r = Rooms_c(app,mysql)
+    k = Keys_c(app,mysql)
+    g = Guests_c(app,mysql)
+    
+    return [r,k,g]
