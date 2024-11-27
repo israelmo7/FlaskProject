@@ -64,12 +64,39 @@ def open_lock(rid, gid):
             if check_room(ans,'doors') == rid:
                 #logged in
                 res = 1
-            
-    
-        
-        
-        
     return res
+def add_keys(kid,ses):
+
+    cur = mysql.connection.cursor()
+    
+    cur.execute("""select sessions from keys_t where id = '{}' """.format(kid))
+    
+    kses = "".join(cur.fetchall())
+    
+    if kses == '' or ses not in kses.split('.'):
+        kses += ses + '.'
+        cur.execute("""update keys_t set sessions = "{}" where id = '{}'""".format(kses,kid))
+        mysql.connection.commit()
+        
+    cur.close()
+    
+def find_keys(kid):
+
+    cur = mysql.connection.cursor()
+    cur.execute("""select sessions from keys_t where id = '{}' """.format(kid))
+    ans = cur.fetchall()
+    cur.close()
+        
+    return ans
+def find_key_by_seq(ses, same = False):
+
+    ses += ('.' if same else '')
+    cur = mysql.connection.cursor()
+    cur.execute("""SELECT * FROM keys_t WHERE seq LIKE '%.{}%' """.format(ses))
+    ans = cur.fetchall()
+    cur.close()
+        
+    return ans
     
 def check_guest(gid):
     

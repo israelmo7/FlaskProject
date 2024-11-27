@@ -1,5 +1,0 @@
-*.log 
-.env/
-/instance/
-*.pyc
-/__pycache__/
