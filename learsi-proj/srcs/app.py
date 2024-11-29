@@ -7,8 +7,8 @@ from flask_mysqldb import MySQL
 
 import json
 from srcs.db import get_package
-from srcs.rooms.routes import rooms_bp
-from srcs.core.routes import core_bp, init_db
+from srcs.rooms.routes import rooms_bp, init_db_r
+from srcs.core.routes import core_bp, init_db_c
 
 app = create_app()
 #session.clear()
@@ -17,15 +17,20 @@ config_f = "\\".join(__file__.split('\\')[:-3:1])
 config_f += "\\config.json"
 with open(config_f) as config_file:
     data_conf = json.load(config_file)
-
+    # Can be improved 
     app.config['MYSQL_HOST'] = data_conf['db']['HOST']
     app.config['MYSQL_USER'] = data_conf['db']['USER']
     app.config['MYSQL_PASSWORD'] = data_conf['db']['PASSWORD']
     app.config['MYSQL_DB'] = data_conf['db']['NAME']
     app.config["SESSION_PERMANENT"] = data_conf['ses']['PERMANENT']
     app.config["SESSION_TYPE"] = data_conf['ses']['TYPE']
-    app.secret_key = data_conf['oth']['SECRET_KEY']
+    app.config['SESSION_COOKIE_PATH'] = data_conf['ses']['PATH'] 
+    app.secret_key = data_conf['ses']['SECRET_KEY']
+    
+    
     print("[CONFIG] = True")
+
+
 app.register_blueprint(rooms_bp, url_prefix = '/room')
 app.register_blueprint(core_bp, url_prefix = "/data")
 print("[BP] = True\n")
@@ -34,8 +39,9 @@ print("[BP] = True\n")
 mysql = MySQL(app)
 
 rooms_c, keys_c, guests_c = get_package(app,mysql)
-print("Recived:\nR: {}\nK: {}\nG: {}\n".format(rooms_c,keys_c,guests_c))
-init_db(rooms_c, keys_c, guests_c)
+#print("Recived:\nR: {}\nK: {}\nG: {}\n".format(rooms_c,keys_c,guests_c))
+init_db_r(rooms_c, keys_c, guests_c)
+init_db_c(rooms_c, keys_c, guests_c)
 
 def rand_str(len):
 
@@ -111,6 +117,10 @@ def join_room(value):
         
         
     return ret
+    
+@app.route('/', methods=['GET'])
+def gindex():
+    return render_template("gindex.html")
 #@app.route('/data/', methods=['POST'])
 if __name__ == "__main__":
     app.run(debug=True)    
