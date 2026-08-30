@@ -1,0 +1,14 @@
+{
+  "db": {
+    "HOST": "localhost",
+    "USER": "knocknok",
+    "PASSWORD": "change-me",
+    "NAME": "knocknok"
+  },
+  "ses": {
+    "PERMANENT": false,
+    "TYPE": "filesystem",
+    "PATH": "/",
+    "SECRET_KEY": "change-me-to-a-random-secret"
+  }
+}
