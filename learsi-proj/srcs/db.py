@@ -59,7 +59,7 @@ class Rooms_c(Database):
 
     def get_room(self, rid):
         with self.get_cur() as _cur:
-            _cur.execute("SELECT doors, paths FROM keys_t WHERE id = %s", (rid,))
+            _cur.execute("SELECT doors FROM keys_t WHERE id = %s", (rid,))
             return _cur.fetchall()
 
     def enter_aroom(self, path):

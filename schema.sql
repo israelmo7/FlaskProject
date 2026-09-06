@@ -5,8 +5,7 @@ CREATE TABLE IF NOT EXISTS keys_t (
     id INT PRIMARY KEY AUTO_INCREMENT,
     seq VARCHAR(64) NOT NULL,
     sessions VARCHAR(255) DEFAULT '.',
-    doors VARCHAR(255) DEFAULT '',
-    paths VARCHAR(255) DEFAULT ''
+    doors VARCHAR(255) DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS guests (
@@ -28,9 +27,9 @@ CREATE TABLE IF NOT EXISTS sessions (
     extra VARCHAR(7) DEFAULT ''
 );
 
-INSERT IGNORE INTO keys_t (id, seq, sessions, doors, paths) VALUES
-    (1, 'abc', '.', '1.2.', '.lobby.'),
-    (99, 'test', '.', '', '');
+INSERT IGNORE INTO keys_t (id, seq, sessions, doors) VALUES
+    (1, 'abc', '.', '1.2.'),
+    (99, 'test', '.', '');
 
 INSERT IGNORE INTO rooms (id, paths, doors) VALUES
     (1, '.lobby.', '1.2.');
