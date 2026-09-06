@@ -11,31 +11,47 @@ Session-based knock authentication built with Flask and MySQL.
 
 ## Setup
 
-1. Create a virtual environment and install dependencies:
+1. System packages (Ubuntu/Debian):
 
 ```bash
-python -m venv venv
+sudo apt-get update
+sudo apt-get install -y python3-venv python3.12-dev build-essential \
+  default-libmysqlclient-dev pkg-config mariadb-server mariadb-client
+```
+
+2. Create a virtual environment and install dependencies:
+
+```bash
+python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-2. Copy the example config and edit credentials:
+Or use the helper script:
+
+```bash
+./scripts/install.sh
+```
+
+3. Copy the example config and edit credentials:
 
 ```bash
 cp config.example.json config.json
 ```
 
-3. Create the database schema:
+4. Start MySQL/MariaDB and create the database schema:
 
 ```bash
-mysql -u root -p < schema.sql
+./scripts/start-db.sh
+# or manually:
+# sudo mysql < schema.sql
 ```
 
-4. Run the application from the repository root:
+5. Run the application from the repository root:
 
 ```bash
 cd learsi-proj
-FLASK_DEBUG=1 python -m srcs.app
+FLASK_DEBUG=1 PYTHONPATH=. python3 -m srcs.app
 ```
 
 The app listens on `http://127.0.0.1:5000/`.
@@ -52,7 +68,7 @@ The app listens on `http://127.0.0.1:5000/`.
 ## Testing
 
 ```bash
-pip install -r requirements.txt
+source venv/bin/activate
 pytest
 ```
 

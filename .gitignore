@@ -4,3 +4,9 @@
 /instance/
 *.pyc
 /__pycache__/
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+config.json

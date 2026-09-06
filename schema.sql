@@ -28,9 +28,9 @@ CREATE TABLE IF NOT EXISTS sessions (
     extra VARCHAR(7) DEFAULT ''
 );
 
-INSERT INTO keys_t (id, seq, sessions, doors, paths) VALUES
+INSERT IGNORE INTO keys_t (id, seq, sessions, doors, paths) VALUES
     (1, 'abc', '.', '1.2.', '.lobby.'),
     (99, 'test', '.', '', '');
 
-INSERT INTO rooms (id, paths, doors) VALUES
+INSERT IGNORE INTO rooms (id, paths, doors) VALUES
     (1, '.lobby.', '1.2.');
