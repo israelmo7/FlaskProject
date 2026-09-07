@@ -59,6 +59,30 @@ def test_should_reset_knock_buffer_when_input_full(app):
         assert should_reset_knock_buffer(mvars) is True
 
 
+def test_should_reset_knock_buffer_keeps_partial(app):
+    with app.test_request_context():
+        mvars = {'buffer': {'input': 'ab', 'output': 'XY', 'used': 0}}
+        assert should_reset_knock_buffer(mvars) is False
+
+
+def test_data_root_flushes_buffer(client, app):
+    with client.session_transaction() as sess:
+        sess['mvars'] = {
+            'user': {'id': 1, 'seq': 'XYZ', 'used': 0},
+            'buffer': {'input': 'abc', 'output': 'XYZ', 'used': 0},
+        }
+        sess['id'] = 'guesttoken123'
+
+    response = client.get('/data/')
+    assert response.status_code == 200
+    assert len(response.get_data(as_text=True)) == 1
+
+    with client.session_transaction() as sess:
+        assert sess['mvars']['buffer']['input'] == ''
+        assert sess['mvars']['buffer']['output'] == ''
+        assert 'id' not in sess
+
+
 class FakeCursor:
     def __init__(self, results=None):
         self.results = results or []

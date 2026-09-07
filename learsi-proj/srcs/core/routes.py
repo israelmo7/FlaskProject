@@ -33,15 +33,12 @@ def should_reset_knock_buffer(mvars):
         return True
     if len(mvars['buffer']['input']) >= SIZE_LIMIT:
         return True
-    return not session.get('user_id')
+    return False
 
 
 @core_bp.route('/', methods=['GET'])
 def display_signes():
-    if session.get('mvars') and session.get('mvars')['buffer']['used'] == 0:
-        session['mvars']['buffer']['used'] = 1
-        return session['mvars']['buffer']['output'][-1]
-
+    """Flush the knock buffer and start a fresh session."""
     init_session()
     return rand_str(1)
 
@@ -76,9 +73,10 @@ def knock_knock(tav):
                 session['mvars']['user']['id'] = da_same[0][0]
                 session['mvars']['user']['seq'] = session['mvars']['buffer']['output']
                 session['mvars']['user']['used'] = 0
-    else:
-        init_session()
 
+        return session['mvars']['buffer']['output'][-1]
+
+    init_session()
     return redirect("/data/")
 
 
@@ -92,7 +90,12 @@ def send_seq():
     if session.get('mvars') and len(request.args) == 1:
         data_p = request.args.get(session['mvars']['user']['seq'])
 
-    if data_p == '1' and session['mvars']['user']['id'] != 0:
+    if (
+        session.get('mvars')
+        and data_p == '1'
+        and session['mvars']['user']['id'] != 0
+        and session['mvars']['user']['id'] != ""
+    ):
         ans = keys_c.get_key(session['mvars']['user']['id'])
         if len(ans) > 0:
             valid = session.get('id')
