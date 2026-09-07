@@ -3,7 +3,7 @@ from flask import Flask
 
 from srcs import create_app
 from srcs.core.routes import is_valid_knock_letter, should_reset_knock_buffer
-from srcs.db import Keys_c
+from srcs.db import Keys_c, Rooms_c
 
 
 @pytest.fixture
@@ -159,3 +159,27 @@ def test_find_key_exact_match():
     assert result == [(1,)]
     assert 'seq = %s' in cursor.query
     assert cursor.params == ('abc',)
+
+
+def test_find_key_by_session():
+    cursor = FakeCursor(results=[(1,)])
+    app = Flask(__name__)
+    keys = Keys_c(app, FakeMySQL(cursor))
+
+    result = keys.find_key_by_session('AbCdEfGh')
+
+    assert result == [(1,)]
+    assert 'sessions LIKE' in cursor.query
+    assert cursor.params == ('%.AbCdEfGh.%',)
+
+
+def test_get_room_reads_rooms_doors():
+    cursor = FakeCursor(results=[('1.2.',)])
+    app = Flask(__name__)
+    rooms = Rooms_c(app, FakeMySQL(cursor))
+
+    result = rooms.get_room(1)
+
+    assert result == [('1.2.',)]
+    assert 'FROM rooms' in cursor.query
+    assert cursor.params == (1,)

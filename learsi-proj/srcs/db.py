@@ -59,7 +59,7 @@ class Rooms_c(Database):
 
     def get_room(self, rid):
         with self.get_cur() as _cur:
-            _cur.execute("SELECT doors FROM keys_t WHERE id = %s", (rid,))
+            _cur.execute("SELECT doors FROM rooms WHERE id = %s", (rid,))
             return _cur.fetchall()
 
     def enter_aroom(self, path):
@@ -94,7 +94,7 @@ class Keys_c(Database):
                 kses = kses[(0 if already_there else 1):MAX_KEY_SESSIONS]
 
             if not already_there:
-                more_sessions_by_this_guest = self.find_key(gid, equal=True)
+                more_sessions_by_this_guest = self.find_key_by_session(gid)
 
                 if more_sessions_by_this_guest:
                     self.del_key_ses(more_sessions_by_this_guest, gid)
@@ -149,6 +149,15 @@ class Keys_c(Database):
                 _cur.execute("SELECT id FROM keys_t WHERE seq = %s", (seq,))
             else:
                 _cur.execute("SELECT id FROM keys_t WHERE seq LIKE %s", (f'%{seq}%',))
+            return _cur.fetchall()
+
+    def find_key_by_session(self, gid):
+        """Find keys that currently hold this guest token in sessions (.gid.)."""
+        with self.get_cur() as _cur:
+            _cur.execute(
+                "SELECT id FROM keys_t WHERE sessions LIKE %s",
+                (f'%.{gid}.%',),
+            )
             return _cur.fetchall()
 
 
