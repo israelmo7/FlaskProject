@@ -133,17 +133,9 @@ class Keys_c(Database):
         with self.get_cur() as _cur:
             _cur.execute("SELECT sessions FROM keys_t WHERE id = %s", (kid,))
             return _cur.fetchall()
-"""
-    The function find_key is used to search for keys in the database based on a given sequence (seq). It can perform two types of searches: an exact match or a partial match using the SQL LIKE operator. The equal parameter determines which type of search to perform. If equal is True, it looks for an exact match; if False, it looks for any keys that contain the sequence as a substring.
-    Input:
-    - seq: The sequence to search for in the keys.
-    - equal: A boolean indicating whether to search for an exact match (True) or a partial match (False).
-    
-    Output:
-    - A list of tuples containing the IDs of the keys that match the search criteria. If no matches are found, it returns an empty list.
 
-"""
     def find_key(self, seq, equal=False):
+        """Search keys by seq: exact match when equal=True, substring LIKE otherwise."""
         with self.get_cur() as _cur:
             if equal:
                 _cur.execute("SELECT id FROM keys_t WHERE seq = %s", (seq,))

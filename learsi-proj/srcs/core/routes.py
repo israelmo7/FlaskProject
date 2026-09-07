@@ -17,12 +17,18 @@ def init_db_c(r, k, g):
     rooms_c, keys_c, guests_c = r, k, g
 
 
-def init_session():
-    session.clear()
+def reset_knock_buffer():
+    """Clear knock progress only; keep authenticated guest session['id']."""
+    session.pop(SHOW_CHALLENGE_FLAG, None)
     session['mvars'] = {
         'user': {'id': "", 'seq': "", 'used': 1},
         'buffer': {'input': "", 'output': "", 'used': 1},
     }
+
+
+def init_session():
+    """Backward-compatible alias: flush knock state without dropping guest id."""
+    reset_knock_buffer()
 
 
 def is_valid_knock_letter(tav):
@@ -46,8 +52,8 @@ def display_signes():
             return session['mvars']['buffer']['output'][-1]
         return rand_str(1)
 
-    # Manual visit to /data/ — flush the knock buffer.
-    init_session()
+    # Manual visit to /data/ — flush knock buffer only (keep guest session id).
+    reset_knock_buffer()
     return rand_str(1)
 
 
@@ -77,7 +83,9 @@ def knock_knock(tav):
             fdebug("da_same", da_same, "KNOCKx2")
 
             if len(da_same) > 0 and da_same[0] in similar_ans:
-                session['id'] = rand_str(13) # Generate a new session ID for the user
+                # Reuse existing guest token if already authenticated.
+                if not session.get('id'):
+                    session['id'] = rand_str(13)
                 session['mvars']['user']['id'] = da_same[0][0]
                 session['mvars']['user']['seq'] = session['mvars']['buffer']['output']
                 session['mvars']['user']['used'] = 0
@@ -85,7 +93,7 @@ def knock_knock(tav):
         session[SHOW_CHALLENGE_FLAG] = True
         return redirect("/data/")
 
-    init_session()
+    reset_knock_buffer()
     return redirect("/data/")
 
 
@@ -115,6 +123,6 @@ def send_seq():
                 print("[POST] Error: couldnt find UserID\n")
     else:
         print("--Not found\n")
-        init_session()
+        reset_knock_buffer()
 
     return redirect('/')

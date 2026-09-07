@@ -80,7 +80,8 @@ def test_data_root_flushes_buffer(client, app):
     with client.session_transaction() as sess:
         assert sess['mvars']['buffer']['input'] == ''
         assert sess['mvars']['buffer']['output'] == ''
-        assert 'id' not in sess
+        # Guest identity is preserved across knock-buffer flush.
+        assert sess['id'] == 'guesttoken123'
 
 
 def test_data_root_with_flag_returns_challenge_without_flush(client, app):
