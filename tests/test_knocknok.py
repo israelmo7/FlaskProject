@@ -83,6 +83,27 @@ def test_data_root_flushes_buffer(client, app):
         assert 'id' not in sess
 
 
+def test_data_root_with_flag_returns_challenge_without_flush(client, app):
+    with client.session_transaction() as sess:
+        sess['mvars'] = {
+            'user': {'id': 1, 'seq': 'XYZ', 'used': 0},
+            'buffer': {'input': 'abc', 'output': 'XYZ', 'used': 0},
+        }
+        sess['id'] = 'guesttoken123'
+        sess['show_challenge'] = True
+
+    response = client.get('/data/')
+    assert response.status_code == 200
+    assert response.get_data(as_text=True) == 'Z'
+
+    with client.session_transaction() as sess:
+        assert sess['mvars']['buffer']['input'] == 'abc'
+        assert sess['mvars']['buffer']['output'] == 'XYZ'
+        assert sess['mvars']['buffer']['used'] == 1
+        assert sess.get('show_challenge') is None
+        assert sess['id'] == 'guesttoken123'
+
+
 class FakeCursor:
     def __init__(self, results=None):
         self.results = results or []

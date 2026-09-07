@@ -3,6 +3,7 @@ from flask import Blueprint, redirect, request, session
 from srcs.utils import fdebug, rand_str
 
 SIZE_LIMIT = 8
+SHOW_CHALLENGE_FLAG = 'show_challenge'
 
 core_bp = Blueprint(
     'core_bp', __name__, template_folder='templates', static_folder='static'
@@ -38,7 +39,14 @@ def should_reset_knock_buffer(mvars):
 
 @core_bp.route('/', methods=['GET'])
 def display_signes():
-    """Flush the knock buffer and start a fresh session."""
+    # Knock redirect sets this flag so /data/ returns the challenge without flushing.
+    if session.pop(SHOW_CHALLENGE_FLAG, False):
+        if session.get('mvars') and session['mvars']['buffer']['output']:
+            session['mvars']['buffer']['used'] = 1
+            return session['mvars']['buffer']['output'][-1]
+        return rand_str(1)
+
+    # Manual visit to /data/ — flush the knock buffer.
     init_session()
     return rand_str(1)
 
@@ -74,7 +82,8 @@ def knock_knock(tav):
                 session['mvars']['user']['seq'] = session['mvars']['buffer']['output']
                 session['mvars']['user']['used'] = 0
 
-        return session['mvars']['buffer']['output'][-1]
+        session[SHOW_CHALLENGE_FLAG] = True
+        return redirect("/data/")
 
     init_session()
     return redirect("/data/")
