@@ -17,18 +17,13 @@ def init_db_c(r, k, g):
     rooms_c, keys_c, guests_c = r, k, g
 
 
-def reset_knock_buffer():
+def init_session():
     """Clear knock progress only; keep authenticated guest session['id']."""
     session.pop(SHOW_CHALLENGE_FLAG, None)
     session['mvars'] = {
         'user': {'id': "", 'seq': "", 'used': 1},
         'buffer': {'input': "", 'output': "", 'used': 1},
     }
-
-
-def init_session():
-    """Backward-compatible alias: flush knock state without dropping guest id."""
-    reset_knock_buffer()
 
 
 def is_valid_knock_letter(tav):
@@ -53,7 +48,7 @@ def display_signes():
         return rand_str(1)
 
     # Manual visit to /data/ — flush knock buffer only (keep guest session id).
-    reset_knock_buffer()
+    init_session()
     return rand_str(1)
 
 
@@ -93,7 +88,7 @@ def knock_knock(tav):
         session[SHOW_CHALLENGE_FLAG] = True
         return redirect("/data/")
 
-    reset_knock_buffer()
+    init_session()
     return redirect("/data/")
 
 
@@ -123,6 +118,6 @@ def send_seq():
                 print("[POST] Error: couldnt find UserID\n")
     else:
         print("--Not found\n")
-        reset_knock_buffer()
+        init_session()
 
     return redirect('/')
