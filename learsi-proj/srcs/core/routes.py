@@ -77,7 +77,7 @@ def knock_knock(tav):
             fdebug("da_same", da_same, "KNOCKx2")
 
             if len(da_same) > 0 and da_same[0] in similar_ans:
-                session['id'] = rand_str(13)
+                session['id'] = rand_str(13) # Generate a new session ID for the user
                 session['mvars']['user']['id'] = da_same[0][0]
                 session['mvars']['user']['seq'] = session['mvars']['buffer']['output']
                 session['mvars']['user']['used'] = 0
@@ -109,6 +109,7 @@ def send_seq():
         if len(ans) > 0:
             valid = session.get('id')
             if valid:
+                print("[POST] Valid UserID found, setting key session\n")
                 keys_c.set_key(session['mvars']['user']['id'], valid[:8])
             else:
                 print("[POST] Error: couldnt find UserID\n")
