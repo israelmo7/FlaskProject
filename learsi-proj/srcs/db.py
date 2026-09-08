@@ -179,23 +179,25 @@ class Keys_c(Database):
 class Guests_c(Database):
 
     def update_guest(self, gid, s):
-        current_pocket = self.get_guest(gid)
-        if current_pocket and current_pocket != ():
-            current_pocket = current_pocket[0][0]
-            while (len(current_pocket) + len(s)) > CHAT_CAPACITY:
-                current_pocket = current_pocket[current_pocket[1::1].find(".")::1]
-
-            current_pocket += s
+        if s is None:
+            print("[UP-GUEST] Error: pocket key id is required\n")
+            return
+        if self.get_guest(gid):
             with self.get_cur() as _cur:
                 _cur.execute(
                     "UPDATE guests SET pocket = %s WHERE session = %s",
-                    (current_pocket, gid),
+                    (s, gid),
                 )
                 self.commitit()
         else:
             print("[UP-GUEST] Error: couldnt find this guest\n")
 
     def add_guest(self, gid, s):
+        """Insert or update guest pocket with key id `s`. Rejects None pocket."""
+        if s is None:
+            print("[ADD-GUEST] Error: pocket key id is required\n")
+            return 0
+
         ans = 0
         with self.get_cur() as _cur:
             _cur.execute("SELECT pocket FROM guests WHERE session = %s", (gid,))
@@ -214,6 +216,9 @@ class Guests_c(Database):
             elif ans[0][0] != s:
                 ans = 1
                 self.update_guest(gid, s)
+
+            else:
+                ans = 1
 
         return ans
 
