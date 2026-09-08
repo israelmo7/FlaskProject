@@ -47,7 +47,8 @@ def enter_room(value):
         print(f"[ENTER-ROOM]: gid={gid}")
         kid = can_enter_room(rid, gid)
         pocket = guests_c.get_guest(gid)
-        has_guest = 1 if pocket else 0
+        # NULL pocket is a broken row from older enter_room; treat as no guest key
+        has_guest = 1 if pocket and pocket[0][0] is not None else 0
 
         if kid is not None:
             if guests_c.add_guest(gid, kid):
