@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS guests (
 CREATE TABLE IF NOT EXISTS rooms (
     id INT PRIMARY KEY AUTO_INCREMENT,
     paths VARCHAR(255) DEFAULT '',
-    doors VARCHAR(255) DEFAULT ''
+    doors VARCHAR(255) DEFAULT '',
+    chat VARCHAR(255) DEFAULT '.'
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -27,9 +28,15 @@ CREATE TABLE IF NOT EXISTS sessions (
     extra VARCHAR(7) DEFAULT ''
 );
 
+CREATE TABLE IF NOT EXISTS messages (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    body TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 INSERT IGNORE INTO keys_t (id, seq, sessions, doors) VALUES
     (1, 'abc', '.', '1.2.'),
     (99, 'test', '.', '');
 
-INSERT IGNORE INTO rooms (id, paths, doors) VALUES
-    (1, '.lobby.', '1.2.');
+INSERT IGNORE INTO rooms (id, paths, doors, chat) VALUES
+    (1, '.lobby.', '1.2.', '.');
