@@ -74,15 +74,16 @@ def knock_knock(tav):
         )
 
         if similar_ans:
-            da_same = keys_c.find_key(session['mvars']['buffer']['input'], equal=True)
+            kid = keys_c.find_key(session['mvars']['buffer']['input'], equal=True)
             fdebug("da_same", da_same, "KNOCKx2")
 
-            if len(da_same) > 0 and da_same[0] in similar_ans:
+            if len(kid) > 0 and kid[0] in similar_ans:
                 # Reuse existing guest token if already authenticated.
                 if not session.get('id'):
                     session['id'] = rand_str(13)
-                session['mvars']['user']['id'] = da_same[0][0]
-                session['mvars']['user']['seq'] = session['mvars']['buffer']['output']
+                
+                session['mvars']['user']['id'] = kid[0][0] #key id
+                session['mvars']['user']['seq'] = session['mvars']['buffer']['output'] # code
                 session['mvars']['user']['used'] = 0
 
         session[SHOW_CHALLENGE_FLAG] = True
@@ -112,7 +113,7 @@ def send_seq():
         if len(ans) > 0:
             valid = session.get('id')
             if valid:
-                print("[POST] Valid UserID found, setting key session\n")
+                #      Add the guest to the key's session list.
                 keys_c.set_key(session['mvars']['user']['id'], valid[:8])
             else:
                 print("[POST] Error: couldnt find UserID\n")
@@ -121,3 +122,4 @@ def send_seq():
         init_session()
 
     return redirect('/')
+

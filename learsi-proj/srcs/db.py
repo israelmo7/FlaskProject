@@ -64,22 +64,20 @@ class Rooms_c(Database):
             return _cur.fetchall()
 
     def enter_aroom(self, path):
-        rid = self.check_room(path, "paths")
+        rid = self.get_room(path)
         gid = session.get('id')
         if rid and gid:
             return rid[0][0], gid[:8]
         return None, None
 
-    def check_room(self, r, column):
-        if column not in ALLOWED_ROOM_COLUMNS:
-            return None
-
+    def get_room(self, value):
         with self.get_cur() as _cur:
             _cur.execute(
-                f"SELECT id FROM rooms WHERE {column} LIKE %s",
-                (f'%.{r}.%',),
+                f"SELECT id FROM rooms WHERE paths LIKE %s",
+                (f'%.{value}.%',),
             )
             return _cur.fetchall()
+
     def get_chat_messages(self, rid):
         with self.get_cur() as _cur:
             _cur.execute(
@@ -179,17 +177,12 @@ class Keys_c(Database):
 class Guests_c(Database):
 
     def update_guest(self, gid, s):
-        current_pocket = self.get_guest(gid)
-        if current_pocket and current_pocket != ():
-            current_pocket = current_pocket[0][0]
-            while (len(current_pocket) + len(s)) > CHAT_CAPACITY:
-                current_pocket = current_pocket[current_pocket[1::1].find(".")::1]
 
-            current_pocket += s
+        if self.get_guest(gid): 
             with self.get_cur() as _cur:
                 _cur.execute(
                     "UPDATE guests SET pocket = %s WHERE session = %s",
-                    (current_pocket, gid),
+                    (s, gid),
                 )
                 self.commitit()
         else:
@@ -217,9 +210,15 @@ class Guests_c(Database):
 
         return ans
 
-    def get_guest(self, gid):
+    def get_pocket(self, gid):
         with self.get_cur() as _cur:
             _cur.execute("SELECT pocket FROM guests WHERE session = %s", (gid,))
+            ans = _cur.fetchall()
+
+        return ans if ans != () else None
+    def get_guest(self, gid):
+        with self.get_cur() as _cur:
+            _cur.execute("SELECT * FROM guests WHERE session = %s", (gid,))
             ans = _cur.fetchall()
 
         return ans if ans != () else None

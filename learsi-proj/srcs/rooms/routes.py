@@ -9,15 +9,24 @@ rooms_c, keys_c, guests_c = 0, 0, 0
 
 def init_db_r(r, k, g):
     global rooms_c, keys_c, guests_c
-    rooms_c, keys_c, guests_cc = r, k, g
+    rooms_c, keys_c, guests_c = r, k, g
 
-def can_enter_room(room_id, guest_id):
+def own_that_key(gid, kid):
+
+    pocket = guests_c.get_pocket(gid)
+    
+    if pocket and pocket[0][0] == kid:
+        return True
+
+    return False
+
+def has_right_key(room_id, guest_id):
 
     room_info = rooms_c.get_doors(room_id)
     if not room_info or not room_info[0][0]:
         return False
 
-    room_doors = [part for part in str(room_info[0][0]).split('.') if part]
+    room_doors = [door for door in str(room_info[0][0]).split('.') if door]
     key_matches = keys_c.find_key_by_session(guest_id)
 
     if not key_matches or not room_doors:
@@ -33,7 +42,7 @@ def enter_room(value):
     ans = redirect('/room/')
 
     gid = session.get('id')
-    rid = rooms_c.check_room(value, 'paths')
+    rid = rooms_c.get_room(value)
 
     has_guest = 0
     has_permission = 0
@@ -46,21 +55,20 @@ def enter_room(value):
         gid = gid[:8]
         rid = rid[0][0]
         print(f"[ENTER-ROOM]: gid={gid}")
-
-        can_enter = can_enter_room(rid, gid)
-        pocket = guests_c.get_guest(gid)
-        has_guest = 1 if pocket else 0
         
-        if can_enter:
-            if guests_c.add_guest(gid, kid):
-                ans = render_template("panel.html", se=gid)
+        have_key = has_right_key(rid, gid)
 
-        elif has_guest:
-            room_info = rooms_c.get_doors(rid)
-            if room_info and room_info[0][0]:
-                room_doors = [part for part in str(room_info[0][0]).split('.') if part]
-                if str(pocket[0][0]) in room_doors:
-                    ans = render_template("panel.html", se=gid)
+        has_guest = guests_c.get_guest(gid)
+        
+        own_key = own_that_key(gid, kid)
+
+        if have_key and not has_guest:
+            guests_c.add_guest(gid, kid)
+            ans = render_template("panel.html", se=gid)
+        
+        elif own_key or have_key:
+            ans = render_template("panel.html", se=gid)
+        
 
         else:
             print("[ENTER-ROOM]: Cant get In\n")
@@ -77,7 +85,7 @@ def get_messages(room_id):
         print("[GET-MESSAGES]: No gid found in session")
         return redirect('/')
 
-    if not can_enter_room(room_id, gid[:8]):
+    if not has_right_key(room_id, gid[:8]):
         print(f"[GET-MESSAGES]: gid={gid} does not have permission to enter room_id={room_id}")
         return redirect('/')
 
@@ -100,7 +108,7 @@ def send_message(room_id):
     if not gid or not message:
         return redirect('/')
     
-    if not can_enter_room(room_id, gid[:8]):
+    if not has_right_key(room_id, gid[:8]):
         return redirect('/')
 
     rooms_c.set_chat_messages(room_id, message)
