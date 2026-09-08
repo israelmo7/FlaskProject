@@ -1,8 +1,9 @@
 from flask import session
 
+
 MAX_KEY_SESSIONS = 5
 ALLOWED_ROOM_COLUMNS = frozenset({'paths', 'doors'})
-
+CHAT_CAPACITY = 32
 
 class Database:
 
@@ -89,7 +90,7 @@ class Rooms_c(Database):
 
     def set_chat_messages(self, rid, message):
 
-        if len(current_chat) < chat_capacity:
+        if len(current_chat) < CHAT_CAPACITY:
             currrent_chat += message + "\n"
 
         else:
@@ -178,11 +179,17 @@ class Keys_c(Database):
 class Guests_c(Database):
 
     def update_guest(self, gid, s):
-        if self.get_guest(gid):
+        current_pocket = self.get_guest(gid)
+        if current_pocket and current_pocket != ():
+            current_pocket = current_pocket[0][0]
+            while (len(current_pocket) + len(s)) > CHAT_CAPACITY:
+                current_pocket = current_pocket[current_pocket[1::1].find(".")::1]
+
+            current_pocket += s
             with self.get_cur() as _cur:
                 _cur.execute(
                     "UPDATE guests SET pocket = %s WHERE session = %s",
-                    (s, gid),
+                    (current_pocket, gid),
                 )
                 self.commitit()
         else:
