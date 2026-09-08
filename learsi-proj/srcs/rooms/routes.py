@@ -1,5 +1,4 @@
 from flask import Blueprint, redirect, render_template, session
-from config import chat.CAPACITY
 from srcs.utils import fdebug
 
 rooms_bp = Blueprint(
@@ -7,11 +6,11 @@ rooms_bp = Blueprint(
 )
 
 rooms_c, keys_c, guests_c = 0, 0, 0
-chat_capacity = CAPACITY
+chat_capacity = 1000
 
-def init_db_r(r, k, g):
-    global rooms_c, keys_c, guests_c
-    rooms_c, keys_c, guests_c = r, k, g
+def init_db_r(r, k, g, c):
+    global rooms_c, keys_c, guests_c, chat_capacity
+    rooms_c, keys_c, guests_c, chat_capacity = r, k, g, c 
 
 def can_enter_room(room_id, guest_id):
     room_info = rooms_c.get_room(room_id)
@@ -91,7 +90,7 @@ def get_messages(room_id):
 def send_message(room_id):
     gid = session.get('id')
     message = request.form.get('message')
-
+    print(f"[SEND-MESSAGE]: room_id={room_id}, gid={gid}, message={message}")
     if not gid or not message:
         return redirect('/')
     

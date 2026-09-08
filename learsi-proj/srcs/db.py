@@ -96,7 +96,7 @@ class Rooms_c(Database):
             current_chat = current_chat[8::1] + message + "\n"
 
         with rooms_c.get_cur() as _cur:
-        _   cur.execute(
+           cur.execute(
                 "UPDATE rooms SET chat = %s WHERE id = %s",
                 (current_chat, room_id),
             )
