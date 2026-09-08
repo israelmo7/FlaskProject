@@ -13,20 +13,22 @@ def init_db_r(r, k, g, c):
     rooms_c, keys_c, guests_c, chat_capacity = r, k, g, c 
 
 def can_enter_room(room_id, guest_id):
-
+    """Return the matching key id if guest may enter, else None."""
     room_info = rooms_c.get_doors(room_id)
     if not room_info or not room_info[0][0]:
-        return False
+        return None
 
     room_doors = [part for part in str(room_info[0][0]).split('.') if part]
     key_matches = keys_c.find_key_by_session(guest_id)
 
     if not key_matches or not room_doors:
-        return False
+        return None
 
-    key_matches = key_matches[0][0]
-    print(f"[CAN-ENTER-ROOM]: key_matches={key_matches}, room_doors={room_doors}")
-    return str(key_matches) in room_doors
+    kid = key_matches[0][0]
+    print(f"[CAN-ENTER-ROOM]: kid={kid}, room_doors={room_doors}")
+    if str(kid) in room_doors:
+        return kid
+    return None
 
 
 @rooms_bp.route('/<value>', methods=['GET'])
@@ -36,10 +38,6 @@ def enter_room(value):
     gid = session.get('id')
     rid = rooms_c.check_room(value, 'paths')
 
-    has_guest = 0
-    has_permission = 0
-    kid = None
-
     fdebug("gid", gid, "ENTER-ROOM")
     fdebug("rid", rid, "ENTER-ROOM")
 
@@ -47,11 +45,11 @@ def enter_room(value):
         gid = gid[:8]
         rid = rid[0][0]
         print(f"[ENTER-ROOM]: gid={gid}")
-        can_enter = can_enter_room(rid, gid)
+        kid = can_enter_room(rid, gid)
         pocket = guests_c.get_guest(gid)
         has_guest = 1 if pocket else 0
-        
-        if can_enter:
+
+        if kid is not None:
             if guests_c.add_guest(gid, kid):
                 ans = render_template("panel.html", se=gid)
 
