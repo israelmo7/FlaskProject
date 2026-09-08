@@ -79,6 +79,28 @@ class Rooms_c(Database):
                 (f'%.{r}.%',),
             )
             return _cur.fetchall()
+    def get_chat_messages(self, rid):
+        with self.get_cur() as _cur:
+            _cur.execute(
+                "SELECT chat FROM rooms WHERE id = %s",
+                (rid,),
+            )
+            return _cur.fetchall()
+
+    def set_chat_messages(self, rid, message):
+
+        if len(current_chat) < chat_capacity:
+            currrent_chat += message + "\n"
+
+        else:
+            current_chat = current_chat[8::1] + message + "\n"
+
+        with rooms_c.get_cur() as _cur:
+        _   cur.execute(
+                "UPDATE rooms SET chat = %s WHERE id = %s",
+                (current_chat, room_id),
+            )
+        self.commitit()
 
 
 class Keys_c(Database):
