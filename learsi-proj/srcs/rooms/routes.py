@@ -6,11 +6,10 @@ rooms_bp = Blueprint(
 )
 
 rooms_c, keys_c, guests_c = 0, 0, 0
-chat_capacity = 1000
 
-def init_db_r(r, k, g, c):
-    global rooms_c, keys_c, guests_c, chat_capacity
-    rooms_c, keys_c, guests_c, chat_capacity = r, k, g, c 
+def init_db_r(r, k, g):
+    global rooms_c, keys_c, guests_c
+    rooms_c, keys_c, guests_c = r, k, g
 
 def can_enter_room(room_id, guest_id):
     """Return the matching key id if guest may enter, else None."""
@@ -73,13 +72,16 @@ def get_messages(room_id):
     gid = session.get('id')
     print(f"[GET-MESSAGES]: room_id={room_id}, gid={gid}")
     if not gid:
+        print("[GET-MESSAGES]: No gid found in session")
         return redirect('/')
 
     if not can_enter_room(room_id, gid[:8]):
+        print(f"[GET-MESSAGES]: gid={gid} does not have permission to enter room_id={room_id}")
         return redirect('/')
 
     data = rooms_c.get_chat_messages(room_id)
     if not data:
+        print(f"[GET-MESSAGES]: No messages found for room_id={room_id}")
         return redirect('/')
 
     messages = data[0][0] if data[0][0] else ""

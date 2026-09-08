@@ -1,8 +1,9 @@
 from flask import session
 
+
 MAX_KEY_SESSIONS = 5
 ALLOWED_ROOM_COLUMNS = frozenset({'paths', 'doors'})
-
+CHAT_CAPACITY = 32
 
 class Database:
 
@@ -89,7 +90,7 @@ class Rooms_c(Database):
 
     def set_chat_messages(self, rid, message):
 
-        if len(current_chat) < chat_capacity:
+        if len(current_chat) < CHAT_CAPACITY:
             currrent_chat += message + "\n"
 
         else:

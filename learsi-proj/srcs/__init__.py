@@ -31,7 +31,7 @@ def _load_json_config(app):
     app.config["SESSION_TYPE"] = data_conf['ses']['TYPE']
     app.config['SESSION_COOKIE_PATH'] = data_conf['ses']['PATH']
     app.config['CHAT_CAPACITY'] = data_conf['chat']['CAPACITY']
-
+    app.config['SESSION_LENGTH'] = data_conf['ses']['LENGTH']
     app.secret_key = data_conf['ses']['SECRET_KEY']
 
 
@@ -62,7 +62,7 @@ def create_app(test_config=None):
 
         mysql = MySQL(app)
         rooms_c, keys_c, guests_c = get_package(app, mysql)
-        init_db_r(rooms_c, keys_c, guests_c,  app.config.get('CHAT_CAPACITY', 1000))
+        init_db_r(rooms_c, keys_c, guests_c)
         init_db_c(rooms_c, keys_c, guests_c)
 
         app.extensions['mysql'] = mysql
