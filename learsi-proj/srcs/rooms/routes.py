@@ -13,18 +13,20 @@ def init_db_r(r, k, g, c):
     rooms_c, keys_c, guests_c, chat_capacity = r, k, g, c 
 
 def can_enter_room(room_id, guest_id):
-    room_info = rooms_c.get_room(room_id)
+
+    room_info = rooms_c.get_doors(room_id)
     if not room_info or not room_info[0][0]:
         return False
 
     room_doors = [part for part in str(room_info[0][0]).split('.') if part]
     key_matches = keys_c.find_key_by_session(guest_id)
 
-    if not key_matches:
+    if not key_matches or not room_doors:
         return False
 
-    key_id = key_matches[0][0]
-    return str(key_id) in room_doors
+    key_matches = key_matches[0][0]
+    print(f"[CAN-ENTER-ROOM]: key_matches={key_matches}, room_doors={room_doors}")
+    return str(key_matches) in room_doors
 
 
 @rooms_bp.route('/<value>', methods=['GET'])
@@ -44,7 +46,7 @@ def enter_room(value):
     if gid and rid:
         gid = gid[:8]
         rid = rid[0][0]
-
+        print(f"[ENTER-ROOM]: gid={gid}")
         can_enter = can_enter_room(rid, gid)
         pocket = guests_c.get_guest(gid)
         has_guest = 1 if pocket else 0
@@ -54,7 +56,7 @@ def enter_room(value):
                 ans = render_template("panel.html", se=gid)
 
         elif has_guest:
-            room_info = rooms_c.get_room(rid)
+            room_info = rooms_c.get_doors(rid)
             if room_info and room_info[0][0]:
                 room_doors = [part for part in str(room_info[0][0]).split('.') if part]
                 if str(pocket[0][0]) in room_doors:
@@ -70,7 +72,7 @@ def enter_room(value):
 @rooms_bp.route('/<room_id>/messages', methods=['GET'])
 def get_messages(room_id):
     gid = session.get('id')
-
+    print(f"[GET-MESSAGES]: room_id={room_id}, gid={gid}")
     if not gid:
         return redirect('/')
 
@@ -82,6 +84,7 @@ def get_messages(room_id):
         return redirect('/')
 
     messages = data[0][0] if data[0][0] else ""
+    print(f"[GET-MESSAGES]: room_id={room_id}, gid={gid}, messages={messages}")
     return render_template("messages.html", messages=messages)
 
 

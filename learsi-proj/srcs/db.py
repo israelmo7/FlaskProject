@@ -57,7 +57,7 @@ class Database:
 
 class Rooms_c(Database):
 
-    def get_room(self, rid):
+    def get_doors(self, rid):
         with self.get_cur() as _cur:
             _cur.execute("SELECT doors FROM rooms WHERE id = %s", (rid,))
             return _cur.fetchall()
@@ -199,7 +199,8 @@ class Guests_c(Database):
                     "INSERT INTO guests(session, pocket) VALUES (%s, %s)",
                     (gid, s),
                 )
-                self._mysql.connection.commit()
+                self.commitit()
+
                 ans = 1
                 self.set_session((gid, 'k', 'session', ''))
 
