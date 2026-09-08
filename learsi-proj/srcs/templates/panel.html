@@ -63,18 +63,22 @@
     <div class="container">
         <nav>
             <ul>
-                <li><a href="#">Dashboard</a></li>
-                <li><a href="#">Users</a></li>
+                <li><a href="/">Home</a></li>
+                <li><a href="/room/">Rooms</a></li>
+                <li><a href="/data/">New knock</a></li>
                 <li><a href="#">Settings</a></li>
                 <li><a href="#">Reports</a></li>
-                <li><a href="#">Logout</a></li>
             </ul>
         </nav>
         <main>
-		{% if se %}
-
+            {% if se %}
             <h2>Welcome, {{ se }}</h2>
-		
-		{% endif %}
-			<div class="card">
-                <h3>Dashboard Overview</h
+            {% endif %}
+            <div class="card">
+                <h3>Dashboard Overview</h3>
+                <p>You have successfully entered the room.</p>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
