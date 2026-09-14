@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Room {{ room_id }} chat</title>
+    <title>Room {{ room_path }} chat</title>
     <style>
         :root {
             --bg: #1a1f1c;
@@ -96,11 +96,11 @@
     <main>
         <h1>Room chat</h1>
         <p class="meta">
-            guest <strong>{{ se }}</strong> · room {{ room_id }}
+            guest <strong>{{ se }}</strong> · room {{ room_path }}
             · <a href="/room/">rooms</a>
         </p>
         <div class="log">{{ messages }}</div>
-        <form method="post" action="/room/{{ room_id }}/messages">
+        <form method="post" action="/room/{{ room_path }}/messages">
             <label for="message" class="meta">New message</label>
             <textarea id="message" name="message" maxlength="500" required placeholder="Type a message…"></textarea>
             <button type="submit">Send</button>
