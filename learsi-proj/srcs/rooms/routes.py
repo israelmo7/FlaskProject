@@ -46,7 +46,7 @@ def start_guest_cleaner(app):
     threading.Thread(target=_loop, name='guest-cleaner', daemon=True).start()
 
 
-def resolve_room_id(room_path):
+def path_room_to_id(room_path):
     """Turn a path segment like 'lobby' into the numeric rooms.id, or None."""
     rows = rooms_c.get_room(room_path)
     if not rows:
@@ -79,7 +79,7 @@ def enter_room(value):
     ans = redirect('/room/')
 
     gid = session.get('id')
-    rid = resolve_room_id(value)
+    rid = path_room_to_id(value)
 
     fdebug("gid", gid, "ENTER-ROOM")
     fdebug("rid", rid, "ENTER-ROOM")
@@ -109,7 +109,7 @@ def enter_room(value):
 @rooms_bp.route('/<room_path>/messages', methods=['GET'])
 def get_messages(room_path):
     gid = session.get('id')
-    room_id = resolve_room_id(room_path)
+    room_id = path_room_to_id(room_path)
 
     if not gid or room_id is None:
         return redirect('/')
@@ -141,7 +141,7 @@ def send_message(room_path):
     if not gid or not message.strip():
         return redirect('/')
 
-    room_id = resolve_room_id(room_path)
+    room_id = path_room_to_id(room_path)
     if room_id is None or has_right_key(room_id, gid[:8]) is None:
         return redirect('/')
 
@@ -153,7 +153,7 @@ def send_message(room_path):
 def room_app(room_path):
     """Serve the React room chat shell (JS talks to /api/messages)."""
     gid = session.get('id')
-    room_id = resolve_room_id(room_path)
+    room_id = path_room_to_id(room_path)
     if not gid or room_id is None:
         return redirect('/')
     if has_right_key(room_id, gid[:8]) is None:
@@ -182,7 +182,7 @@ def api_get_messages(room_path):
     gid = session.get('id')
     if not gid:
         return jsonify(error='unauthorized'), 401
-    room_id = resolve_room_id(room_path)
+    room_id = path_room_to_id(room_path)
     if room_id is None or has_right_key(room_id, gid[:8]) is None:
         return jsonify(error='forbidden'), 403
 
@@ -195,7 +195,7 @@ def api_send_message(room_path):
     gid = session.get('id')
     if not gid:
         return jsonify(error='unauthorized'), 401
-    room_id = resolve_room_id(room_path)
+    room_id = path_room_to_id(room_path)
     if room_id is None or has_right_key(room_id, gid[:8]) is None:
         return jsonify(error='forbidden'), 403
 
