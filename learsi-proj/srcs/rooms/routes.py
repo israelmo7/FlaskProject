@@ -99,15 +99,14 @@ def enter_room(value):
     return ans
 
 
-@rooms_bp.route('/<room_id>/messages', methods=['GET'])
-def get_messages(room_id):
+@rooms_bp.route('/<room_path>/messages', methods=['GET'])
+def get_messages(room_path):
     gid = session.get('id')
-    room_id = rooms_c.get_room(room_id)
-    
-    print(f"[GET-MESSAGES]: room_id={room_id}, gid={gid}")
-    if not gid:
-        return redirect('/')
+    room_id = rooms_c.get_room(room_path)
 
+    if not gid or not room_id:
+        return redirect('/')
+    print(f"[GET-MESSAGES]: room_id={room_id}, gid={gid}")
     if has_right_key(room_id, gid[:8]) is None:
         print(f"[GET-MESSAGES]: no permission room_id={room_id} gid={gid}")
         return redirect('/')
@@ -122,24 +121,25 @@ def get_messages(room_id):
     return render_template(
         "messages.html",
         messages=messages,
-        room_id=room_id,
+        room_id=room_path,
         se=gid[:8],
     )
 
 
-@rooms_bp.route('/<room_id>/messages', methods=['POST'])
-def send_message(room_id):
+@rooms_bp.route('/<room_path>/messages', methods=['POST'])
+def send_message(room_path):
     gid = session.get('id')
     message = request.form.get('message', '')
-    print(f"[SEND-MESSAGE]: room_id={room_id}, gid={gid}, message={message!r}")
+    print(f"[SEND-MESSAGE]: room_path={room_path}, gid={gid}, message={message!r}")
     if not gid or not message.strip():
         return redirect('/')
 
+    room_id = rooms_c.get_room(room_path)
     if has_right_key(room_id, gid[:8]) is None:
         return redirect('/')
 
     rooms_c.set_chat_messages(room_id, message, gid=gid[:8])
-    return redirect(f'/room/{room_id}/messages')
+    return redirect(f'/room/{room_path}/messages')
 
 
 @rooms_bp.route('/', methods=['GET'])
