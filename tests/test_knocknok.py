@@ -189,16 +189,16 @@ def test_get_room_reads_rooms_doors():
     assert cursor.params == (1,)
 
 
-def test_set_chat_messages_appends_and_tags_guest():
+def test_set_chat_messages_appends_plain_text():
     import json
 
     cursor = FakeCursor(results=[(json.dumps('old\n'),)])
     app = Flask(__name__)
     rooms = Rooms_c(app, FakeMySQL(cursor))
 
-    rooms.set_chat_messages(1, 'hello', gid='guest001')
+    rooms.set_chat_messages(1, 'hello')
 
     assert 'UPDATE rooms SET chat' in cursor.query
     stored = json.loads(cursor.params[0])
-    assert stored == 'old\n[guest001] hello\n'
+    assert stored == 'old\nhello\n'
     assert cursor.params[1] == 1

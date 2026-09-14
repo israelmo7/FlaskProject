@@ -1,7 +1,7 @@
 import threading
 import time
 
-from flask import Blueprint, redirect, render_template, request, session
+from flask import Blueprint, jsonify, redirect, render_template, request, session
 
 from srcs.utils import fdebug
 
@@ -124,6 +124,21 @@ def get_messages(room_id):
     )
 
 
+@rooms_bp.route('/<room_id>/app', methods=['GET'])
+def room_app(room_id):
+    """Serve the React room chat shell (static JS talks to /api/messages)."""
+    gid = session.get('id')
+    if not gid:
+        return redirect('/')
+    if has_right_key(room_id, gid[:8]) is None:
+        return redirect('/')
+    return render_template(
+        "room_app.html",
+        room_id=room_id,
+        se=gid[:8],
+    )
+
+
 @rooms_bp.route('/<room_id>/messages', methods=['POST'])
 def send_message(room_id):
     gid = session.get('id')
@@ -135,8 +150,49 @@ def send_message(room_id):
     if has_right_key(room_id, gid[:8]) is None:
         return redirect('/')
 
-    rooms_c.set_chat_messages(room_id, message, gid=gid[:8])
+    rooms_c.set_chat_messages(room_id, message)
     return redirect(f'/room/{room_id}/messages')
+
+
+def _chat_lines(room_id):
+    """Split rooms.chat blob into non-empty lines (still one DB string column)."""
+    data = rooms_c.get_chat_messages(room_id)
+    raw = ""
+    if data and data[0] and data[0][0] is not None:
+        raw = data[0][0]
+        if not isinstance(raw, str):
+            raw = str(raw)
+    return [line for line in raw.split('\n') if line]
+
+
+@rooms_bp.route('/<room_id>/api/messages', methods=['GET'])
+def api_get_messages(room_id):
+    """JSON list of chat lines for the React room UI."""
+    gid = session.get('id')
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    if has_right_key(room_id, gid[:8]) is None:
+        return jsonify(error='forbidden'), 403
+
+    return jsonify(messages=_chat_lines(room_id))
+
+
+@rooms_bp.route('/<room_id>/api/messages', methods=['POST'])
+def api_send_message(room_id):
+    """Append one plain message string; returns updated line list."""
+    gid = session.get('id')
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    if has_right_key(room_id, gid[:8]) is None:
+        return jsonify(error='forbidden'), 403
+
+    payload = request.get_json(silent=True) or {}
+    message = payload.get('message') or request.form.get('message', '')
+    if not str(message).strip():
+        return jsonify(error='empty'), 400
+
+    rooms_c.set_chat_messages(room_id, message)
+    return jsonify(messages=_chat_lines(room_id)), 201
 
 
 @rooms_bp.route('/', methods=['GET'])
