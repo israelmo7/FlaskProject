@@ -70,15 +70,14 @@ def create_app(test_config=None):
         app.extensions['rooms_c'] = rooms_c
         app.extensions['keys_c'] = keys_c
         app.extensions['guests_c'] = guests_c
+        from srcs.rooms.routes import start_guest_cleaner
+
+        start_guest_cleaner(app)
     else:
         app.extensions['mysql'] = None
         app.extensions['rooms_c'] = None
         app.extensions['keys_c'] = None
         app.extensions['guests_c'] = None
-
-    pass
-    #init cleaning daemon.      deadline => app.config['SESSION_TIMEOUT']
-
 
     @app.route('/', methods=['GET'])
     def gindex():

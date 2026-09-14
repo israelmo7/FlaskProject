@@ -1,9 +1,12 @@
+import json
+
 from flask import session
 
 
 MAX_KEY_SESSIONS = 5
 ALLOWED_ROOM_COLUMNS = frozenset({'paths', 'doors'})
-CHAT_CAPACITY = 32
+# Max characters kept in rooms.chat (oldest text trimmed from the front).
+CHAT_CAPACITY = 4000
 
 class Database:
 
@@ -84,22 +87,51 @@ class Rooms_c(Database):
                 "SELECT chat FROM rooms WHERE id = %s",
                 (rid,),
             )
-            return _cur.fetchall()
+            rows = _cur.fetchall()
 
-    def set_chat_messages(self, rid, message):
+        if not rows:
+            return rows
 
-        if len(current_chat) < CHAT_CAPACITY:
-            currrent_chat += message + "\n"
-
+        raw = rows[0][0]
+        if raw is None:
+            return (('',),)
+        if isinstance(raw, (bytes, bytearray)):
+            raw = raw.decode('utf-8', errors='replace')
+        if isinstance(raw, str):
+            try:
+                parsed = json.loads(raw)
+                if isinstance(parsed, str):
+                    raw = parsed
+            except (TypeError, ValueError, json.JSONDecodeError):
+                pass
         else:
-            current_chat = current_chat[8::1] + message + "\n"
+            raw = str(raw)
+        return ((raw,),)
 
-        with rooms_c.get_cur() as _cur:
-           cur.execute(
+    def set_chat_messages(self, rid, message, gid=None):
+        """Append one chat line and trim to CHAT_CAPACITY characters."""
+        rows = self.get_chat_messages(rid)
+        current_chat = ""
+        if rows and rows[0] and rows[0][0] is not None:
+            current_chat = rows[0][0]
+            if not isinstance(current_chat, str):
+                current_chat = str(current_chat)
+
+        text = (message or "").strip()
+        if not text:
+            return
+
+        line = f"[{gid}] {text}\n" if gid else f"{text}\n"
+        current_chat = current_chat + line
+        if len(current_chat) > CHAT_CAPACITY:
+            current_chat = current_chat[-CHAT_CAPACITY:]
+
+        with self.get_cur() as _cur:
+            _cur.execute(
                 "UPDATE rooms SET chat = %s WHERE id = %s",
-                (current_chat, room_id),
+                (json.dumps(current_chat), rid),
             )
-        self.commitit()
+            self.commitit()
 
 
 class Keys_c(Database):

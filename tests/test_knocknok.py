@@ -132,6 +132,9 @@ class FakeConnection:
     def cursor(self):
         return self._cursor
 
+    def commit(self):
+        return None
+
 
 class FakeMySQL:
     def __init__(self, cursor):
@@ -179,8 +182,23 @@ def test_get_room_reads_rooms_doors():
     app = Flask(__name__)
     rooms = Rooms_c(app, FakeMySQL(cursor))
 
-    result = rooms.get_room(1)
+    result = rooms.get_doors(1)
 
     assert result == [('1.2.',)]
     assert 'FROM rooms' in cursor.query
     assert cursor.params == (1,)
+
+
+def test_set_chat_messages_appends_and_tags_guest():
+    import json
+
+    cursor = FakeCursor(results=[(json.dumps('old\n'),)])
+    app = Flask(__name__)
+    rooms = Rooms_c(app, FakeMySQL(cursor))
+
+    rooms.set_chat_messages(1, 'hello', gid='guest001')
+
+    assert 'UPDATE rooms SET chat' in cursor.query
+    stored = json.loads(cursor.params[0])
+    assert stored == 'old\n[guest001] hello\n'
+    assert cursor.params[1] == 1
