@@ -2,6 +2,7 @@ import threading
 import time
 
 from flask import Blueprint, jsonify, redirect, render_template, request, session
+from srcs.rooms.routes import has_right_key
 
 from srcs.utils import fdebug
 
@@ -67,5 +68,6 @@ def api_send_message(room_path):
 
 
 @api_bp.route('/', methods=['GET'])
-def aindex():
+@api_bp.route('/<value>', methods=['GET'])
+def aindex(value=None):
     return "App"
