@@ -25,7 +25,6 @@ def init_session():
         'buffer': {'input': "", 'output': "", 'used': 1},
     }
 
-
 def is_valid_knock_letter(tav):
     return isinstance(tav, str) and len(tav) == 1 and 'a' <= tav <= 'z'
 
@@ -75,7 +74,7 @@ def knock_knock(tav):
 
         if similar_ans:
             kid = keys_c.find_key(session['mvars']['buffer']['input'], equal=True)
-            fdebug("da_same", da_same, "KNOCKx2")
+            fdebug("kid", kid, "KNOCKx2")
 
             if len(kid) > 0 and kid[0] in similar_ans:
                 # Reuse existing guest token if already authenticated.

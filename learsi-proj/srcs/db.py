@@ -223,6 +223,11 @@ class Guests_c(Database):
 
         return ans if ans != () else None
 
+    def remove_all_guests(self):
+        with self.get_cur() as _cur:
+            _cur.execute("DELETE FROM guests")
+            self.commitit()
+
 
 def get_package(app, mysql):
     return Rooms_c(app, mysql), Keys_c(app, mysql), Guests_c(app, mysql)

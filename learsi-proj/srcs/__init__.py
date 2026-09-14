@@ -32,6 +32,7 @@ def _load_json_config(app):
     app.config['SESSION_COOKIE_PATH'] = data_conf['ses']['PATH']
     app.config['CHAT_CAPACITY'] = data_conf['chat']['CAPACITY']
     app.config['SESSION_LENGTH'] = data_conf['ses']['LENGTH']
+    app.config['SESSION_TIMEOUT'] = data_conf['ses']['TIMEOUT']
     app.secret_key = data_conf['ses']['SECRET_KEY']
 
 
@@ -74,6 +75,10 @@ def create_app(test_config=None):
         app.extensions['rooms_c'] = None
         app.extensions['keys_c'] = None
         app.extensions['guests_c'] = None
+
+    pass
+    #init cleaning daemon.      deadline => app.config['SESSION_TIMEOUT']
+
 
     @app.route('/', methods=['GET'])
     def gindex():
