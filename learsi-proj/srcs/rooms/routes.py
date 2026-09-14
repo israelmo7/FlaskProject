@@ -153,24 +153,26 @@ def _chat_lines(room_id):
     return [line for line in raw.split('\n') if line]
 
 
-@rooms_bp.route('/<room_id>/api/messages', methods=['GET'])
-def api_get_messages(room_id):
+@rooms_bp.route('/<room_path>/api/messages', methods=['GET'])
+def api_get_messages(room_path):
     """JSON list of chat lines for the React room UI."""
     gid = session.get('id')
     if not gid:
         return jsonify(error='unauthorized'), 401
+    room_id = rooms_c.get_room(room_path)
     if has_right_key(room_id, gid[:8]) is None:
         return jsonify(error='forbidden'), 403
 
     return jsonify(messages=_chat_lines(room_id))
 
 
-@rooms_bp.route('/<room_id>/api/messages', methods=['POST'])
-def api_send_message(room_id):
+@rooms_bp.route('/<room_path>/api/messages', methods=['POST'])
+def api_send_message(room_path):
     """Append one plain message string; returns updated line list."""
     gid = session.get('id')
     if not gid:
         return jsonify(error='unauthorized'), 401
+    room_id = rooms_c.get_room(room_path)
     if has_right_key(room_id, gid[:8]) is None:
         return jsonify(error='forbidden'), 403
 
