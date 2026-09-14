@@ -1,0 +1,4 @@
+Flask>=3.0.0
+flask-mysqldb>=2.0.0
+mysqlclient>=2.2.0
+pytest>=8.0.0
