@@ -22,7 +22,9 @@ def own_that_key(gid, kid):
 
 def has_right_key(room_id, guest_id):
 
+    print(f"[HAS-RIGHT-KEY]: room_id={room_id}, guest_id={guest_id}")
     room_info = rooms_c.get_doors(room_id)
+    print(f"[HAS-RIGHT-KEY]: room_info={room_info}")
     if not room_info or not room_info[0][0]:
         return False
 
@@ -84,6 +86,8 @@ def enter_room(value):
 @rooms_bp.route('/<room_id>/messages', methods=['GET'])
 def get_messages(room_id):
     gid = session.get('id')
+    room_id = rooms_c.get_room(room_id)
+    
     print(f"[GET-MESSAGES]: room_id={room_id}, gid={gid}")
     if not gid:
         print("[GET-MESSAGES]: No gid found in session")
