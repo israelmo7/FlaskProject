@@ -152,60 +152,22 @@ def send_message(room_path):
 @rooms_bp.route('/<room_path>/app', methods=['GET'])
 def room_app(room_path):
     """Serve the React room chat shell (JS talks to /api/messages)."""
+    
     gid = session.get('id')
     room_id = path_room_to_id(room_path)
+
     if not gid or room_id is None:
         return redirect('/')
     if has_right_key(room_id, gid[:8]) is None:
         return redirect('/')
+    
+    
     return render_template(
         "room_app.html",
         room_path=room_path,
         se=gid[:8],
     )
 
-
-def _chat_lines(room_id):
-    """Split rooms.chat blob into non-empty lines (still one DB string column)."""
-    data = rooms_c.get_chat_messages(room_id)
-    raw = ""
-    if data and data[0] and data[0][0] is not None:
-        raw = data[0][0]
-        if not isinstance(raw, str):
-            raw = str(raw)
-    return [line for line in raw.split('\n') if line]
-
-
-@rooms_bp.route('/<room_path>/api/messages', methods=['GET'])
-def api_get_messages(room_path):
-    """JSON list of chat lines for the React room UI."""
-    gid = session.get('id')
-    if not gid:
-        return jsonify(error='unauthorized'), 401
-    room_id = path_room_to_id(room_path)
-    if room_id is None or has_right_key(room_id, gid[:8]) is None:
-        return jsonify(error='forbidden'), 403
-
-    return jsonify(messages=_chat_lines(room_id))
-
-
-@rooms_bp.route('/<room_path>/api/messages', methods=['POST'])
-def api_send_message(room_path):
-    """Append one plain message string; returns updated line list."""
-    gid = session.get('id')
-    if not gid:
-        return jsonify(error='unauthorized'), 401
-    room_id = path_room_to_id(room_path)
-    if room_id is None or has_right_key(room_id, gid[:8]) is None:
-        return jsonify(error='forbidden'), 403
-
-    payload = request.get_json(silent=True) or {}
-    message = payload.get('message') or request.form.get('message', '')
-    if not str(message).strip():
-        return jsonify(error='empty'), 400
-
-    rooms_c.set_chat_messages(room_id, message)
-    return jsonify(messages=_chat_lines(room_id)), 201
 
 
 @rooms_bp.route('/', methods=['GET'])

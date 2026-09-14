@@ -1,0 +1,71 @@
+import threading
+import time
+
+from flask import Blueprint, jsonify, redirect, render_template, request, session
+
+from srcs.utils import fdebug
+
+api_bp = Blueprint(
+    'api_bp', __name__, template_folder='templates', static_folder='static'
+)
+rooms_c, keys_c, guests_c = 0, 0, 0
+
+
+def init_db_a(r, k, g):
+    global rooms_c, keys_c, guests_c
+    rooms_c, keys_c, guests_c = r, k, g
+
+def path_room_to_id(room_path):
+    """Turn a path segment like 'lobby' into the numeric rooms.id, or None."""
+    rows = rooms_c.get_room(room_path)
+    if not rows:
+        return None
+    return rows[0][0]
+
+
+def _chat_lines(room_id):
+    """Split rooms.chat blob into non-empty lines (still one DB string column)."""
+    data = rooms_c.get_chat_messages(room_id)
+    raw = ""
+    if data and data[0] and data[0][0] is not None:
+        raw = data[0][0]
+        if not isinstance(raw, str):
+            raw = str(raw)
+    return [line for line in raw.split('\n') if line]
+
+
+@api_bp.route('/<room_path>/messages', methods=['GET'])
+def api_get_messages(room_path):
+    """JSON list of chat lines for the React room UI."""
+    gid = session.get('id')
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    room_id = path_room_to_id(room_path)
+    if room_id is None or has_right_key(room_id, gid[:8]) is None:
+        return jsonify(error='forbidden'), 403
+
+    return jsonify(messages=_chat_lines(room_id))
+
+
+@api_bp.route('/<room_path>/messages', methods=['POST'])
+def api_send_message(room_path):
+    """Append one plain message string; returns updated line list."""
+    gid = session.get('id')
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    room_id = path_room_to_id(room_path)
+    if room_id is None or has_right_key(room_id, gid[:8]) is None:
+        return jsonify(error='forbidden'), 403
+
+    payload = request.get_json(silent=True) or {}
+    message = payload.get('message') or request.form.get('message', '')
+    if not str(message).strip():
+        return jsonify(error='empty'), 400
+
+    rooms_c.set_chat_messages(room_id, message)
+    return jsonify(messages=_chat_lines(room_id)), 201
+
+
+@api_bp.route('/', methods=['GET'])
+def aindex():
+    return "App"

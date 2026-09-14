@@ -12,7 +12,7 @@ function readRoomId() {
 }
 
 async function fetchMessages(roomId) {
-  const res = await fetch(`/room/${roomId}/api/messages`, {
+  const res = await fetch(`/api/${roomId}/messages`, {
     credentials: 'include',
   })
   if (!res.ok) {
@@ -23,7 +23,7 @@ async function fetchMessages(roomId) {
 }
 
 async function postMessage(roomId, message) {
-  const res = await fetch(`/room/${roomId}/api/messages`, {
+  const res = await fetch(`/api/${roomId}/messages`, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -60,6 +60,10 @@ export default function App() {
     return () => clearInterval(id)
   }, [load])
 
+  async function handleOpenWindow() {
+    const url = `/room/${roomId}/app`
+    window.open(url, '_blank', 'width=400,height=600')
+  }
   async function onSend(e) {
     e.preventDefault()
     const text = draft.trim()
@@ -113,6 +117,9 @@ export default function App() {
           Send
         </button>
       </form>
+      <button type="button" onClick={handleOpenWindow}>
+        Open in new window
+      </button>
     </main>
   )
 }
