@@ -94,10 +94,9 @@
 </head>
 <body>
     <main>
-        <h1>Room chat</h1>
+        <h1>-Room-Chat-</h1>
         <p class="meta">
-            guest <strong>{{ se }}</strong> · room {{ room_path }}
-            · <a href="/room/">rooms</a>
+            (<strong>{{ room_path }}</strong>)
         </p>
         <div class="log">{{ messages }}</div>
         <form method="post" action="/room/{{ room_path }}/messages">

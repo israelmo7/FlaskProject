@@ -5,9 +5,19 @@ admin_bp = Blueprint(
 )
 
 
-@admin_bp.route('/')
-def admin_home():
+@admin_bp.route('/<kid>', methods=['GET'])
+def admin_login(kid):
     guest_id = session.get('id', '')[:8] if session.get('id') else None
-    if guest_id:
-        return render_template("panel.html", se=guest_id)
-    return "You Got it!"
+    if not guest_id:
+        return '', 403
+
+    pocket = guests_c.get_guest(guest_id)
+    if not pocket:
+        return '', 403
+
+    if pocket != kid:
+        return '', 403
+
+    return render_template(
+        "admin.html",
+        se=guest_id)

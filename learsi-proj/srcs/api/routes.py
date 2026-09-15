@@ -62,5 +62,5 @@ def api_send_message(room_path):
 
 @api_bp.route('/', methods=['GET'])
 @api_bp.route('/<value>', methods=['GET'])
-def aindex():
-    return 404
+def aindex(value=None):
+    return '', 404
