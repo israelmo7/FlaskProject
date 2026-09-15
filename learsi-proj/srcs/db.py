@@ -108,8 +108,8 @@ class Rooms_c(Database):
             raw = str(raw)
         return ((raw,),)
 
-    def set_chat_messages(self, rid, message, gid=None):
-        """Append one chat line and trim to CHAT_CAPACITY characters."""
+    def set_chat_messages(self, rid, message):
+        """Append plain text line to rooms.chat (one string column); trim capacity."""
         rows = self.get_chat_messages(rid)
         current_chat = ""
         if rows and rows[0] and rows[0][0] is not None:
@@ -121,8 +121,7 @@ class Rooms_c(Database):
         if not text:
             return
 
-        line = f"[{gid}] {text}\n" if gid else f"{text}\n"
-        current_chat = current_chat + line
+        current_chat = current_chat + text + "\n"
         if len(current_chat) > CHAT_CAPACITY:
             current_chat = current_chat[-CHAT_CAPACITY:]
 

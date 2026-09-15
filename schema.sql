@@ -36,7 +36,8 @@ CREATE TABLE IF NOT EXISTS messages (
 
 INSERT IGNORE INTO keys_t (id, seq, sessions, doors) VALUES
     (1, 'abc', '.', '1.2.'),
-    (99, 'test', '.', '');
+    (99, 'admin', '.', '999.');
 
 INSERT IGNORE INTO rooms (id, paths, doors, chat) VALUES
-    (1, '.lobby.', '1.2.', '.');
+    (1, '.lobby.', '999.1.2.', '.'),
+    (999, '.admin.', '999.', '.');

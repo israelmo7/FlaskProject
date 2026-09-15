@@ -1,7 +1,7 @@
 import threading
 import time
 
-from flask import Blueprint, redirect, render_template, request, session
+from flask import Blueprint, jsonify, redirect, render_template, request, session
 
 from srcs.utils import fdebug
 
@@ -46,10 +46,18 @@ def start_guest_cleaner(app):
     threading.Thread(target=_loop, name='guest-cleaner', daemon=True).start()
 
 
+def path_room_to_id(room_path):
+    """Turn a path segment like 'lobby' into the numeric rooms.id, or None."""
+    rows = rooms_c.get_room(room_path)
+    if not rows:
+        return None
+    return rows[0][0]
+
+
 def has_right_key(room_id, guest_id):
     """Return key id if guest may enter this room, else None."""
     room_info = rooms_c.get_doors(room_id)
-    print(f"[HAS-RIGHT-KEY]: room_info={room_info}")
+    print(f"[HAS-RIGHT-KEY]: room_id={room_id} room_info={room_info}")
     if not room_info or not room_info[0][0]:
         return None
 
@@ -71,15 +79,14 @@ def enter_room(value):
     ans = redirect('/room/')
 
     gid = session.get('id')
-    rid = rooms_c.get_room(value)
+    rid = path_room_to_id(value)
 
     fdebug("gid", gid, "ENTER-ROOM")
     fdebug("rid", rid, "ENTER-ROOM")
 
-    if gid and rid:
+    if gid and rid is not None:
         gid = gid[:8]
-        rid = rid[0][0]
-        print(f"[ENTER-ROOM]: gid={gid} rid={rid}")
+        print(f"[ENTER-ROOM]: gid={gid} rid={rid} path={value}")
 
         kid = has_right_key(rid, gid)
         if kid is not None:
@@ -102,13 +109,13 @@ def enter_room(value):
 @rooms_bp.route('/<room_path>/messages', methods=['GET'])
 def get_messages(room_path):
     gid = session.get('id')
-    room_id = rooms_c.get_room(room_path)
+    room_id = path_room_to_id(room_path)
 
-    if not gid or not room_id:
+    if not gid or room_id is None:
         return redirect('/')
-    print(f"[GET-MESSAGES]: room_id={room_id}, gid={gid}")
+    print(f"[GET-MESSAGES]: path={room_path} room_id={room_id}, gid={gid}")
     if has_right_key(room_id, gid[:8]) is None:
-        print(f"[GET-MESSAGES]: no permission room_id={room_id} gid={gid}")
+        print(f"[GET-MESSAGES]: no permission path={room_path} gid={gid}")
         return redirect('/')
 
     data = rooms_c.get_chat_messages(room_id)
@@ -121,7 +128,7 @@ def get_messages(room_path):
     return render_template(
         "messages.html",
         messages=messages,
-        room_id=room_path,
+        room_path=room_path,
         se=gid[:8],
     )
 
@@ -134,14 +141,35 @@ def send_message(room_path):
     if not gid or not message.strip():
         return redirect('/')
 
-    room_id = rooms_c.get_room(room_path)
-    if has_right_key(room_id, gid[:8]) is None:
+    room_id = path_room_to_id(room_path)
+    if room_id is None or has_right_key(room_id, gid[:8]) is None:
         return redirect('/')
 
-    rooms_c.set_chat_messages(room_id, message, gid=gid[:8])
+    rooms_c.set_chat_messages(room_id, message)
     return redirect(f'/room/{room_path}/messages')
+
+
+@rooms_bp.route('/<room_path>/app', methods=['GET'])
+def room_app(room_path):
+    """Serve the React room chat shell (JS talks to /api/messages)."""
+    
+    gid = session.get('id')
+    room_id = path_room_to_id(room_path)
+
+    if not gid or room_id is None:
+        return redirect('/')
+    if has_right_key(room_id, gid[:8]) is None:
+        return redirect('/')
+    
+    
+    return render_template(
+        "room_app.html",
+        room_path=room_path,
+        se=gid[:8],
+    )
+
 
 
 @rooms_bp.route('/', methods=['GET'])
 def rindex():
-    return "Rooms"
+    return '', 404
