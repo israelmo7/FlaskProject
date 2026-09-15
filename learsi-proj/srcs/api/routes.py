@@ -2,7 +2,7 @@ import threading
 import time
 
 from flask import Blueprint, jsonify, redirect, render_template, request, session
-from srcs.rooms.routes import has_right_key
+from srcs.rooms.routes import has_right_key, path_room_to_id
 
 from srcs.utils import fdebug
 
@@ -15,13 +15,6 @@ rooms_c, keys_c, guests_c = 0, 0, 0
 def init_db_a(r, k, g):
     global rooms_c, keys_c, guests_c
     rooms_c, keys_c, guests_c = r, k, g
-
-def path_room_to_id(room_path):
-    """Turn a path segment like 'lobby' into the numeric rooms.id, or None."""
-    rows = rooms_c.get_room(room_path)
-    if not rows:
-        return None
-    return rows[0][0]
 
 
 def _chat_lines(room_id):
@@ -69,5 +62,5 @@ def api_send_message(room_path):
 
 @api_bp.route('/', methods=['GET'])
 @api_bp.route('/<value>', methods=['GET'])
-def aindex(value=None):
-    return "App"
+def aindex():
+    return 404

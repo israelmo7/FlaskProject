@@ -172,4 +172,4 @@ def room_app(room_path):
 
 @rooms_bp.route('/', methods=['GET'])
 def rindex():
-    return "Rooms"
+    return 404
