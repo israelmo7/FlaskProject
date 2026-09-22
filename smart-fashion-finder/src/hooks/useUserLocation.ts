@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import * as Location from 'expo-location';
 import inventoryData from '@/data/inventory.json';
-import type { Coordinates } from '@/utils/distance';
+import { haversineKm, type Coordinates } from '@/utils/distance';
 
 const FALLBACK: Coordinates = {
   latitude: inventoryData.userDefaultLocation.latitude,
   longitude: inventoryData.userDefaultLocation.longitude,
 };
+
+/** If the device is far from the demo market, keep using Haifa inventory coords. */
+const DEMO_RADIUS_KM = 80;
 
 export function useUserLocation() {
   const [coords, setCoords] = useState<Coordinates>(FALLBACK);
@@ -30,11 +33,20 @@ export function useUserLocation() {
         const position = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         });
-        if (!cancelled) {
-          setCoords({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
+        if (cancelled) return;
+
+        const live: Coordinates = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        };
+        const distanceToDemo = haversineKm(live, FALLBACK);
+
+        if (distanceToDemo > DEMO_RADIUS_KM) {
+          setCoords(FALLBACK);
+          setLabel(`${inventoryData.userDefaultLocation.label} (demo)`);
+          setPermissionDenied(false);
+        } else {
+          setCoords(live);
           setLabel('Current location');
           setPermissionDenied(false);
         }

@@ -23,5 +23,5 @@ export function stockColorClass(status: StockStatus): string {
 }
 
 export function formatPriceILS(amount: number): string {
-  return `₪${amount.toLocaleString('he-IL')}`;
+  return `₪${amount}`;
 }
