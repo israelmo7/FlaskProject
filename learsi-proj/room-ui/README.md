@@ -12,9 +12,10 @@ Chat is still **one string column** in MySQL (`rooms.chat`). Lines are plain tex
 
 ## Learn by reading
 
-1. `src/main.jsx` — mounts React into `#root`
-2. `src/App.jsx` — state (`useState`), load/poll (`useEffect`), `fetch`
-3. `vite.config.js` — build output goes to `../srcs/static/room-ui/`
+1. `index.html` — Vite **must** have this at the project root (entry HTML + `/src/main.jsx` script)
+2. `src/main.jsx` — mounts React into `#root`
+3. `src/App.jsx` — picks Chat vs AdminPanel; Chat does `useState` / `useEffect` / `fetch`
+4. `vite.config.js` — build output goes to `../srcs/static/room-ui/`
 
 ## Dev (hot reload)
 

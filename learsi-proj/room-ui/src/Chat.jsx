@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import './Chat.css'
+import './chat.css'
 
 function readRoomId() {
   const fromDom = document.getElementById('root')?.dataset?.roomId
