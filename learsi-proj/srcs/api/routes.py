@@ -1,10 +1,6 @@
-import threading
-import time
+from flask import Blueprint, jsonify, request, session
 
-from flask import Blueprint, jsonify, redirect, render_template, request, session
-from srcs.rooms.routes import has_right_key, path_room_to_id
-
-from srcs.utils import fdebug
+from srcs.rooms.routes import has_admin_key, has_right_key, path_room_to_id
 
 api_bp = Blueprint(
     'api_bp', __name__, template_folder='templates', static_folder='static'
@@ -28,14 +24,21 @@ def _chat_lines(room_id):
     return [line for line in raw.split('\n') if line]
 
 
+def _require_guest():
+    gid = session.get('id')
+    if not gid:
+        return None
+    return gid[:8]
+
+
 @api_bp.route('/<room_path>/messages', methods=['GET'])
 def api_get_messages(room_path):
     """JSON list of chat lines for the React room UI."""
-    gid = session.get('id')
+    gid = _require_guest()
     if not gid:
         return jsonify(error='unauthorized'), 401
     room_id = path_room_to_id(room_path)
-    if room_id is None or has_right_key(room_id, gid[:8]) is None:
+    if room_id is None or has_right_key(room_id, gid) is None:
         return jsonify(error='forbidden'), 403
 
     return jsonify(messages=_chat_lines(room_id))
@@ -44,11 +47,11 @@ def api_get_messages(room_path):
 @api_bp.route('/<room_path>/messages', methods=['POST'])
 def api_send_message(room_path):
     """Append one plain message string; returns updated line list."""
-    gid = session.get('id')
+    gid = _require_guest()
     if not gid:
         return jsonify(error='unauthorized'), 401
     room_id = path_room_to_id(room_path)
-    if room_id is None or has_right_key(room_id, gid[:8]) is None:
+    if room_id is None or has_right_key(room_id, gid) is None:
         return jsonify(error='forbidden'), 403
 
     payload = request.get_json(silent=True) or {}
@@ -58,6 +61,28 @@ def api_send_message(room_path):
 
     rooms_c.set_chat_messages(room_id, message)
     return jsonify(messages=_chat_lines(room_id)), 201
+
+
+@api_bp.route('/admin/rooms', methods=['GET'])
+def api_admin_rooms():
+    """List rooms for AdminPanel (requires builtin admin key)."""
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    if not has_admin_key(gid):
+        return jsonify(error='forbidden'), 403
+    return jsonify(rooms=rooms_c.list_rooms())
+
+
+@api_bp.route('/admin/guests', methods=['GET'])
+def api_admin_guests():
+    """List guests for AdminPanel (requires builtin admin key)."""
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    if not has_admin_key(gid):
+        return jsonify(error='forbidden'), 403
+    return jsonify(guests=guests_c.list_guests())
 
 
 @api_bp.route('/', methods=['GET'])

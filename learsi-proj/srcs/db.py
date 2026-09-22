@@ -7,6 +7,8 @@ MAX_KEY_SESSIONS = 5
 ALLOWED_ROOM_COLUMNS = frozenset({'paths', 'doors'})
 # Max characters kept in rooms.chat (oldest text trimmed from the front).
 CHAT_CAPACITY = 4000
+# Admin key id — granted only in app code, never via knock (seq is non a-z).
+ADMIN_KEY_ID = 999
 
 class Database:
 
@@ -65,6 +67,39 @@ class Rooms_c(Database):
         with self.get_cur() as _cur:
             _cur.execute("SELECT doors FROM rooms WHERE id = %s", (rid,))
             return _cur.fetchall()
+
+    def get_rtype(self, rid):
+        """Return rooms.rtype ('chat'|'admin'), or None if column/row missing."""
+        try:
+            with self.get_cur() as _cur:
+                _cur.execute("SELECT rtype FROM rooms WHERE id = %s", (rid,))
+                rows = _cur.fetchall()
+            if rows and rows[0] and rows[0][0]:
+                return str(rows[0][0])
+        except Exception:
+            return None
+        return None
+
+    def list_rooms(self):
+        """Return [{id, path, rtype}, ...] for admin UI."""
+        with self.get_cur() as _cur:
+            try:
+                _cur.execute("SELECT id, paths, rtype FROM rooms")
+            except Exception:
+                _cur.execute("SELECT id, paths FROM rooms")
+            rows = _cur.fetchall()
+
+        out = []
+        for row in rows:
+            rid = row[0]
+            paths = row[1] or ''
+            parts = [p for p in str(paths).split('.') if p]
+            path = parts[0] if parts else str(rid)
+            rtype = row[2] if len(row) > 2 and row[2] else (
+                'admin' if path == 'admin' else 'chat'
+            )
+            out.append({'id': rid, 'path': path, 'rtype': rtype})
+        return out
 
     def enter_aroom(self, path):
         rid = self.get_room(path)
@@ -187,12 +222,21 @@ class Keys_c(Database):
             return _cur.fetchall()
 
     def find_key(self, seq, equal=False):
-        """Search keys by seq: exact match when equal=True, substring LIKE otherwise."""
+        """Search keys by seq: exact match when equal=True, substring LIKE otherwise.
+
+        Builtin admin key (ADMIN_KEY_ID) is never returned — knock cannot gain it.
+        """
         with self.get_cur() as _cur:
             if equal:
-                _cur.execute("SELECT id FROM keys_t WHERE seq = %s", (seq,))
+                _cur.execute(
+                    "SELECT id FROM keys_t WHERE seq = %s AND id != %s",
+                    (seq, ADMIN_KEY_ID),
+                )
             else:
-                _cur.execute("SELECT id FROM keys_t WHERE seq LIKE %s", (f'%{seq}%',))
+                _cur.execute(
+                    "SELECT id FROM keys_t WHERE seq LIKE %s AND id != %s",
+                    (f'%{seq}%', ADMIN_KEY_ID),
+                )
             return _cur.fetchall()
 
     def find_key_by_session(self, gid):
@@ -203,6 +247,28 @@ class Keys_c(Database):
                 (f'%.{gid}.%',),
             )
             return _cur.fetchall()
+
+    def grant_admin_key(self, gid):
+        """Builtin-only: attach ADMIN_KEY_ID without removing other keys."""
+        kses = self.get_key(ADMIN_KEY_ID)
+        if kses is None or kses == ():
+            return
+
+        parts = [p for p in str(kses[0][0]).split('.') if p]
+        if gid in parts:
+            return
+
+        parts.append(gid)
+        if len(parts) > MAX_KEY_SESSIONS:
+            parts = parts[-MAX_KEY_SESSIONS:]
+        new_sessions = '.' + '.'.join(parts) + '.'
+
+        with self.get_cur() as _cur:
+            _cur.execute(
+                "UPDATE keys_t SET sessions = %s WHERE id = %s",
+                (new_sessions, ADMIN_KEY_ID),
+            )
+            self.commitit()
 
 
 class Guests_c(Database):
@@ -258,6 +324,16 @@ class Guests_c(Database):
         with self.get_cur() as _cur:
             _cur.execute("DELETE FROM guests")
             self.commitit()
+
+    def list_guests(self):
+        """Return [{session, pocket}, ...] for admin UI."""
+        with self.get_cur() as _cur:
+            _cur.execute("SELECT session, pocket FROM guests")
+            rows = _cur.fetchall()
+        return [
+            {'session': row[0] or '', 'pocket': row[1] or ''}
+            for row in rows
+        ]
 
 
 def get_package(app, mysql):

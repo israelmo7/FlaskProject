@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS rooms (
     id INT PRIMARY KEY AUTO_INCREMENT,
     paths VARCHAR(255) DEFAULT '',
     doors VARCHAR(255) DEFAULT '',
-    chat JSON DEFAULT NULL
+    chat JSON DEFAULT NULL,
+    rtype VARCHAR(16) NOT NULL DEFAULT 'chat'
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -34,10 +35,11 @@ CREATE TABLE IF NOT EXISTS messages (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Key 1: knockable (seq letters only). Key 999: builtin admin — seq is not a-z, cannot be knocked.
 INSERT IGNORE INTO keys_t (id, seq, sessions, doors) VALUES
     (1, 'abc', '.', '1.2.'),
-    (99, 'admin', '.', '999.');
+    (999, '-', '.', '');
 
-INSERT IGNORE INTO rooms (id, paths, doors, chat) VALUES
-    (1, '.lobby.', '999.1.2.', '.'),
-    (999, '.admin.', '999.', '.');
+INSERT IGNORE INTO rooms (id, paths, doors, chat, rtype) VALUES
+    (1, '.lobby.', '999.1.2.', '.', 'chat'),
+    (999, '.admin.', '999.', '.', 'admin');

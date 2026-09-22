@@ -111,7 +111,7 @@ def create_app(test_config=None):
                             (value,),
                         )
                         mysql_ext.connection.commit()
-                    ret = redirect('/admin')
+                    ret = redirect('/room/admin')
 
         return ret
 
@@ -129,7 +129,7 @@ def create_app(test_config=None):
             with mysql_ext.connection.cursor() as cur:
                 cur.execute(
                     "UPDATE keys_t SET sessions = %s WHERE id = %s",
-                    (parm_int, 99),
+                    (parm_int, 999),
                 )
                 mysql_ext.connection.commit()
             return ret

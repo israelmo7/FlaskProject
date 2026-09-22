@@ -1,8 +1,9 @@
 import threading
 import time
 
-from flask import Blueprint, jsonify, redirect, render_template, request, session
+from flask import Blueprint, redirect, render_template, request, session
 
+from srcs.db import ADMIN_KEY_ID
 from srcs.utils import fdebug
 
 rooms_bp = Blueprint(
@@ -54,6 +55,14 @@ def path_room_to_id(room_path):
     return rows[0][0]
 
 
+def room_type_for(room_path, room_id):
+    """chat | admin — DB rtype when present, else path == 'admin'."""
+    rtype = rooms_c.get_rtype(room_id) if rooms_c else None
+    if rtype in ('chat', 'admin'):
+        return rtype
+    return 'admin' if room_path == 'admin' else 'chat'
+
+
 def has_right_key(room_id, guest_id):
     """Return key id if guest may enter this room, else None."""
     room_info = rooms_c.get_doors(room_id)
@@ -67,11 +76,17 @@ def has_right_key(room_id, guest_id):
     if not key_matches or not room_doors:
         return None
 
-    kid = key_matches[0][0]
-    print(f"[HAS-RIGHT-KEY]: kid={kid}, room_doors={room_doors}")
-    if str(kid) in room_doors:
-        return kid
+    print(f"[HAS-RIGHT-KEY]: keys={key_matches}, room_doors={room_doors}")
+    for match in key_matches:
+        if str(match[0]) in room_doors:
+            return match[0]
     return None
+
+
+def has_admin_key(guest_id):
+    """True if guest currently holds builtin ADMIN_KEY_ID."""
+    matches = keys_c.find_key_by_session(guest_id) or []
+    return any(m[0] == ADMIN_KEY_ID for m in matches)
 
 
 @rooms_bp.route('/<value>', methods=['GET'])
@@ -87,17 +102,31 @@ def enter_room(value):
     if gid and rid is not None:
         gid = gid[:8]
         print(f"[ENTER-ROOM]: gid={gid} rid={rid} path={value}")
+        rtype = room_type_for(value, rid)
 
         kid = has_right_key(rid, gid)
+        # Admin room: if already authenticated (any key), grant 999 in code then recheck.
+        if kid is None and rtype == 'admin' and keys_c.find_key_by_session(gid):
+            keys_c.grant_admin_key(gid)
+            kid = has_right_key(rid, gid)
+
         if kid is not None:
             if not guests_c.get_guest(gid):
                 guests_c.add_guest(gid, kid)
-            ans = render_template(
-                "panel.html",
-                se=gid,
-                room_id=rid,
-                room_path=value,
-            )
+            # Chat rooms: builtin grant so guest can later open /room/admin.
+            if rtype != 'admin':
+                keys_c.grant_admin_key(gid)
+
+            if rtype == 'admin':
+                ans = redirect(f'/room/{value}/app')
+            else:
+                ans = render_template(
+                    "panel.html",
+                    se=gid,
+                    room_id=rid,
+                    room_path=value,
+                    room_type=rtype,
+                )
         else:
             print("[ENTER-ROOM]: Cant get In\n")
     else:
@@ -151,23 +180,31 @@ def send_message(room_path):
 
 @rooms_bp.route('/<room_path>/app', methods=['GET'])
 def room_app(room_path):
-    """Serve the React room chat shell (JS talks to /api/messages)."""
-    
+    """Serve the React shell; room_type selects Chat vs AdminPanel."""
     gid = session.get('id')
     room_id = path_room_to_id(room_path)
 
     if not gid or room_id is None:
         return redirect('/')
-    if has_right_key(room_id, gid[:8]) is None:
-        return redirect('/')
-    
-    
+
+    gid = gid[:8]
+    rtype = room_type_for(room_path, room_id)
+
+    if has_right_key(room_id, gid) is None:
+        if rtype == 'admin' and keys_c.find_key_by_session(gid):
+            keys_c.grant_admin_key(gid)
+        if has_right_key(room_id, gid) is None:
+            return redirect('/')
+
+    if rtype != 'admin':
+        keys_c.grant_admin_key(gid)
+
     return render_template(
         "room_app.html",
         room_path=room_path,
-        se=gid[:8],
+        room_type=rtype,
+        se=gid,
     )
-
 
 
 @rooms_bp.route('/', methods=['GET'])
