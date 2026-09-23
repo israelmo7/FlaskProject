@@ -1,92 +1,117 @@
 import { Image, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { DressableFigure } from '@/components/DressableFigure';
+import { PERSONA_OPTIONS } from '@/constants/avatar';
 import { he } from '@/i18n/he';
+import type { AvatarPersona, AvatarProfile, OutfitLayers, OutfitPiece } from '@/types';
 
 type Props = {
+  profile: AvatarProfile;
+  layers: OutfitLayers;
+  onPersonaChange: (persona: AvatarPersona) => void;
+  onRemovePiece?: (piece: OutfitPiece) => void;
   onFindNearMe?: () => void;
-  onAvatarPress?: () => void;
+  onEditAvatar?: () => void;
+  onQuickDenim?: () => void;
 };
 
-export function HeroAvatarSection({ onFindNearMe, onAvatarPress }: Props) {
+export function HeroAvatarSection({
+  profile,
+  layers,
+  onPersonaChange,
+  onRemovePiece,
+  onFindNearMe,
+  onEditAvatar,
+  onQuickDenim,
+}: Props) {
   const { width } = useWindowDimensions();
-  const heroHeight = Math.min(520, Math.max(380, width * 0.72));
 
   return (
-    <View
-      className="mx-4 mt-4 overflow-hidden rounded-2xl"
-      style={{ height: heroHeight }}
-    >
+    <View className="mx-4 mt-4 overflow-hidden rounded-2xl bg-[#12161C]">
       <Image
         source={require('../../assets/images/boutique-bg.png')}
         className="absolute inset-0 h-full w-full"
         resizeMode="cover"
+        style={{ opacity: 0.45 }}
       />
       <LinearGradient
-        colors={['rgba(12,14,18,0.35)', 'rgba(12,14,18,0.55)', 'rgba(12,14,18,0.75)']}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-        }}
+        colors={['rgba(12,14,18,0.5)', 'rgba(12,14,18,0.75)', 'rgba(12,14,18,0.92)']}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
       />
 
-      <Text className="mt-6 text-center font-display text-2xl text-white md:text-3xl">
+      <Text className="mt-5 text-center font-display text-2xl text-white">
         {he.heroTitle}
       </Text>
+      <Text className="mt-1 px-4 text-center font-body text-xs text-stone-dark">
+        הבובה שאתם מלבישים — בחרו גיל ומין, והוסיפו בגדים
+      </Text>
 
-      <View className="flex-1 flex-row items-end justify-center px-2 pb-4">
-        {/* הדמות */}
-        <Pressable onPress={onAvatarPress} className="items-center">
-          <Image
-            source={require('../../assets/images/avatar-doll.png')}
-            style={{
-              width: Math.min(260, width * 0.42),
-              height: Math.min(360, width * 0.58),
-            }}
-            resizeMode="contain"
+      {/* גילאים על הבובה */}
+      <View className="mt-3 flex-row flex-wrap justify-center px-2">
+        {PERSONA_OPTIONS.map((opt) => {
+          const active = profile.persona === opt.id;
+          return (
+            <Pressable
+              key={opt.id}
+              onPress={() => onPersonaChange(opt.id)}
+              className={`mb-1.5 mx-1 rounded-full px-3 py-1.5 ${
+                active ? 'bg-[#E07A4F]' : 'bg-white/15'
+              }`}
+            >
+              <Text
+                className={`font-bodyMedium text-xs ${
+                  active ? 'text-white' : 'text-stone-light'
+                }`}
+              >
+                {opt.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <View className="mt-2 items-center px-2 pb-2">
+        <Pressable onPress={onEditAvatar}>
+          <DressableFigure
+            compact={width < 500}
+            profile={profile}
+            layers={layers}
+            onRemovePiece={onRemovePiece}
           />
-          <Text className="mt-1 font-bodyMedium text-sm text-white">
-            {he.heroCaption}
-          </Text>
         </Pressable>
+      </View>
 
-        {/* קריאה לדוגמת בד — ג'ינס כחול */}
-        <View
-          className="absolute items-center"
-          style={{
-            right: width > 700 ? 48 : 12,
-            bottom: heroHeight * 0.28,
-            width: 92,
-          }}
+      {/* swatch ג׳ינס כחול */}
+      <View className="absolute items-center" style={{ right: 12, top: 120 }}>
+        <Pressable
+          onPress={onQuickDenim}
+          className="overflow-hidden rounded-md border border-white/80 bg-white"
+          style={{ width: 64, height: 64 }}
         >
-          <View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              left: -40,
-              top: 36,
-              width: 44,
-              height: 1,
-              backgroundColor: 'rgba(255,255,255,0.85)',
-            }}
+          <Image
+            source={require('../../assets/images/denim-swatch.png')}
+            className="h-full w-full"
+            resizeMode="cover"
           />
-          <Pressable
-            onPress={onFindNearMe}
-            className="overflow-hidden rounded-md border border-white/80 bg-white"
-            style={{ width: 78, height: 78 }}
-          >
-            <Image
-              source={require('../../assets/images/denim-swatch.png')}
-              className="h-full w-full"
-              resizeMode="cover"
-            />
-          </Pressable>
-          <Text className="mt-1.5 text-center font-bodyMedium text-xs text-white">
-            {he.swatchLabel}
-          </Text>
-        </View>
+        </Pressable>
+        <Text className="mt-1 text-center font-bodyMedium text-[10px] text-white">
+          {he.swatchLabel}
+        </Text>
+      </View>
+
+      <View className="flex-row items-center justify-center gap-2 px-4 pb-4">
+        <Pressable
+          onPress={onEditAvatar}
+          className="rounded-full border border-white/40 px-4 py-2"
+        >
+          <Text className="font-bodyMedium text-sm text-white">עריכת בובה</Text>
+        </Pressable>
+        <Pressable
+          onPress={onFindNearMe}
+          className="rounded-full bg-[#E07A4F] px-4 py-2"
+        >
+          <Text className="font-bodyBold text-sm text-white">{he.findNearMe}</Text>
+        </Pressable>
       </View>
     </View>
   );

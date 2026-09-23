@@ -1,262 +1,121 @@
-import { Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import {
+  PERSONA_OPTIONS,
   buildWidthScale,
   garmentColorHex,
   heightScale,
   isFemalePersona,
 } from '@/constants/avatar';
+import { PERSONA_BASE_IMAGES, layerImageForPieceId } from '@/constants/avatarAssets';
 import type { AvatarProfile, OutfitLayers, OutfitPiece } from '@/types';
 
 type Props = {
   profile: AvatarProfile;
   layers: OutfitLayers;
   onRemovePiece?: (piece: OutfitPiece) => void;
+  /** קומפקטי ל-Hero בדף הבית */
+  compact?: boolean;
 };
 
 /**
- * בובה מורכבת משכבות:
- * בסיס בתחתונים בלבד → עליהם נערמים הפריטים שנבחרו.
+ * בובה פוטוריאליסטית לפי גיל/מין + שכבות בגדים שנבחרו.
+ * הבסיס הוא דמות איכותית; הבגדים נערמים מעליה ונשארים.
  */
-export function DressableFigure({ profile, layers, onRemovePiece }: Props) {
+export function DressableFigure({
+  profile,
+  layers,
+  onRemovePiece,
+  compact = false,
+}: Props) {
   const female = isFemalePersona(profile.persona);
   const wScale = buildWidthScale(profile.build);
   const hScale = heightScale(profile.heightCm, profile.persona);
-  const baseW = 88 * wScale;
-  const childish =
-    profile.persona === 'boy' ||
-    profile.persona === 'girl' ||
-    profile.persona === 'teenBoy' ||
-    profile.persona === 'teenGirl';
+  const personaLabel =
+    PERSONA_OPTIONS.find((p) => p.id === profile.persona)?.label ?? '';
 
-  const head = childish ? 44 : 52;
-  const torsoH = 86 * hScale;
-  const legH = 112 * hScale;
-  const skin = '#E8C4A8';
-  const underwear = female ? '#F2D6DE' : '#2C3340';
+  const dollW = (compact ? 200 : 240) * Math.min(1.15, Math.max(0.85, wScale));
+  const dollH = (compact ? 300 : 360) * Math.min(1.15, Math.max(0.85, hScale));
 
   const worn = [layers.dress, layers.top, layers.bottom, layers.outer, layers.shoes].filter(
     Boolean,
   ) as OutfitPiece[];
 
+  const baseImage = PERSONA_BASE_IMAGES[profile.persona];
+
   return (
-    <View className="items-center rounded-2xl bg-[#1A222C] px-4 py-8">
-      <Text className="mb-4 font-display text-lg text-stone-light">
-        {profile.heightCm} ס״מ
-      </Text>
+    <View className="items-center">
+      <View
+        className="overflow-hidden rounded-2xl bg-[#12161C]"
+        style={{ width: dollW + 48, paddingVertical: compact ? 12 : 20 }}
+      >
+        <Text className="mb-1 text-center font-display text-base text-stone-light">
+          {personaLabel} · {profile.heightCm} ס״מ
+        </Text>
 
-      <View className="items-center" style={{ transform: [{ scale: Math.min(1.05, 0.9 + hScale * 0.1) }] }}>
-        {/* ראש */}
-        <View
-          style={{
-            width: head,
-            height: head,
-            borderRadius: head / 2,
-            backgroundColor: skin,
-            marginBottom: 4,
-          }}
-        />
-        {/* צוואר */}
-        <View style={{ width: 14, height: 10, backgroundColor: skin, marginBottom: 0 }} />
-
-        {/* גוף — שכבות */}
-        <View style={{ width: baseW + 24, alignItems: 'center' }}>
-          {/* טורסו בעור */}
-          <View
+        <View className="items-center justify-center" style={{ height: dollH }}>
+          <Image
+            source={baseImage}
             style={{
-              width: baseW,
-              height: torsoH,
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
-              backgroundColor: skin,
+              width: dollW,
+              height: dollH,
+              resizeMode: 'contain',
             }}
           />
 
-          {/* חזייה / חזה לגברים — תחתונים עליונים */}
-          {female ? (
-            <View
-              pointerEvents="none"
+          {/* שכבות בגדים מעל הבסיס */}
+          {layers.bottom && !layers.dress ? (
+            <GarmentOverlay
+              piece={layers.bottom}
               style={{
-                position: 'absolute',
-                top: torsoH * 0.22,
-                width: baseW * 0.92,
-                height: torsoH * 0.28,
-                borderRadius: 10,
-                backgroundColor: underwear,
-                opacity: layers.dress || layers.top || layers.outer ? 0 : 1,
+                bottom: dollH * 0.02,
+                width: dollW * 0.55,
+                height: dollH * 0.42,
               }}
             />
           ) : null}
 
-          {/* חולצה */}
           {layers.top && !layers.dress ? (
-            <View
-              pointerEvents="none"
+            <GarmentOverlay
+              piece={layers.top}
               style={{
-                position: 'absolute',
-                top: 0,
-                width: baseW + 8,
-                height: torsoH * 0.92,
-                borderTopLeftRadius: 18,
-                borderTopRightRadius: 18,
-                backgroundColor: garmentColorHex(layers.top.color),
-                alignItems: 'center',
-                justifyContent: 'center',
+                top: dollH * 0.22,
+                width: dollW * 0.58,
+                height: dollH * 0.28,
               }}
-            >
-              <Text className="px-1 text-center font-bodyMedium text-[9px] text-white">
-                {layers.top.label} · {layers.top.size}
-              </Text>
-            </View>
+            />
           ) : null}
 
-          {/* שמלה */}
           {layers.dress ? (
-            <View
-              pointerEvents="none"
+            <GarmentOverlay
+              piece={layers.dress}
               style={{
-                position: 'absolute',
-                top: 0,
-                width: baseW + 10,
-                height: torsoH + legH * 0.55,
-                borderTopLeftRadius: 18,
-                borderTopRightRadius: 18,
-                borderBottomLeftRadius: 16,
-                borderBottomRightRadius: 16,
-                backgroundColor: garmentColorHex(layers.dress.color),
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 2,
+                top: dollH * 0.2,
+                width: dollW * 0.6,
+                height: dollH * 0.55,
               }}
-            >
-              <Text className="px-1 text-center font-bodyMedium text-[9px] text-white">
-                {layers.dress.label} · {layers.dress.size}
-              </Text>
-            </View>
+            />
           ) : null}
 
-          {/* עליונית מעל החולצה */}
           {layers.outer ? (
-            <View
-              pointerEvents="none"
+            <GarmentOverlay
+              piece={layers.outer}
               style={{
-                position: 'absolute',
-                top: -4,
-                width: baseW + 18,
-                height: torsoH * 0.95,
-                borderTopLeftRadius: 20,
-                borderTopRightRadius: 20,
-                backgroundColor: garmentColorHex(layers.outer.color),
-                opacity: 0.92,
-                alignItems: 'center',
-                justifyContent: 'flex-end',
-                paddingBottom: 8,
-                zIndex: 3,
+                top: dollH * 0.18,
+                width: dollW * 0.62,
+                height: dollH * 0.32,
               }}
-            >
-              <Text className="px-1 text-center font-bodyMedium text-[9px] text-white">
-                {layers.outer.label} · {layers.outer.size}
-              </Text>
-            </View>
+            />
           ) : null}
-
-          {/* רגליים + תחתון */}
-          {!layers.dress ? (
-            <View className="flex-row justify-between" style={{ width: baseW - 8 }}>
-              {[0, 1].map((i) => (
-                <View key={i} style={{ alignItems: 'center' }}>
-                  <View
-                    style={{
-                      width: 22 * wScale,
-                      height: legH,
-                      borderBottomLeftRadius: 8,
-                      borderBottomRightRadius: 8,
-                      backgroundColor: skin,
-                    }}
-                  />
-                </View>
-              ))}
-              {/* תחתון בסיס */}
-              <View
-                pointerEvents="none"
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: legH * 0.22,
-                  backgroundColor: underwear,
-                  borderRadius: 6,
-                  opacity: layers.bottom ? 0 : 1,
-                }}
-              />
-              {/* מכנסיים */}
-              {layers.bottom ? (
-                <View
-                  pointerEvents="none"
-                  style={{
-                    position: 'absolute',
-                    top: -4,
-                    left: -6,
-                    right: -6,
-                    height: legH * 0.92,
-                    backgroundColor: garmentColorHex(layers.bottom.color),
-                    borderRadius: 8,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1,
-                  }}
-                >
-                  <Text className="px-1 text-center font-bodyMedium text-[9px] text-white">
-                    {layers.bottom.label} · {layers.bottom.size}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-          ) : (
-            <View style={{ height: legH * 0.35 }} />
-          )}
-
-          {/* נעליים */}
-          {layers.shoes ? (
-            <View className="mt-1 flex-row justify-between" style={{ width: baseW - 4 }}>
-              {[0, 1].map((i) => (
-                <View
-                  key={i}
-                  style={{
-                    width: 28 * wScale,
-                    height: 14,
-                    borderRadius: 6,
-                    backgroundColor: garmentColorHex(layers.shoes!.color),
-                  }}
-                />
-              ))}
-            </View>
-          ) : (
-            <View className="mt-1 flex-row justify-between" style={{ width: baseW - 4 }}>
-              {[0, 1].map((i) => (
-                <View
-                  key={i}
-                  style={{
-                    width: 24 * wScale,
-                    height: 10,
-                    borderRadius: 4,
-                    backgroundColor: skin,
-                    opacity: 0.7,
-                  }}
-                />
-              ))}
-            </View>
-          )}
         </View>
-      </View>
 
-      <Text className="mt-5 text-center font-body text-xs text-stone-dark">
-        {worn.length === 0
-          ? female
-            ? 'בסיס: חזייה ותחתון'
-            : 'בסיס: תחתון בלבד'
-          : 'פריטים על הבובה'}
-      </Text>
+        <Text className="mt-2 px-3 text-center font-body text-xs text-stone-dark">
+          {worn.length === 0
+            ? female
+              ? 'בסיס בלי בגדים חיצוניים — מוכנה להלבשה'
+              : 'בסיס בלי בגדים חיצוניים — מוכן להלבשה'
+            : 'הפריטים שבחרת נשארים על הבובה'}
+        </Text>
+      </View>
 
       {worn.length > 0 ? (
         <View className="mt-3 w-full flex-row flex-wrap justify-center">
@@ -264,15 +123,57 @@ export function DressableFigure({ profile, layers, onRemovePiece }: Props) {
             <Pressable
               key={piece.id}
               onPress={() => onRemovePiece?.(piece)}
-              className="mb-2 ml-2 rounded-full bg-white/10 px-3 py-1.5"
+              className="mb-2 ml-2 rounded-full px-3 py-1.5"
+              style={{ backgroundColor: garmentColorHex(piece.color) }}
             >
-              <Text className="font-bodyMedium text-xs text-stone-light">
+              <Text className="font-bodyMedium text-xs text-white">
                 {piece.label} · {piece.size} ✕
               </Text>
             </Pressable>
           ))}
         </View>
       ) : null}
+    </View>
+  );
+}
+
+function GarmentOverlay({
+  piece,
+  style,
+}: {
+  piece: OutfitPiece;
+  style: {
+    top?: number;
+    bottom?: number;
+    width: number;
+    height: number;
+  };
+}) {
+  const src = layerImageForPieceId(piece.id);
+  return (
+    <View
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        alignSelf: 'center',
+        ...style,
+        borderRadius: 12,
+        overflow: 'hidden',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: src ? 'transparent' : garmentColorHex(piece.color),
+        borderWidth: src ? 0 : 1,
+        borderColor: 'rgba(255,255,255,0.35)',
+      }}
+    >
+      {src ? (
+        <Image source={src} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+      ) : null}
+      <View className="absolute bottom-1 rounded bg-black/65 px-1.5 py-0.5">
+        <Text className="font-bodyMedium text-[9px] text-white">
+          {piece.label} · {piece.size}
+        </Text>
+      </View>
     </View>
   );
 }
