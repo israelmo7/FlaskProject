@@ -26,11 +26,32 @@ const WARDROBE: {
   label: string;
   category: GarmentCategory;
   color: string;
+  subcategory: string;
 }[] = [
-  { label: 'קרגו זית', category: 'Pants', color: 'Olive Green' },
-  { label: 'אוקספורד לבן', category: 'Shirts', color: 'White' },
-  { label: 'ג׳קט ג׳ינס', category: 'Outerwear', color: 'Light Wash' },
-  { label: 'ג׳ינס אינדיגו', category: 'Pants', color: 'Indigo' },
+  {
+    label: 'קרגו זית',
+    category: 'Pants',
+    color: 'Olive Green',
+    subcategory: 'Cargo Pants',
+  },
+  {
+    label: 'אוקספורד לבן',
+    category: 'Shirts',
+    color: 'White',
+    subcategory: 'Oxford Shirt',
+  },
+  {
+    label: 'ג׳קט ג׳ינס',
+    category: 'Outerwear',
+    color: 'Light Wash',
+    subcategory: 'Denim Jacket',
+  },
+  {
+    label: 'ג׳ינס אינדיגו',
+    category: 'Pants',
+    color: 'Indigo',
+    subcategory: 'Slim Fit Jeans',
+  },
 ];
 
 export default function HomeScreen() {
@@ -53,6 +74,7 @@ export default function HomeScreen() {
       ...result,
       category: item.category,
       color: item.color,
+      subcategory: item.subcategory,
       imageUri: undefined,
     });
     setFilters((prev) => ({ ...prev, category: item.category }));
@@ -111,14 +133,14 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1 bg-stone" style={{ paddingTop: insets.top }}>
-      {/* ===== Top bar: hamburger (ימין) + חיפוש (מרכז) ===== */}
-      <View className="flex-row items-center px-4 pb-3 pt-2">
-        {/* ב־RTL הילד הראשון מופיע מימין */}
+      {/* ===== Top bar: המבורגר ימין · חיפוש במרכז · מצלמה שמאל ===== */}
+      <View className="relative mb-1 h-14 justify-center px-4">
         <Pressable
           onPress={() => setMenuOpen(true)}
-          className="h-11 w-11 items-center justify-center rounded-xl bg-stone-light"
+          className="absolute right-4 z-10 h-11 w-11 items-center justify-center rounded-xl bg-stone-light"
           accessibilityRole="button"
           accessibilityLabel={he.menuCategories}
+          style={{ top: 6 }}
         >
           <View className="w-5">
             <View className="mb-1.5 h-0.5 w-full rounded-full bg-ink" />
@@ -127,7 +149,10 @@ export default function HomeScreen() {
           </View>
         </Pressable>
 
-        <View className="mx-3 flex-1 flex-row items-center rounded-xl bg-stone-light px-3 py-2.5">
+        <View
+          className="flex-row items-center rounded-xl bg-stone-light px-3 py-2.5"
+          style={{ marginHorizontal: 52 }}
+        >
           <Ionicons name="search" size={18} color="#5C6675" />
           <TextInput
             value={query}
@@ -144,9 +169,10 @@ export default function HomeScreen() {
         <Pressable
           onPress={() => runPhoto('camera')}
           disabled={isAnalyzing}
-          className="h-11 w-11 items-center justify-center rounded-xl bg-teal"
+          className="absolute left-4 z-10 h-11 w-11 items-center justify-center rounded-xl bg-teal"
           accessibilityRole="button"
           accessibilityLabel={he.openCamera}
+          style={{ top: 6 }}
         >
           <Ionicons name="camera-outline" size={20} color="#FAF7F2" />
         </Pressable>
