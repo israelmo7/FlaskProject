@@ -4,10 +4,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { FilterChips } from '@/components/FilterChips';
 import { SearchOptions } from '@/components/SearchOptions';
-import { RecentSearches } from '@/components/TrendingStyles';
-import { TrendingStyles } from '@/components/TrendingStyles';
+import { RecentSearches, TrendingStyles } from '@/components/TrendingStyles';
 import { BRAND_NAME, BRAND_TAGLINE, DEFAULT_FILTERS } from '@/constants/filters';
 import { useGarmentRecognition } from '@/hooks/useGarmentRecognition';
+import { he } from '@/i18n/he';
 import type { GarmentAnalysis, RecentSearch, SearchFilters, TrendingStyle } from '@/types';
 
 export default function HomeScreen() {
@@ -23,6 +23,7 @@ export default function HomeScreen() {
         payload: JSON.stringify(analysis),
         distanceKm: String(filters.distanceKm),
         gender: filters.gender,
+        preferredSize: filters.preferredSize,
       },
     });
   };
@@ -40,7 +41,7 @@ export default function HomeScreen() {
       });
       goToAnalysis(analysis);
     } catch {
-      Alert.alert('Recognition failed', 'Could not analyze the image. Please try again.');
+      Alert.alert(he.recognitionFailed, he.recognitionFailedHint);
     }
   };
 
@@ -93,9 +94,19 @@ export default function HomeScreen() {
           paddingBottom: 36,
         }}
       >
-        <Text className="font-displayBold text-4xl text-stone-light">{BRAND_NAME}</Text>
-        <Text className="mt-2 max-w-[280px] font-body text-base text-stone-dark">
+        <View className="mb-3 self-start rounded-md bg-white/15 px-2.5 py-1">
+          <Text className="font-bodyMedium text-xs text-stone-light">
+            {he.pilotBadge}
+          </Text>
+        </View>
+        <Text className="text-right font-displayBold text-4xl text-stone-light">
+          {BRAND_NAME}
+        </Text>
+        <Text className="mt-2 max-w-[300px] self-end text-right font-body text-base text-stone-dark">
           {BRAND_TAGLINE}
+        </Text>
+        <Text className="mt-3 max-w-[320px] self-end text-right font-body text-sm text-stone-dark/90">
+          {he.valueProp}
         </Text>
       </LinearGradient>
 
@@ -103,10 +114,11 @@ export default function HomeScreen() {
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Search by style, color, or brand…"
+          placeholder={he.searchPlaceholder}
           placeholderTextColor="#5C6675"
-          className="rounded-xl bg-stone px-4 py-3 font-body text-base text-ink"
+          className="rounded-xl bg-stone px-4 py-3 text-right font-body text-base text-ink"
           returnKeyType="search"
+          textAlign="right"
         />
         <View className="mt-4">
           <SearchOptions

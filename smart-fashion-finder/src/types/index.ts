@@ -38,6 +38,8 @@ export interface Store {
   city: string;
   latitude: number;
   longitude: number;
+  /** בוטיק מקומי — מקבל הדגשה בפיילוט */
+  isBoutique?: boolean;
 }
 
 export interface InventoryItem {
@@ -59,12 +61,14 @@ export interface StoreMatch {
   store: Store;
   item: InventoryItem;
   distanceKm: number;
+  hasPreferredSize: boolean;
 }
 
 export interface SearchFilters {
   category: GarmentCategory | 'All';
   distanceKm: DistanceRadius;
   gender: GenderFilter | 'All';
+  preferredSize: string;
 }
 
 export interface RecentSearch {

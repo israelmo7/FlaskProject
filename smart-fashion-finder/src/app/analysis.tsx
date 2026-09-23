@@ -1,6 +1,7 @@
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { GarmentOverlay } from '@/components/GarmentOverlay';
+import { he } from '@/i18n/he';
 import type { GarmentAnalysis } from '@/types';
 
 export default function AnalysisScreen() {
@@ -8,6 +9,7 @@ export default function AnalysisScreen() {
     payload?: string;
     distanceKm?: string;
     gender?: string;
+    preferredSize?: string;
   }>();
 
   let analysis: GarmentAnalysis | null = null;
@@ -20,15 +22,15 @@ export default function AnalysisScreen() {
   if (!analysis) {
     return (
       <View className="flex-1 items-center justify-center bg-stone px-6">
-        <Text className="font-display text-2xl text-ink">No analysis yet</Text>
+        <Text className="font-display text-2xl text-ink">{he.noAnalysis}</Text>
         <Text className="mt-2 text-center font-body text-ink-muted">
-          Upload a photo or style an avatar to identify a garment.
+          {he.noAnalysisHint}
         </Text>
         <Pressable
           onPress={() => router.back()}
           className="mt-6 rounded-xl bg-teal px-5 py-3"
         >
-          <Text className="font-bodyBold text-stone-light">Go back</Text>
+          <Text className="font-bodyBold text-stone-light">{he.goBack}</Text>
         </Pressable>
       </View>
     );
@@ -46,14 +48,15 @@ export default function AnalysisScreen() {
               payload: JSON.stringify(analysis),
               distanceKm: params.distanceKm ?? '5',
               gender: params.gender ?? analysis.gender,
+              preferredSize: params.preferredSize ?? 'All',
             },
           })
         }
         className="mt-8 items-center rounded-xl bg-coral py-4"
         accessibilityRole="button"
-        accessibilityLabel="Find Near Me"
+        accessibilityLabel={he.findNearMe}
       >
-        <Text className="font-bodyBold text-base text-white">Find Near Me</Text>
+        <Text className="font-bodyBold text-base text-white">{he.findNearMe}</Text>
       </Pressable>
     </ScrollView>
   );

@@ -1,8 +1,8 @@
 {
   "userDefaultLocation": {
-    "latitude": 32.7940,
+    "latitude": 32.794,
     "longitude": 34.9896,
-    "label": "Haifa Center"
+    "label": "מרכז חיפה"
   },
   "stores": [
     {
@@ -10,88 +10,108 @@
       "name": "Zara",
       "brand": "Zara",
       "logoColor": "#1A1A1A",
-      "mall": "Grand Canyon Haifa",
+      "mall": "גרנד קניון חיפה",
       "address": "Simcha Golan 54",
-      "city": "Haifa",
+      "city": "חיפה",
       "latitude": 32.7892,
-      "longitude": 35.0084
+      "longitude": 35.0084,
+      "isBoutique": false
     },
     {
       "id": "store-castro-gc",
       "name": "Castro",
       "brand": "Castro",
       "logoColor": "#C45C26",
-      "mall": "Grand Canyon Haifa",
+      "mall": "גרנד קניון חיפה",
       "address": "Simcha Golan 54",
-      "city": "Haifa",
+      "city": "חיפה",
       "latitude": 32.7895,
-      "longitude": 35.0088
+      "longitude": 35.0088,
+      "isBoutique": false
     },
     {
       "id": "store-hm-lev",
       "name": "H&M",
       "brand": "H&M",
       "logoColor": "#E50010",
-      "mall": "Lev HaMifratz",
+      "mall": "לב המפרץ",
       "address": "HaHistadrut Ave 55",
-      "city": "Haifa",
+      "city": "חיפה",
       "latitude": 32.8091,
-      "longitude": 35.0492
+      "longitude": 35.0492,
+      "isBoutique": false
     },
     {
       "id": "store-fox-city",
       "name": "Fox",
       "brand": "Fox",
       "logoColor": "#0B3D5C",
-      "mall": "City Center Haifa",
+      "mall": "סיטי סנטר חיפה",
       "address": "HaNassi Ave 122",
-      "city": "Haifa",
+      "city": "חיפה",
       "latitude": 32.8156,
-      "longitude": 34.9841
+      "longitude": 34.9841,
+      "isBoutique": false
     },
     {
       "id": "store-golf-gc",
       "name": "Golf & Co",
       "brand": "Golf",
       "logoColor": "#2E5A3C",
-      "mall": "Grand Canyon Haifa",
+      "mall": "גרנד קניון חיפה",
       "address": "Simcha Golan 54",
-      "city": "Haifa",
+      "city": "חיפה",
       "latitude": 32.7888,
-      "longitude": 35.0079
+      "longitude": 35.0079,
+      "isBoutique": false
     },
     {
       "id": "store-terminal-x",
       "name": "Terminal X",
       "brand": "Terminal X",
       "logoColor": "#111827",
-      "mall": "Haifa Port Outlet",
+      "mall": "אאוטלט נמל חיפה",
       "address": "HaNamal St 12",
-      "city": "Haifa",
+      "city": "חיפה",
       "latitude": 32.8198,
-      "longitude": 35.0021
+      "longitude": 35.0021,
+      "isBoutique": false
     },
     {
       "id": "store-local-atelier",
       "name": "Atelier Carmel",
       "brand": "Local Boutique",
       "logoColor": "#6B4F3A",
-      "mall": "Hadar Street Market",
+      "mall": "שוק הדר",
       "address": "Herzl St 28",
-      "city": "Haifa",
+      "city": "חיפה",
       "latitude": 32.8064,
-      "longitude": 34.9947
+      "longitude": 34.9947,
+      "isBoutique": true
     },
     {
       "id": "store-pullbear-ck",
       "name": "Pull&Bear",
       "brand": "Pull&Bear",
       "logoColor": "#3F3F46",
-      "mall": "Check Post Mall",
+      "mall": "קניון הצ׳קפוסט",
       "address": "HaHashmonaim 1",
-      "city": "Haifa",
+      "city": "חיפה",
       "latitude": 32.7914,
-      "longitude": 35.0356
+      "longitude": 35.0356,
+      "isBoutique": false
+    },
+    {
+      "id": "store-studio-neve",
+      "name": "סטודיו נווה",
+      "brand": "Local Boutique",
+      "logoColor": "#8B4557",
+      "mall": "נווה שאנן",
+      "address": "רח׳ טרומפלדור 15",
+      "city": "חיפה",
+      "latitude": 32.7875,
+      "longitude": 35.0142,
+      "isBoutique": true
     }
   ],
   "inventory": [
@@ -104,7 +124,11 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Unisex",
-      "sizes": ["S", "M", "L"],
+      "sizes": [
+        "S",
+        "M",
+        "L"
+      ],
       "price": 249,
       "stockStatus": "in_stock",
       "stockCount": 14
@@ -118,7 +142,11 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Men",
-      "sizes": ["30", "32", "34"],
+      "sizes": [
+        "30",
+        "32",
+        "34"
+      ],
       "price": 279,
       "stockStatus": "low_stock",
       "stockCount": 3
@@ -132,7 +160,11 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Women",
-      "sizes": ["XS", "S", "M"],
+      "sizes": [
+        "XS",
+        "S",
+        "M"
+      ],
       "price": 179,
       "stockStatus": "in_stock",
       "stockCount": 9
@@ -146,7 +178,10 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Unisex",
-      "sizes": ["S", "M"],
+      "sizes": [
+        "S",
+        "M"
+      ],
       "price": 199,
       "stockStatus": "out_of_stock",
       "stockCount": 0
@@ -160,7 +195,12 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Women",
-      "sizes": ["S", "M", "L", "XL"],
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
       "price": 229,
       "stockStatus": "in_stock",
       "stockCount": 7
@@ -174,7 +214,12 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Men",
-      "sizes": ["31", "32", "33", "34"],
+      "sizes": [
+        "31",
+        "32",
+        "33",
+        "34"
+      ],
       "price": 319,
       "stockStatus": "low_stock",
       "stockCount": 2
@@ -188,7 +233,10 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Unisex",
-      "sizes": ["M", "L"],
+      "sizes": [
+        "M",
+        "L"
+      ],
       "price": 389,
       "stockStatus": "in_stock",
       "stockCount": 4
@@ -202,7 +250,11 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Men",
-      "sizes": ["S", "M", "L"],
+      "sizes": [
+        "S",
+        "M",
+        "L"
+      ],
       "price": 169,
       "stockStatus": "in_stock",
       "stockCount": 11
@@ -216,7 +268,12 @@
       "color": "Indigo",
       "pattern": "Solid",
       "gender": "Men",
-      "sizes": ["30", "32", "34", "36"],
+      "sizes": [
+        "30",
+        "32",
+        "34",
+        "36"
+      ],
       "price": 199,
       "stockStatus": "in_stock",
       "stockCount": 18
@@ -230,7 +287,12 @@
       "color": "Indigo",
       "pattern": "Solid",
       "gender": "Women",
-      "sizes": ["25", "26", "27", "28"],
+      "sizes": [
+        "25",
+        "26",
+        "27",
+        "28"
+      ],
       "price": 259,
       "stockStatus": "low_stock",
       "stockCount": 3
@@ -244,7 +306,12 @@
       "color": "White",
       "pattern": "Solid",
       "gender": "Unisex",
-      "sizes": ["S", "M", "L", "XL"],
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
       "price": 129,
       "stockStatus": "in_stock",
       "stockCount": 22
@@ -258,7 +325,10 @@
       "color": "Navy Stripe",
       "pattern": "Striped",
       "gender": "Men",
-      "sizes": ["M", "L"],
+      "sizes": [
+        "M",
+        "L"
+      ],
       "price": 149,
       "stockStatus": "in_stock",
       "stockCount": 8
@@ -272,7 +342,11 @@
       "color": "Cream",
       "pattern": "Solid",
       "gender": "Women",
-      "sizes": ["XS", "S", "M"],
+      "sizes": [
+        "XS",
+        "S",
+        "M"
+      ],
       "price": 189,
       "stockStatus": "low_stock",
       "stockCount": 2
@@ -286,7 +360,11 @@
       "color": "Light Wash",
       "pattern": "Solid",
       "gender": "Unisex",
-      "sizes": ["S", "M", "L"],
+      "sizes": [
+        "S",
+        "M",
+        "L"
+      ],
       "price": 299,
       "stockStatus": "in_stock",
       "stockCount": 6
@@ -300,7 +378,11 @@
       "color": "Charcoal",
       "pattern": "Solid",
       "gender": "Men",
-      "sizes": ["M", "L", "XL"],
+      "sizes": [
+        "M",
+        "L",
+        "XL"
+      ],
       "price": 549,
       "stockStatus": "in_stock",
       "stockCount": 5
@@ -314,7 +396,10 @@
       "color": "Camel",
       "pattern": "Solid",
       "gender": "Women",
-      "sizes": ["S", "M"],
+      "sizes": [
+        "S",
+        "M"
+      ],
       "price": 459,
       "stockStatus": "low_stock",
       "stockCount": 1
@@ -328,7 +413,11 @@
       "color": "Terracotta",
       "pattern": "Floral",
       "gender": "Women",
-      "sizes": ["S", "M", "L"],
+      "sizes": [
+        "S",
+        "M",
+        "L"
+      ],
       "price": 420,
       "stockStatus": "in_stock",
       "stockCount": 4
@@ -342,30 +431,52 @@
       "color": "Black",
       "pattern": "Solid",
       "gender": "Unisex",
-      "sizes": ["40", "41", "42", "43"],
+      "sizes": [
+        "40",
+        "41",
+        "42",
+        "43"
+      ],
       "price": 219,
       "stockStatus": "in_stock",
       "stockCount": 12
+    },
+    {
+      "id": "inv-019",
+      "storeId": "store-studio-neve",
+      "name": "קרגו זית בעבודת יד",
+      "category": "Pants",
+      "subcategory": "Cargo Pants",
+      "color": "Olive Green",
+      "pattern": "Solid",
+      "gender": "Unisex",
+      "sizes": [
+        "S",
+        "M"
+      ],
+      "price": 349,
+      "stockStatus": "in_stock",
+      "stockCount": 3
     }
   ],
   "recentSearches": [
     {
       "id": "rs-1",
-      "label": "Olive cargo pants",
+      "label": "מכנסי קרגו זית",
       "category": "Pants",
       "color": "Olive Green",
       "timestamp": "2026-09-22T08:30:00Z"
     },
     {
       "id": "rs-2",
-      "label": "White oxford shirt",
+      "label": "חולצת אוקספורד לבנה",
       "category": "Shirts",
       "color": "White",
       "timestamp": "2026-09-21T16:10:00Z"
     },
     {
       "id": "rs-3",
-      "label": "Denim jacket",
+      "label": "ג׳קט ג׳ינס",
       "category": "Outerwear",
       "color": "Light Wash",
       "timestamp": "2026-09-20T11:45:00Z"
@@ -374,31 +485,31 @@
   "trendingStyles": [
     {
       "id": "tr-1",
-      "title": "Utility Olive",
+      "title": "זית יוטיליטי",
       "category": "Pants",
       "color": "Olive Green",
-      "tag": "Trending near you"
+      "tag": "טרנד לידכם"
     },
     {
       "id": "tr-2",
-      "title": "Coastal Linen",
+      "title": "פשתן חופי",
       "category": "Shirts",
       "color": "Navy Stripe",
-      "tag": "Week's pick"
+      "tag": "בחירת השבוע"
     },
     {
       "id": "tr-3",
-      "title": "Soft Camel Layer",
+      "title": "שכבת קאמל רכה",
       "category": "Outerwear",
       "color": "Camel",
-      "tag": "Fall edit"
+      "tag": "קולקציית סתיו"
     },
     {
       "id": "tr-4",
-      "title": "Indigo Slim",
+      "title": "אינדיגו צמוד",
       "category": "Pants",
       "color": "Indigo",
-      "tag": "Most searched"
+      "tag": "הכי מחפשים"
     }
   ]
 }

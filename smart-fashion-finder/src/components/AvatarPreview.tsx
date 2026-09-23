@@ -1,11 +1,12 @@
 import { Pressable, Text, View } from 'react-native';
+import { bodyLabel, he } from '@/i18n/he';
 import type { BodyType, GarmentAnalysis } from '@/types';
 
-const BODY_TYPES: { id: BodyType; label: string; width: number }[] = [
-  { id: 'slim', label: 'Slim', width: 56 },
-  { id: 'regular', label: 'Regular', width: 68 },
-  { id: 'athletic', label: 'Athletic', width: 74 },
-  { id: 'plus', label: 'Plus', width: 88 },
+const BODY_TYPES: { id: BodyType; width: number }[] = [
+  { id: 'slim', width: 56 },
+  { id: 'regular', width: 68 },
+  { id: 'athletic', width: 74 },
+  { id: 'plus', width: 88 },
 ];
 
 type Props = {
@@ -20,17 +21,17 @@ export function AvatarPreview({ bodyType, onBodyTypeChange, garment }: Props) {
 
   return (
     <View>
-      <Text className="mb-3 font-bodyMedium text-xs uppercase tracking-widest text-ink-muted">
-        Body type
+      <Text className="mb-3 text-right font-bodyMedium text-xs text-ink-muted">
+        {he.bodyType}
       </Text>
-      <View className="mb-6 flex-row flex-wrap">
+      <View className="mb-6 flex-row flex-wrap justify-end">
         {BODY_TYPES.map((type) => {
           const active = type.id === bodyType;
           return (
             <Pressable
               key={type.id}
               onPress={() => onBodyTypeChange(type.id)}
-              className={`mr-2 mb-2 rounded-md px-3 py-2 ${
+              className={`mb-2 ml-2 rounded-md px-3 py-2 ${
                 active ? 'bg-teal' : 'bg-stone-dark'
               }`}
             >
@@ -39,7 +40,7 @@ export function AvatarPreview({ bodyType, onBodyTypeChange, garment }: Props) {
                   active ? 'text-stone-light' : 'text-ink-soft'
                 }`}
               >
-                {type.label}
+                {bodyLabel[type.id]}
               </Text>
             </Pressable>
           );
@@ -48,21 +49,24 @@ export function AvatarPreview({ bodyType, onBodyTypeChange, garment }: Props) {
 
       <View className="items-center rounded-2xl bg-ink px-6 py-10">
         <View className="items-center">
-          {/* Head */}
           <View className="mb-2 h-14 w-14 rounded-full bg-stone-dark" />
-          {/* Torso */}
           <View
             className="mb-1 rounded-t-2xl bg-stone"
             style={{ width: selected.width, height: 90 }}
           />
-          {/* Garment overlay area (pants / lower or shirt band) */}
           <View
             className="items-center justify-center rounded-b-xl"
             style={{
               width: selected.width + (garment?.category === 'Outerwear' ? 12 : 0),
-              height: garment?.category === 'Shirts' || garment?.category === 'Outerwear' ? 70 : 110,
+              height:
+                garment?.category === 'Shirts' || garment?.category === 'Outerwear'
+                  ? 70
+                  : 110,
               backgroundColor: garment ? garmentColor : '#2A313C',
-              marginTop: garment?.category === 'Shirts' || garment?.category === 'Outerwear' ? -70 : 0,
+              marginTop:
+                garment?.category === 'Shirts' || garment?.category === 'Outerwear'
+                  ? -70
+                  : 0,
             }}
           >
             {garment ? (
@@ -70,11 +74,12 @@ export function AvatarPreview({ bodyType, onBodyTypeChange, garment }: Props) {
                 {garment.subcategory}
               </Text>
             ) : (
-              <Text className="font-body text-xs text-ink-muted">No garment</Text>
+              <Text className="font-body text-xs text-ink-muted">{he.selectGarment}</Text>
             )}
           </View>
-          {/* Legs base when shirt/outerwear */}
-          {(garment?.category === 'Shirts' || garment?.category === 'Outerwear' || !garment) && (
+          {(garment?.category === 'Shirts' ||
+            garment?.category === 'Outerwear' ||
+            !garment) && (
             <View
               className="mt-1 flex-row justify-between"
               style={{ width: selected.width - 8 }}
@@ -85,11 +90,11 @@ export function AvatarPreview({ bodyType, onBodyTypeChange, garment }: Props) {
           )}
         </View>
         <Text className="mt-6 font-display text-xl text-stone-light">
-          {garment ? 'Try-on preview' : 'Select a garment to preview'}
+          {garment ? he.tryOnPreview : he.selectGarment}
         </Text>
         {garment && (
           <Text className="mt-1 text-center font-body text-sm text-stone-dark">
-            {garment.color} {garment.subcategory} on {selected.label.toLowerCase()} frame
+            {garment.color} · {bodyLabel[bodyType]}
           </Text>
         )}
       </View>

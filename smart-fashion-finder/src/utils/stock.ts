@@ -1,13 +1,14 @@
 import type { StockStatus } from '@/types';
+import { he } from '@/i18n/he';
 
 export function stockLabel(status: StockStatus): string {
   switch (status) {
     case 'in_stock':
-      return 'In Stock';
+      return he.inStock;
     case 'low_stock':
-      return 'Low Stock';
+      return he.lowStock;
     case 'out_of_stock':
-      return 'Out of Stock';
+      return he.outOfStock;
   }
 }
 
