@@ -26,7 +26,7 @@ export default function TabsLayout() {
           fontFamily: 'DMSans_500Medium',
           fontSize: 11,
         },
-        sceneStyle: { backgroundColor: '#F3EEE6' },
+        sceneStyle: { backgroundColor: '#FFFFFF' },
       }}
     >
       <Tabs.Screen
@@ -35,7 +35,7 @@ export default function TabsLayout() {
           title: he.tabs.discover,
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search" size={size} color={color} />
+            <Ionicons name="home-outline" size={size} color={color} />
           ),
         }}
       />

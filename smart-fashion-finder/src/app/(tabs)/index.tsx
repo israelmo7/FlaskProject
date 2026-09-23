@@ -1,259 +1,136 @@
 import { useState } from 'react';
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AvatarPreview } from '@/components/AvatarPreview';
-import { CategoryDrawer } from '@/components/CategoryDrawer';
+import {
+  GenderPills,
+  ProductGrid,
+  StyleBanner,
+} from '@/components/DiscoverySection';
+import { HeroAvatarSection } from '@/components/HeroAvatarSection';
+import { SiteHeader } from '@/components/SiteHeader';
 import { DEFAULT_FILTERS } from '@/constants/filters';
+import type { ProductCard, ShopGender } from '@/data/catalog';
 import { useGarmentRecognition } from '@/hooks/useGarmentRecognition';
 import { he } from '@/i18n/he';
-import type {
-  BodyType,
-  GarmentAnalysis,
-  GarmentCategory,
-  SearchFilters,
-} from '@/types';
-
-const WARDROBE: {
-  label: string;
-  category: GarmentCategory;
-  color: string;
-  subcategory: string;
-}[] = [
-  {
-    label: 'קרגו זית',
-    category: 'Pants',
-    color: 'Olive Green',
-    subcategory: 'Cargo Pants',
-  },
-  {
-    label: 'אוקספורד לבן',
-    category: 'Shirts',
-    color: 'White',
-    subcategory: 'Oxford Shirt',
-  },
-  {
-    label: 'ג׳קט ג׳ינס',
-    category: 'Outerwear',
-    color: 'Light Wash',
-    subcategory: 'Denim Jacket',
-  },
-  {
-    label: 'ג׳ינס אינדיגו',
-    category: 'Pants',
-    color: 'Indigo',
-    subcategory: 'Slim Fit Jeans',
-  },
-];
+import type { GarmentAnalysis, SearchFilters } from '@/types';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [bodyType, setBodyType] = useState<BodyType>('regular');
-  const [garment, setGarment] = useState<GarmentAnalysis | null>(null);
-  const [filters, setFilters] = useState<SearchFilters>(DEFAULT_FILTERS);
-  const { isAnalyzing, analyzeImage, pickFromLibrary, snapWithCamera } =
-    useGarmentRecognition();
+  const [shopGender, setShopGender] = useState<ShopGender>('women');
+  const [filters] = useState<SearchFilters>(DEFAULT_FILTERS);
+  const { analyzeImage, isAnalyzing } = useGarmentRecognition();
 
-  const dressWith = async (item: (typeof WARDROBE)[number]) => {
+  const buildPantsAnalysis = async (
+    color = 'Blue',
+    subcategory = 'Slim Fit Jeans',
+  ): Promise<GarmentAnalysis> => {
     const result = await analyzeImage('', 'avatar', {
-      category: item.category,
-      color: item.color,
-      gender: filters.gender === 'All' ? 'Unisex' : filters.gender,
+      category: 'Pants',
+      color,
+      gender: shopGender === 'men' ? 'Men' : 'Women',
     });
-    setGarment({
+    return {
       ...result,
-      category: item.category,
-      color: item.color,
-      subcategory: item.subcategory,
+      category: 'Pants',
+      color,
+      subcategory,
+      gender: shopGender === 'men' ? 'Men' : 'Women',
       imageUri: undefined,
-    });
-    setFilters((prev) => ({ ...prev, category: item.category }));
+    };
   };
 
-  const findNearMe = () => {
-    if (!garment) {
-      Alert.alert(he.chooseGarmentAlert);
-      return;
-    }
+  const goToStores = async (analysis?: GarmentAnalysis) => {
+    const payload = analysis ?? (await buildPantsAnalysis());
     router.push({
       pathname: '/stores',
       params: {
-        payload: JSON.stringify(garment),
+        payload: JSON.stringify(payload),
         distanceKm: String(filters.distanceKm),
-        gender: filters.gender,
+        gender: payload.gender,
         preferredSize: filters.preferredSize,
       },
     });
   };
 
-  const runPhoto = async (mode: 'upload' | 'camera') => {
-    try {
-      const uri =
-        mode === 'upload' ? await pickFromLibrary() : await snapWithCamera();
-      if (!uri) return;
-      const analysis = await analyzeImage(uri, mode, {
-        category: filters.category === 'All' ? 'Pants' : filters.category,
-        gender: filters.gender === 'All' ? 'Unisex' : filters.gender,
-      });
-      setGarment(analysis);
-      router.push({
-        pathname: '/analysis',
-        params: {
-          payload: JSON.stringify(analysis),
-          distanceKm: String(filters.distanceKm),
-          gender: filters.gender,
-          preferredSize: filters.preferredSize,
-        },
-      });
-    } catch {
-      Alert.alert(he.recognitionFailed, he.recognitionFailedHint);
-    }
+  const onProductSelect = async (product: ProductCard) => {
+    const result = await analyzeImage('', 'avatar', {
+      category: product.category === 'Dresses' ? 'Outerwear' : product.category,
+      color: product.color,
+      gender: shopGender === 'men' ? 'Men' : 'Women',
+    });
+    const analysis: GarmentAnalysis = {
+      ...result,
+      category: product.category === 'Dresses' ? 'Outerwear' : product.category,
+      color: product.color,
+      subcategory: product.subcategory,
+      gender: shopGender === 'men' ? 'Men' : 'Women',
+      imageUri: undefined,
+      estimatedPriceMin: product.price ? Math.round(product.price * 0.85) : result.estimatedPriceMin,
+      estimatedPriceMax: product.price ?? result.estimatedPriceMax,
+    };
+    router.push({
+      pathname: '/analysis',
+      params: {
+        payload: JSON.stringify(analysis),
+        distanceKm: String(filters.distanceKm),
+        gender: analysis.gender,
+        preferredSize: filters.preferredSize,
+      },
+    });
   };
 
   const onSearchSubmit = async () => {
     if (!query.trim()) return;
-    const hintCategory =
-      filters.category === 'All' ? 'Pants' : filters.category;
-    const analysis = await analyzeImage('', 'upload', {
-      category: hintCategory,
-      color: query.trim(),
-    });
-    setGarment({ ...analysis, color: query.trim(), imageUri: undefined });
+    await goToStores(await buildPantsAnalysis(query.trim(), 'Search Match'));
   };
 
   return (
-    <View className="flex-1 bg-stone" style={{ paddingTop: insets.top }}>
-      {/* ===== Top bar: המבורגר ימין · חיפוש במרכז · מצלמה שמאל ===== */}
-      <View className="relative mb-1 h-14 justify-center px-4">
-        <Pressable
-          onPress={() => setMenuOpen(true)}
-          className="absolute right-4 z-10 h-11 w-11 items-center justify-center rounded-xl bg-stone-light"
-          accessibilityRole="button"
-          accessibilityLabel={he.menuCategories}
-          style={{ top: 6 }}
-        >
-          <View className="w-5">
-            <View className="mb-1.5 h-0.5 w-full rounded-full bg-ink" />
-            <View className="mb-1.5 h-0.5 w-full rounded-full bg-ink" />
-            <View className="h-0.5 w-full rounded-full bg-ink" />
-          </View>
-        </Pressable>
-
-        <View
-          className="flex-row items-center rounded-xl bg-stone-light px-3 py-2.5"
-          style={{ marginHorizontal: 52 }}
-        >
-          <Ionicons name="search" size={18} color="#5C6675" />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            onSubmitEditing={onSearchSubmit}
-            placeholder={he.searchPlaceholder}
-            placeholderTextColor="#5C6675"
-            className="mr-2 flex-1 text-right font-body text-base text-ink"
-            returnKeyType="search"
-            textAlign="right"
-          />
-        </View>
-
-        <Pressable
-          onPress={() => runPhoto('camera')}
-          disabled={isAnalyzing}
-          className="absolute left-4 z-10 h-11 w-11 items-center justify-center rounded-xl bg-teal"
-          accessibilityRole="button"
-          accessibilityLabel={he.openCamera}
-          style={{ top: 6 }}
-        >
-          <Ionicons name="camera-outline" size={20} color="#FAF7F2" />
-        </Pressable>
-      </View>
+    <View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
+      <SiteHeader
+        query={query}
+        onQueryChange={setQuery}
+        onSearchSubmit={onSearchSubmit}
+        onCart={() => Alert.alert(he.cart, 'עגלת הקניות תתווסף בגרסה הבאה.')}
+        onProfile={() => Alert.alert(he.profile, 'פרופיל משתמש יתווסף בקרוב.')}
+        onArea={() => Alert.alert(he.area, he.pilotBadge)}
+        onNav={(key) => {
+          if (key === 'collections') {
+            // גלילה ויזואלית — כבר במסך
+          }
+        }}
+      />
 
       <ScrollView
         className="flex-1"
-        contentContainerClassName="px-4 pb-10"
-        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        {/* ===== אווטאר להלבשה — מרכז המסך ===== */}
-        <AvatarPreview
-          hero
-          bodyType={bodyType}
-          onBodyTypeChange={setBodyType}
-          garment={garment}
+        <HeroAvatarSection
+          onFindNearMe={() => goToStores()}
+          onAvatarPress={() => router.push('/avatar')}
         />
 
-        <Text className="mb-3 mt-5 text-right font-bodyMedium text-xs text-ink-muted">
-          {he.overlayGarment}
-        </Text>
-        <View className="flex-row flex-wrap justify-end">
-          {WARDROBE.filter(
-            (item) =>
-              filters.category === 'All' || item.category === filters.category,
-          ).map((item) => {
-            const active =
-              garment?.category === item.category &&
-              garment?.color === item.color;
-            return (
-              <Pressable
-                key={item.label}
-                disabled={isAnalyzing}
-                onPress={() => dressWith(item)}
-                className={`mb-2 ml-2 rounded-xl px-3.5 py-2.5 ${
-                  active ? 'bg-coral' : 'bg-ink'
-                }`}
-              >
-                <Text className="font-bodyMedium text-sm text-stone-light">
-                  {item.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <GenderPills selected={shopGender} onSelect={setShopGender} />
 
-        <View className="mt-3 flex-row justify-end gap-2">
+        <StyleBanner />
+
+        <View className="mt-2 flex-row items-center justify-between px-4">
           <Pressable
-            onPress={() => runPhoto('upload')}
             disabled={isAnalyzing}
-            className="flex-row items-center rounded-xl bg-stone-dark px-3 py-2.5"
+            onPress={() => goToStores()}
+            className="rounded-full bg-ink px-4 py-2"
           >
-            <Text className="ml-1.5 font-bodyMedium text-sm text-ink">
-              {he.openGallery}
-            </Text>
-            <Ionicons name="image-outline" size={16} color="#12161C" />
+            <Text className="font-bodyBold text-sm text-white">{he.findNearMe}</Text>
           </Pressable>
+          <Text className="font-bodyMedium text-sm text-ink-muted">
+            {he.discoverStyle}
+          </Text>
         </View>
 
-        <Pressable
-          onPress={findNearMe}
-          className="mt-6 items-center rounded-xl bg-coral py-4"
-          accessibilityRole="button"
-        >
-          <Text className="font-bodyBold text-base text-white">{he.findNearMe}</Text>
-        </Pressable>
-
-        <Text className="mt-4 text-center font-body text-xs text-ink-muted">
-          {he.tagline}
-        </Text>
+        <ProductGrid onSelect={onProductSelect} />
       </ScrollView>
-
-      <CategoryDrawer
-        visible={menuOpen}
-        selected={filters.category}
-        onSelect={(category) =>
-          setFilters((prev) => ({ ...prev, category }))
-        }
-        onClose={() => setMenuOpen(false)}
-      />
     </View>
   );
 }

@@ -1,4 +1,4 @@
-/** עברית לפיילוט StyleNear בחיפה */
+/** עברית — StyleNear לפי עיצוב המאקאפ */
 export const he = {
   brand: 'StyleNear',
   tagline: 'מצאת את הבגד? לך לחנות הקרובה.',
@@ -6,13 +6,39 @@ export const he = {
   valueProp:
     'במקום להזמין אונליין — בודקים מידה וצבע בחנויות לידכם, כולל בוטיקים מקומיים.',
 
+  nav: {
+    home: 'Home',
+    collections: 'Collections',
+    offers: 'Offers',
+    about: 'About',
+  },
+
+  searchPlaceholder: 'חפש בגדים',
+  cart: 'עגלה',
+  profile: 'פרופיל',
+  area: 'אזור',
+
+  heroTitle: 'קולקציות חדשות לנשים',
+  heroCaption: 'מכנסיים מחויטים',
+  swatchLabel: "ג'ינס כחול",
+  dressHint: 'לחצו על פריט כדי להלביש את הדמות',
+
+  genderWomen: 'נשים',
+  genderMen: 'גברים',
+  genderAccessories: 'אביזרים',
+  sale: 'SALE',
+
+  discoverStyle: 'גלו את הסגנון שלכם',
+  findNearMe: 'מצא לידך',
+  newCollections: 'קולקציות חדשות לנשים',
+  closeUp: 'close-up',
+
   tabs: {
     discover: 'גילוי',
     avatar: 'אווטאר',
     history: 'היסטוריה',
   },
 
-  searchPlaceholder: 'חפשו בגד, צבע או מותג…',
   upload: 'העלאת תמונה',
   uploadSub: 'בחרו לוק מהגלריה',
   camera: 'צילום מהיר',
@@ -22,7 +48,6 @@ export const he = {
   analyzing: 'מזהים את הבגד…',
   menuCategories: 'קטגוריות',
   closeMenu: 'סגור',
-  dressHint: 'לחצו על פריט כדי להלביש את הדמות',
   openCamera: 'מצלמה',
   openGallery: 'גלריה',
   homeBrandHint: 'StyleNear',
@@ -50,7 +75,6 @@ export const he = {
   category: 'קטגוריה',
   colorPattern: 'צבע ודוגמה',
   estimatedPrice: 'טווח מחיר משוער',
-  findNearMe: 'מצא לידך',
   confidence: 'התאמה',
   noAnalysis: 'עדיין אין ניתוח',
   noAnalysisHint: 'העלו תמונה או הלבישו אווטאר כדי לזהות בגד.',
