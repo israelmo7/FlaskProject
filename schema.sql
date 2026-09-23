@@ -42,4 +42,4 @@ INSERT IGNORE INTO keys_t (id, seq, sessions, doors) VALUES
 
 INSERT IGNORE INTO rooms (id, paths, doors, chat, rtype) VALUES
     (1, '.lobby.', '999.1.2.', '.', 'chat'),
-    (999, '.admin.', '999.', '.', 'admin');
+    (999, '.adminPanel.', '999.', '.', 'admin');

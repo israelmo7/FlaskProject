@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request, session
 
-from srcs.rooms.routes import has_admin_key, has_right_key, path_room_to_id
+from srcs.rooms.routes import has_right_key, path_room_to_id
 
 api_bp = Blueprint(
     'api_bp', __name__, template_folder='templates', static_folder='static'
@@ -61,28 +61,6 @@ def api_send_message(room_path):
 
     rooms_c.set_chat_messages(room_id, message)
     return jsonify(messages=_chat_lines(room_id)), 201
-
-
-@api_bp.route('/admin/rooms', methods=['GET'])
-def api_admin_rooms():
-    """List rooms for AdminPanel (requires builtin admin key)."""
-    gid = _require_guest()
-    if not gid:
-        return jsonify(error='unauthorized'), 401
-    if not has_admin_key(gid):
-        return jsonify(error='forbidden'), 403
-    return jsonify(rooms=rooms_c.list_rooms())
-
-
-@api_bp.route('/admin/guests', methods=['GET'])
-def api_admin_guests():
-    """List guests for AdminPanel (requires builtin admin key)."""
-    gid = _require_guest()
-    if not gid:
-        return jsonify(error='unauthorized'), 401
-    if not has_admin_key(gid):
-        return jsonify(error='forbidden'), 403
-    return jsonify(guests=guests_c.list_guests())
 
 
 @api_bp.route('/', methods=['GET'])

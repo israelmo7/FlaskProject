@@ -20,8 +20,8 @@ export default function AdminPanel() {
     async function load() {
       try {
         const [roomsData, guestsData] = await Promise.all([
-          fetchJson('/api/admin/rooms'),
-          fetchJson('/api/admin/guests'),
+          fetchJson('/admin/api/rooms'),
+          fetchJson('/admin/api/guests'),
         ])
         if (cancelled) return
         setRooms(roomsData.rooms || [])

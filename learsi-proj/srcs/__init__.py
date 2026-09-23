@@ -5,7 +5,7 @@ from pathlib import Path
 
 from flask import Flask, jsonify, redirect, render_template, request
 
-from srcs.admin.routes import admin_bp
+from srcs.admin.routes import admin_bp, init_db_adm
 from srcs.core.routes import core_bp, init_db_c
 from srcs.db import get_package
 from srcs.rooms.routes import init_db_r, rooms_bp
@@ -68,6 +68,7 @@ def create_app(test_config=None):
         init_db_r(rooms_c, keys_c, guests_c)
         init_db_c(rooms_c, keys_c, guests_c)
         init_db_a(rooms_c, keys_c, guests_c)
+        init_db_adm(rooms_c, keys_c, guests_c)
         
         app.extensions['mysql'] = mysql
         app.extensions['rooms_c'] = rooms_c
@@ -111,7 +112,7 @@ def create_app(test_config=None):
                             (value,),
                         )
                         mysql_ext.connection.commit()
-                    ret = redirect('/room/admin')
+                    ret = redirect('/room/adminPanel')
 
         return ret
 

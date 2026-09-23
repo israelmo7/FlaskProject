@@ -31,7 +31,7 @@ def test_gindex_renders(client):
 def test_admin_route_redirects_to_admin_room(client):
     response = client.get('/admin/')
     assert response.status_code in (301, 302)
-    assert '/room/admin' in response.headers.get('Location', '')
+    assert '/room/adminPanel' in response.headers.get('Location', '')
 
 
 @pytest.mark.parametrize(

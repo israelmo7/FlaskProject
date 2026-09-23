@@ -96,7 +96,7 @@ class Rooms_c(Database):
             parts = [p for p in str(paths).split('.') if p]
             path = parts[0] if parts else str(rid)
             rtype = row[2] if len(row) > 2 and row[2] else (
-                'admin' if path == 'admin' else 'chat'
+                'admin' if path in ('adminPanel', 'admin') else 'chat'
             )
             out.append({'id': rid, 'path': path, 'rtype': rtype})
         return out
