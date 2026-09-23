@@ -33,6 +33,7 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: he.tabs.discover,
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="search" size={size} color={color} />
           ),

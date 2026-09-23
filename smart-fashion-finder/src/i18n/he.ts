@@ -12,7 +12,7 @@ export const he = {
     history: 'היסטוריה',
   },
 
-  searchPlaceholder: 'חפשו לפי סגנון, צבע או מותג…',
+  searchPlaceholder: 'חפשו בגד, צבע או מותג…',
   upload: 'העלאת תמונה',
   uploadSub: 'בחרו לוק מהגלריה',
   camera: 'צילום מהיר',
@@ -20,6 +20,12 @@ export const he = {
   avatarCta: 'הלבשת אווטאר AI',
   avatarSub: 'בחרו מבנה גוף והתאימו את הבגד',
   analyzing: 'מזהים את הבגד…',
+  menuCategories: 'קטגוריות',
+  closeMenu: 'סגור',
+  dressHint: 'לחצו על פריט כדי להלביש את הדמות',
+  openCamera: 'מצלמה',
+  openGallery: 'גלריה',
+  homeBrandHint: 'StyleNear',
 
   filters: {
     category: 'קטגוריה',
