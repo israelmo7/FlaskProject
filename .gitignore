@@ -1,4 +1,7 @@
 *.json
+!smart-fashion-finder/**/*.json
+node_modules/
+.expo/
 .env/
 /instance/
 *.pyc

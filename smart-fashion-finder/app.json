@@ -1,0 +1,70 @@
+{
+  "expo": {
+    "name": "StyleNear",
+    "slug": "smart-fashion-finder",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "stylenear",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#12161C"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "StyleNear needs camera access to identify garments.",
+        "NSPhotoLibraryUsageDescription": "StyleNear needs photo access to identify garments from your library.",
+        "NSLocationWhenInUseUsageDescription": "StyleNear uses your location to find nearby stores with matching stock."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#12161C",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow StyleNear to access your photos to identify garments."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow StyleNear to use your camera to snap garments."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow StyleNear to use your location to find nearby stock."
+        }
+      ],
+      "expo-splash-screen"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
