@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { he } from '@/i18n/he';
 
 export default function TabsLayout() {
   return (
@@ -11,6 +12,7 @@ export default function TabsLayout() {
           fontFamily: 'Fraunces_600SemiBold',
           fontSize: 20,
         },
+        headerTitleAlign: 'center',
         tabBarActiveTintColor: '#1F6B63',
         tabBarInactiveTintColor: '#5C6675',
         tabBarStyle: {
@@ -24,22 +26,23 @@ export default function TabsLayout() {
           fontFamily: 'DMSans_500Medium',
           fontSize: 11,
         },
-        sceneStyle: { backgroundColor: '#F3EEE6' },
+        sceneStyle: { backgroundColor: '#FFFFFF' },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Discover',
+          title: he.tabs.discover,
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search" size={size} color={color} />
+            <Ionicons name="home-outline" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="avatar"
         options={{
-          title: 'Avatar',
+          title: he.tabs.avatar,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="body-outline" size={size} color={color} />
           ),
@@ -48,7 +51,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="history"
         options={{
-          title: 'History',
+          title: he.tabs.history,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="time-outline" size={size} color={color} />
           ),
