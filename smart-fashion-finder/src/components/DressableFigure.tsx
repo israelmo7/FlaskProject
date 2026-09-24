@@ -113,7 +113,7 @@ export function DressableFigure({
           ) : null}
         </View>
 
-        <Text className="mt-2 px-3 text-center font-body text-xs text-stone-dark">
+        <Text className="mt-2 px-1 text-left font-body text-xs text-ink-muted">
           {worn.length === 0
             ? female
               ? 'בסיס בלי בגדים חיצוניים — מוכנה להלבשה'
@@ -123,12 +123,12 @@ export function DressableFigure({
       </View>
 
       {worn.length > 0 ? (
-        <View className="mt-3 w-full flex-row flex-wrap justify-center">
+        <View className="mt-3 w-full flex-row flex-wrap justify-start">
           {worn.map((piece) => (
             <Pressable
               key={piece.id}
               onPress={() => onRemovePiece?.(piece)}
-              className="mb-2 ml-2 rounded-full px-3 py-1.5"
+              className="mb-2 mr-2 rounded-full px-3 py-1.5"
               style={{ backgroundColor: garmentColorHex(piece.color) }}
             >
               <Text className="font-bodyMedium text-xs text-white">

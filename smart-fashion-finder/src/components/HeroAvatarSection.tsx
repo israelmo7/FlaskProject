@@ -54,8 +54,11 @@ export function HeroAvatarSection({
         })}
       </View>
 
-      {/* בובה בצד שמאל — בלי רקע חנות מאחוריה */}
-      <View className="mt-2 flex-row items-end justify-start">
+      {/* בובה בצד שמאל הפיזי של המסך */}
+      <View
+        className="mt-2 flex-row items-end"
+        style={{ direction: 'ltr', justifyContent: 'flex-start' }}
+      >
         <Pressable onPress={onEditAvatar} className="items-start">
           <DressableFigure
             compact={compact}
