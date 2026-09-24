@@ -123,7 +123,7 @@ export default function CartScreen() {
                     {he.sizeLabel}: {piece.size || preferredSize}
                   </Text>
                   <Text className="mt-0.5 font-body text-xs text-ink-muted">
-                    {piece.color} · {piece.subcategory}
+                    {piece.color}
                   </Text>
                   <Text className="mt-2 font-bodyBold text-sm text-teal">
                     {formatPriceILS(189)}
