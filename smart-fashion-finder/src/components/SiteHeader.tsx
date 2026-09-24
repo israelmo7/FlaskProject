@@ -60,31 +60,22 @@ export function SiteHeader({
   return (
     <View className="border-b border-[#E8E4DE] bg-white px-4 pb-3 pt-2">
       <View className="flex-row flex-wrap items-center justify-between gap-y-3">
-        {/* צד שמאל ויזואלי ב־LTR של הסרגל: אייקונים + חיפוש */}
-        <View className="flex-row items-center gap-2">
-          <HeaderIcon
-            icon="location-outline"
-            label={areaLabel || he.area}
-            onPress={onArea}
-          />
-          <HeaderIcon
-            icon="person-outline"
-            label={he.profile}
-            onPress={onProfile}
-          />
-          <View className="relative">
-            <HeaderIcon icon="cart-outline" label={he.cart} onPress={onCart} />
-            {cartCount > 0 ? (
-              <View className="absolute -left-0.5 -top-0.5 min-w-[16px] items-center rounded-full bg-[#E07A4F] px-1">
-                <Text className="font-bodyBold text-[9px] text-white">
-                  {cartCount}
-                </Text>
-              </View>
-            ) : null}
-          </View>
+        {/* המבורגר בצד ימין הפיזי (ראשון ב־RTL) */}
+        <Pressable
+          onPress={onMenu}
+          hitSlop={10}
+          accessibilityLabel={he.menuCategories}
+          className="rounded-lg bg-[#F3F0EB] p-2"
+        >
+          <Ionicons name="menu" size={24} color="#12161C" />
+        </Pressable>
 
+        <Text className="font-displayBold text-2xl text-ink">{he.brand}</Text>
+
+        {/* חיפוש + אייקונים — צד שמאל ויזואלי */}
+        <View className="flex-row items-center gap-2">
           <View
-            className="ml-1 min-w-[210px] max-w-[300px] flex-row items-center rounded-full border border-[#D9D3C9] bg-[#FAF8F5] px-2 py-1.5"
+            className="min-w-[200px] max-w-[280px] flex-row items-center rounded-full border border-[#D9D3C9] bg-[#FAF8F5] px-2 py-1.5"
             style={{ direction: 'ltr' }}
           >
             {/* מצלמה בצד שמאל של החיפוש */}
@@ -132,19 +123,27 @@ export function SiteHeader({
               style={{ direction: 'rtl' }}
             />
           </View>
-        </View>
 
-        <View className="flex-row items-center gap-3">
-          <Text className="font-displayBold text-2xl text-ink">{he.brand}</Text>
-          {/* המבורגר קטגוריות — צד ימין עליון */}
-          <Pressable
-            onPress={onMenu}
-            hitSlop={10}
-            accessibilityLabel={he.menuCategories}
-            className="rounded-lg bg-[#F3F0EB] p-2"
-          >
-            <Ionicons name="menu" size={24} color="#12161C" />
-          </Pressable>
+          <View className="relative">
+            <HeaderIcon icon="cart-outline" label={he.cart} onPress={onCart} />
+            {cartCount > 0 ? (
+              <View className="absolute -left-0.5 -top-0.5 min-w-[16px] items-center rounded-full bg-[#E07A4F] px-1">
+                <Text className="font-bodyBold text-[9px] text-white">
+                  {cartCount}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+          <HeaderIcon
+            icon="person-outline"
+            label={he.profile}
+            onPress={onProfile}
+          />
+          <HeaderIcon
+            icon="location-outline"
+            label={areaLabel || he.area}
+            onPress={onArea}
+          />
         </View>
       </View>
 
