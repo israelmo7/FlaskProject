@@ -60,6 +60,10 @@ export default function RootLayout() {
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
+          name="onboarding"
+          options={{ headerShown: false, presentation: 'card' }}
+        />
+        <Stack.Screen
           name="analysis"
           options={{ title: he.analysisTitle, presentation: 'card' }}
         />

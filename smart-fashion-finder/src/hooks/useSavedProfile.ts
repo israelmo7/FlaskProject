@@ -4,13 +4,14 @@ import { DEFAULT_AVATAR_PROFILE } from '@/constants/avatar';
 import { DEFAULT_AREA_ID } from '@/constants/areas';
 import type { AvatarProfile, OutfitLayers } from '@/types';
 
-const STORAGE_KEY = '@stylenear/user_prefs_v1';
+const STORAGE_KEY = '@stylenear/user_prefs_v2';
 
 export type SavedUserPrefs = {
   profile: AvatarProfile;
   preferredSize: string;
   layers: OutfitLayers;
   areaId: string;
+  onboardingComplete: boolean;
 };
 
 const DEFAULT_PREFS: SavedUserPrefs = {
@@ -18,7 +19,16 @@ const DEFAULT_PREFS: SavedUserPrefs = {
   preferredSize: 'M',
   layers: {},
   areaId: DEFAULT_AREA_ID,
+  onboardingComplete: false,
 };
+
+function normalizeProfile(partial?: Partial<AvatarProfile>): AvatarProfile {
+  return {
+    ...DEFAULT_AVATAR_PROFILE,
+    ...partial,
+    weightKg: partial?.weightKg ?? DEFAULT_AVATAR_PROFILE.weightKg,
+  };
+}
 
 export function useSavedProfile() {
   const [prefs, setPrefs] = useState<SavedUserPrefs>(DEFAULT_PREFS);
@@ -28,14 +38,17 @@ export function useSavedProfile() {
     let cancelled = false;
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(STORAGE_KEY);
+        const raw =
+          (await AsyncStorage.getItem(STORAGE_KEY)) ||
+          (await AsyncStorage.getItem('@stylenear/user_prefs_v1'));
         if (raw && !cancelled) {
           const parsed = JSON.parse(raw) as Partial<SavedUserPrefs>;
           setPrefs({
-            profile: { ...DEFAULT_AVATAR_PROFILE, ...parsed.profile },
+            profile: normalizeProfile(parsed.profile),
             preferredSize: parsed.preferredSize || 'M',
             layers: parsed.layers || {},
             areaId: parsed.areaId || DEFAULT_AREA_ID,
+            onboardingComplete: Boolean(parsed.onboardingComplete),
           });
         }
       } catch {
@@ -60,7 +73,7 @@ export function useSavedProfile() {
 
   const updateProfile = useCallback(
     (profile: AvatarProfile) => {
-      void persist({ ...prefs, profile });
+      void persist({ ...prefs, profile: normalizeProfile(profile) });
     },
     [persist, prefs],
   );
@@ -86,23 +99,42 @@ export function useSavedProfile() {
     [persist, prefs],
   );
 
+  const completeOnboarding = useCallback(
+    (profile: AvatarProfile, preferredSize?: string) => {
+      void persist({
+        ...prefs,
+        profile: normalizeProfile(profile),
+        preferredSize: preferredSize || prefs.preferredSize,
+        onboardingComplete: true,
+      });
+    },
+    [persist, prefs],
+  );
+
   const saveAll = useCallback(
     (partial: Partial<SavedUserPrefs>) => {
-      void persist({ ...prefs, ...partial });
+      void persist({
+        ...prefs,
+        ...partial,
+        profile: normalizeProfile(partial.profile ?? prefs.profile),
+      });
     },
     [persist, prefs],
   );
 
   const reload = useCallback(async () => {
     try {
-      const raw = await AsyncStorage.getItem(STORAGE_KEY);
+      const raw =
+        (await AsyncStorage.getItem(STORAGE_KEY)) ||
+        (await AsyncStorage.getItem('@stylenear/user_prefs_v1'));
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<SavedUserPrefs>;
         setPrefs({
-          profile: { ...DEFAULT_AVATAR_PROFILE, ...parsed.profile },
+          profile: normalizeProfile(parsed.profile),
           preferredSize: parsed.preferredSize || 'M',
           layers: parsed.layers || {},
           areaId: parsed.areaId || DEFAULT_AREA_ID,
+          onboardingComplete: Boolean(parsed.onboardingComplete),
         });
       }
     } catch {
@@ -117,10 +149,12 @@ export function useSavedProfile() {
     preferredSize: prefs.preferredSize,
     layers: prefs.layers,
     areaId: prefs.areaId,
+    onboardingComplete: prefs.onboardingComplete,
     updateProfile,
     updatePreferredSize,
     updateLayers,
     updateAreaId,
+    completeOnboarding,
     saveAll,
     reload,
   };

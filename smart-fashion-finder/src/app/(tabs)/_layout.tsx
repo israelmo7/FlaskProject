@@ -42,19 +42,15 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="avatar"
         options={{
+          href: null,
           title: he.tabs.avatar,
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="body-outline" size={size} color={color} />
-          ),
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
+          href: null,
           title: he.tabs.history,
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="time-outline" size={size} color={color} />
-          ),
         }}
       />
     </Tabs>

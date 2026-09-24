@@ -16,6 +16,7 @@ import {
   PERSONA_OPTIONS,
   SIZE_OPTIONS_BY_CATEGORY,
   WARDROBE_ITEMS,
+  WEIGHT_RANGE,
   categoryToSlot,
   outfitSummary,
   personaToGenderFilter,
@@ -66,10 +67,12 @@ export default function AvatarScreen() {
 
   const setPersona = (persona: AvatarPersona) => {
     const range = HEIGHT_RANGE[persona];
+    const weight = WEIGHT_RANGE[persona];
     const next: AvatarProfile = {
       ...profile,
       persona,
       heightCm: range.default,
+      weightKg: weight.default,
     };
     updateProfile(next);
     setHeightText(String(range.default));

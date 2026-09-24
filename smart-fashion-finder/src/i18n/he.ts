@@ -21,6 +21,17 @@ export const he = {
   areaTitle: 'בחירת אזור',
   areaHint: 'בחרו איפה לחפש מלאי בפיילוט חיפה.',
 
+  onboardingTitle: 'יצירת פרופיל',
+  onboardingHint: 'בחרו דמות, גובה ומשקל — ואז נכנסים לבית.',
+  onboardingPersona: 'מי הדמות?',
+  onboardingHeight: 'גובה (ס״מ)',
+  onboardingWeight: 'משקל (ק״ג)',
+  onboardingContinue: 'המשך לבית',
+  cmUnit: 'ס״מ',
+  kgUnit: 'ק״ג',
+  homeDressHint: 'הלבישו את הבובה ממוצר או מצילום, ואז מצאו מלאי לידכם.',
+  editProfile: 'עריכת פרופיל',
+
   heroTitle: 'קולקציות חדשות לנשים',
   heroCaption: 'מכנסיים מחויטים',
   swatchLabel: "ג'ינס כחול",

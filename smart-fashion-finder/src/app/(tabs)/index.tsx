@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -20,7 +20,6 @@ import {
 import { HeroAvatarSection } from '@/components/HeroAvatarSection';
 import { SiteHeader } from '@/components/SiteHeader';
 import {
-  HEIGHT_RANGE,
   categoryToSlot,
   personaToGenderFilter,
   removeSlot,
@@ -32,7 +31,6 @@ import { useGarmentRecognition } from '@/hooks/useGarmentRecognition';
 import { useSavedProfile } from '@/hooks/useSavedProfile';
 import { he } from '@/i18n/he';
 import type {
-  AvatarPersona,
   GarmentAnalysis,
   LocationSearchMode,
   OutfitLayers,
@@ -54,7 +52,7 @@ export default function HomeScreen() {
     preferredSize,
     layers,
     areaId,
-    updateProfile,
+    onboardingComplete,
     updateLayers,
     updatePreferredSize,
     reload,
@@ -67,6 +65,12 @@ export default function HomeScreen() {
     }, [reload]),
   );
 
+  useEffect(() => {
+    if (ready && !onboardingComplete) {
+      router.replace('/onboarding');
+    }
+  }, [ready, onboardingComplete]);
+
   const [query, setQuery] = useState('');
   const [homeCategory, setHomeCategory] = useState<HomeCategoryFilter>('sale');
   const [locationMode, setLocationMode] = useState<LocationSearchMode>('nearby');
@@ -77,11 +81,6 @@ export default function HomeScreen() {
     () => layers.top || layers.bottom || layers.dress || layers.outer || layers.shoes,
     [layers],
   );
-
-  const setPersona = (persona: AvatarPersona) => {
-    const range = HEIGHT_RANGE[persona];
-    updateProfile({ ...profile, persona, heightCm: range.default });
-  };
 
   const setLayers = (updater: (prev: OutfitLayers) => OutfitLayers) => {
     updateLayers(updater(layers));
@@ -159,7 +158,9 @@ export default function HomeScreen() {
     rec.interimResults = false;
     rec.maxAlternatives = 1;
     setListening(true);
-    rec.onresult = (event: { results: { [i: number]: { [j: number]: { transcript: string } } } }) => {
+    rec.onresult = (event: {
+      results: { [i: number]: { [j: number]: { transcript: string } } };
+    }) => {
       const text = event.results[0]?.[0]?.transcript ?? '';
       if (text) setQuery(text);
       setListening(false);
@@ -203,7 +204,9 @@ export default function HomeScreen() {
     });
   };
 
-  if (!ready) {
+  const openProfile = () => router.push('/onboarding');
+
+  if (!ready || !onboardingComplete) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
         <ActivityIndicator color="#1F6B63" />
@@ -218,7 +221,7 @@ export default function HomeScreen() {
         onQueryChange={setQuery}
         onSearchSubmit={onSearchSubmit}
         onCart={() => router.push('/cart')}
-        onProfile={() => router.push('/avatar')}
+        onProfile={openProfile}
         onArea={() => router.push('/area')}
         areaLabel={areaLabelForId(areaId)}
         cartCount={countLayers(layers)}
@@ -236,12 +239,11 @@ export default function HomeScreen() {
         <HeroAvatarSection
           profile={profile}
           layers={layers}
-          onPersonaChange={setPersona}
           onRemovePiece={(piece) =>
             setLayers((prev) => removeSlot(prev, piece.slot))
           }
           onFindNearMe={goToStores}
-          onEditAvatar={() => router.push('/avatar')}
+          onEditAvatar={openProfile}
         />
 
         <Text className="mt-3 px-4 text-right font-body text-xs text-ink-muted">
@@ -294,7 +296,11 @@ type SpeechRec = {
   lang: string;
   interimResults: boolean;
   maxAlternatives: number;
-  onresult: ((event: { results: { [i: number]: { [j: number]: { transcript: string } } } }) => void) | null;
+  onresult:
+    | ((event: {
+        results: { [i: number]: { [j: number]: { transcript: string } } };
+      }) => void)
+    | null;
   onerror: (() => void) | null;
   onend: (() => void) | null;
   start: () => void;

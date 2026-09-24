@@ -53,6 +53,8 @@ export interface AvatarProfile {
   /** גובה בס״מ */
   heightCm: number;
   build: BodyBuild;
+  /** משקל בק״ג */
+  weightKg: number;
 }
 
 export interface BoundingBox {

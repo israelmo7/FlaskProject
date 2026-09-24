@@ -30,6 +30,16 @@ export const DEFAULT_AVATAR_PROFILE: AvatarProfile = {
   persona: 'woman',
   heightCm: 165,
   build: 'average',
+  weightKg: 60,
+};
+
+export const WEIGHT_RANGE: Record<AvatarPersona, { min: number; max: number; default: number }> = {
+  boy: { min: 20, max: 55, default: 32 },
+  girl: { min: 20, max: 55, default: 30 },
+  teenBoy: { min: 45, max: 95, default: 62 },
+  teenGirl: { min: 40, max: 85, default: 55 },
+  man: { min: 55, max: 130, default: 78 },
+  woman: { min: 45, max: 110, default: 60 },
 };
 
 export const HEIGHT_RANGE: Record<AvatarPersona, { min: number; max: number; default: number }> = {
