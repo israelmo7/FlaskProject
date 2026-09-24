@@ -9,7 +9,8 @@ type Props = {
   onCart?: () => void;
   onProfile?: () => void;
   onArea?: () => void;
-  onNav?: (key: string) => void;
+  areaLabel?: string;
+  cartCount?: number;
 };
 
 export function SiteHeader({
@@ -19,17 +20,16 @@ export function SiteHeader({
   onCart,
   onProfile,
   onArea,
-  onNav,
+  areaLabel,
+  cartCount = 0,
 }: Props) {
   return (
     <View className="border-b border-[#E8E4DE] bg-white px-4 pb-3 pt-2">
-      {/* שורה עליונה: ניווט · לוגו · חיפוש + אייקונים */}
       <View className="flex-row flex-wrap items-center justify-between gap-y-3">
-        {/* ב־RTL: קבוצת האייקונים תופיע מימין */}
         <View className="flex-row items-center gap-3">
           <HeaderIcon
             icon="location-outline"
-            label={he.area}
+            label={areaLabel || he.area}
             onPress={onArea}
           />
           <HeaderIcon
@@ -37,11 +37,16 @@ export function SiteHeader({
             label={he.profile}
             onPress={onProfile}
           />
-          <HeaderIcon
-            icon="cart-outline"
-            label={he.cart}
-            onPress={onCart}
-          />
+          <View className="relative">
+            <HeaderIcon icon="cart-outline" label={he.cart} onPress={onCart} />
+            {cartCount > 0 ? (
+              <View className="absolute -left-0.5 -top-0.5 min-w-[16px] items-center rounded-full bg-[#E07A4F] px-1">
+                <Text className="font-bodyBold text-[9px] text-white">
+                  {cartCount}
+                </Text>
+              </View>
+            ) : null}
+          </View>
 
           <View className="ml-1 min-w-[160px] max-w-[220px] flex-row items-center rounded-full border border-[#D9D3C9] bg-[#FAF8F5] px-3 py-2">
             <Ionicons name="search" size={16} color="#6B6560" />
@@ -59,21 +64,6 @@ export function SiteHeader({
         </View>
 
         <Text className="font-displayBold text-2xl text-ink">{he.brand}</Text>
-
-        <View className="flex-row items-center gap-4">
-          {(
-            [
-              ['home', he.nav.home],
-              ['collections', he.nav.collections],
-              ['offers', he.nav.offers],
-              ['about', he.nav.about],
-            ] as const
-          ).map(([key, label]) => (
-            <Pressable key={key} onPress={() => onNav?.(key)} hitSlop={6}>
-              <Text className="font-bodyMedium text-sm text-ink-soft">{label}</Text>
-            </Pressable>
-          ))}
-        </View>
       </View>
     </View>
   );
@@ -91,7 +81,9 @@ function HeaderIcon({
   return (
     <Pressable onPress={onPress} className="items-center px-1" hitSlop={8}>
       <Ionicons name={icon} size={20} color="#1A1A1A" />
-      <Text className="mt-0.5 font-body text-[10px] text-ink-muted">{label}</Text>
+      <Text className="mt-0.5 font-body text-[10px] text-ink-muted" numberOfLines={1}>
+        {label}
+      </Text>
     </Pressable>
   );
 }

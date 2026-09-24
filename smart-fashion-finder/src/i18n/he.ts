@@ -6,17 +6,20 @@ export const he = {
   valueProp:
     'במקום להזמין אונליין — בודקים מידה וצבע בחנויות לידכם, כולל בוטיקים מקומיים.',
 
-  nav: {
-    home: 'Home',
-    collections: 'Collections',
-    offers: 'Offers',
-    about: 'About',
-  },
-
   searchPlaceholder: 'חפש בגדים',
   cart: 'עגלה',
   profile: 'פרופיל',
   area: 'אזור',
+
+  cartTitle: 'עגלת קניות',
+  cartHint: 'הפריטים שלבשתם על הבובה — מכאן מחפשים מלאי בחנויות.',
+  cartEmpty: 'העגלה ריקה',
+  cartEmptyHint: 'הלבישו פריט על הבובה בדף הבית כדי להוסיף אותו לכאן.',
+  clearCart: 'ריקון העגלה',
+  backToHome: 'חזרה לבית',
+
+  areaTitle: 'בחירת אזור',
+  areaHint: 'בחרו איפה לחפש מלאי בפיילוט חיפה.',
 
   heroTitle: 'קולקציות חדשות לנשים',
   heroCaption: 'מכנסיים מחויטים',
@@ -31,7 +34,6 @@ export const he = {
   discoverStyle: 'גלו את הסגנון שלכם',
   findNearMe: 'מצא לידך',
   newCollections: 'קולקציות חדשות לנשים',
-  closeUp: 'close-up',
 
   tabs: {
     discover: 'גילוי',

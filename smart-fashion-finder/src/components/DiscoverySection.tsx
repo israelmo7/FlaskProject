@@ -8,38 +8,28 @@ type GenderPillsProps = {
   onSelect: (g: ShopGender) => void;
 };
 
+/** בדף הבית — רק SALE (בלי נשים/גברים) */
 export function GenderPills({ selected, onSelect }: GenderPillsProps) {
-  const items: { id: ShopGender; label: string }[] = [
-    { id: 'women', label: he.genderWomen },
-    { id: 'men', label: he.genderMen },
-    { id: 'accessories', label: he.genderAccessories },
-    { id: 'sale', label: he.sale },
-  ];
+  const active = selected === 'sale';
 
   return (
     <View className="mt-4 flex-row flex-wrap justify-center gap-2 px-4">
-      {items.map((item) => {
-        const active = selected === item.id;
-        return (
-          <Pressable
-            key={item.id}
-            onPress={() => onSelect(item.id)}
-            className={`rounded-full border px-5 py-2.5 ${
-              active
-                ? 'border-[#E07A4F] bg-[#E07A4F]'
-                : 'border-[#D5CFC6] bg-white'
-            }`}
-          >
-            <Text
-              className={`font-bodyBold text-sm ${
-                active ? 'text-white' : 'text-ink'
-              }`}
-            >
-              {item.label}
-            </Text>
-          </Pressable>
-        );
-      })}
+      <Pressable
+        onPress={() => onSelect('sale')}
+        className={`rounded-full border px-5 py-2.5 ${
+          active ? 'border-[#E07A4F] bg-[#E07A4F]' : 'border-[#D5CFC6] bg-white'
+        }`}
+        accessibilityRole="button"
+        accessibilityState={{ selected: active }}
+      >
+        <Text
+          className={`font-bodyBold text-sm ${
+            active ? 'text-white' : 'text-ink'
+          }`}
+        >
+          {he.sale}
+        </Text>
+      </Pressable>
     </View>
   );
 }
@@ -79,7 +69,10 @@ export function ProductGrid({ onSelect }: ProductGridProps) {
             />
             {product.badge ? (
               <View className="absolute bottom-2 right-2 left-2 rounded bg-black/55 px-1.5 py-1">
-                <Text className="text-center font-body text-[10px] text-white" numberOfLines={2}>
+                <Text
+                  className="text-center font-body text-[10px] text-white"
+                  numberOfLines={2}
+                >
                   {product.badge}
                 </Text>
               </View>

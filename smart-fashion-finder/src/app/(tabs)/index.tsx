@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   GenderPills,
@@ -17,7 +17,7 @@ import {
   wearPiece,
 } from '@/constants/avatar';
 import { DEFAULT_FILTERS } from '@/constants/filters';
-import type { ProductCard, ShopGender } from '@/data/catalog';
+import { areaLabelForId, type ProductCard, type ShopGender } from '@/data/catalog';
 import { useSavedProfile } from '@/hooks/useSavedProfile';
 import { he } from '@/i18n/he';
 import type {
@@ -28,6 +28,12 @@ import type {
   SearchFilters,
 } from '@/types';
 
+function countLayers(layers: OutfitLayers): number {
+  return [layers.dress, layers.top, layers.bottom, layers.outer, layers.shoes].filter(
+    Boolean,
+  ).length;
+}
+
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const {
@@ -35,27 +41,22 @@ export default function HomeScreen() {
     profile,
     preferredSize,
     layers,
+    areaId,
     updateProfile,
     updateLayers,
     updatePreferredSize,
+    reload,
   } = useSavedProfile();
 
-  const [query, setQuery] = useState('');
-  const [shopGender, setShopGender] = useState<ShopGender>(
-    profile.persona === 'man' || profile.persona === 'teenBoy' || profile.persona === 'boy'
-      ? 'men'
-      : 'women',
+  useFocusEffect(
+    useCallback(() => {
+      void reload();
+    }, [reload]),
   );
-  const [filters] = useState<SearchFilters>(DEFAULT_FILTERS);
 
-  useEffect(() => {
-    if (!ready) return;
-    if (profile.persona === 'man' || profile.persona === 'teenBoy' || profile.persona === 'boy') {
-      setShopGender('men');
-    } else {
-      setShopGender('women');
-    }
-  }, [ready, profile.persona]);
+  const [query, setQuery] = useState('');
+  const [shopGender, setShopGender] = useState<ShopGender>('sale');
+  const [filters] = useState<SearchFilters>(DEFAULT_FILTERS);
 
   const focusPiece = useMemo(
     () => layers.top || layers.bottom || layers.dress || layers.outer || layers.shoes,
@@ -65,12 +66,6 @@ export default function HomeScreen() {
   const setPersona = (persona: AvatarPersona) => {
     const range = HEIGHT_RANGE[persona];
     updateProfile({ ...profile, persona, heightCm: range.default });
-  };
-
-  const onShopGender = (g: ShopGender) => {
-    setShopGender(g);
-    if (g === 'men') setPersona('man');
-    if (g === 'women') setPersona('woman');
   };
 
   const setLayers = (updater: (prev: OutfitLayers) => OutfitLayers) => {
@@ -101,12 +96,13 @@ export default function HomeScreen() {
     });
   };
 
-  const onQuickDenim = () => {
+  const onSearchSubmit = () => {
+    if (!query.trim()) return;
     dressPiece({
-      id: `w-blue-jeans-${preferredSize || 'M'}`,
-      label: 'ג׳ינס כחול',
+      id: `search-${query}-${preferredSize || 'M'}`,
+      label: query.trim(),
       category: 'Pants',
-      subcategory: 'Slim Fit Jeans',
+      subcategory: 'Search',
       color: 'Blue',
       size: preferredSize || 'M',
       slot: 'bottom',
@@ -159,12 +155,12 @@ export default function HomeScreen() {
       <SiteHeader
         query={query}
         onQueryChange={setQuery}
-        onSearchSubmit={() => {
-          if (query.trim()) onQuickDenim();
-        }}
-        onCart={() => Alert.alert(he.cart, 'עגלת הקניות תתווסף בגרסה הבאה.')}
+        onSearchSubmit={onSearchSubmit}
+        onCart={() => router.push('/cart')}
         onProfile={() => router.push('/avatar')}
-        onArea={() => Alert.alert(he.area, he.pilotBadge)}
+        onArea={() => router.push('/area')}
+        areaLabel={areaLabelForId(areaId)}
+        cartCount={countLayers(layers)}
       />
 
       <ScrollView
@@ -181,14 +177,13 @@ export default function HomeScreen() {
           }
           onFindNearMe={goToStores}
           onEditAvatar={() => router.push('/avatar')}
-          onQuickDenim={onQuickDenim}
         />
 
         <Text className="mt-3 px-4 text-right font-body text-xs text-ink-muted">
           {he.myPreferredSize}: {preferredSize}
         </Text>
 
-        <GenderPills selected={shopGender} onSelect={onShopGender} />
+        <GenderPills selected={shopGender} onSelect={setShopGender} />
 
         <StyleBanner />
 

@@ -12,7 +12,6 @@ type Props = {
   onRemovePiece?: (piece: OutfitPiece) => void;
   onFindNearMe?: () => void;
   onEditAvatar?: () => void;
-  onQuickDenim?: () => void;
 };
 
 export function HeroAvatarSection({
@@ -22,7 +21,6 @@ export function HeroAvatarSection({
   onRemovePiece,
   onFindNearMe,
   onEditAvatar,
-  onQuickDenim,
 }: Props) {
   const { width } = useWindowDimensions();
 
@@ -46,7 +44,6 @@ export function HeroAvatarSection({
         הבובה שאתם מלבישים — בחרו גיל ומין, והוסיפו בגדים
       </Text>
 
-      {/* גילאים על הבובה */}
       <View className="mt-3 flex-row flex-wrap justify-center px-2">
         {PERSONA_OPTIONS.map((opt) => {
           const active = profile.persona === opt.id;
@@ -79,24 +76,6 @@ export function HeroAvatarSection({
             onRemovePiece={onRemovePiece}
           />
         </Pressable>
-      </View>
-
-      {/* swatch ג׳ינס כחול */}
-      <View className="absolute items-center" style={{ right: 12, top: 120 }}>
-        <Pressable
-          onPress={onQuickDenim}
-          className="overflow-hidden rounded-md border border-white/80 bg-white"
-          style={{ width: 64, height: 64 }}
-        >
-          <Image
-            source={require('../../assets/images/denim-swatch.png')}
-            className="h-full w-full"
-            resizeMode="cover"
-          />
-        </Pressable>
-        <Text className="mt-1 text-center font-bodyMedium text-[10px] text-white">
-          {he.swatchLabel}
-        </Text>
       </View>
 
       <View className="flex-row items-center justify-center gap-2 px-4 pb-4">
