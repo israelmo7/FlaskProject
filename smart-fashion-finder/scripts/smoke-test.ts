@@ -63,6 +63,15 @@ assert(inStock.length >= 1, 'at least one in-stock olive cargo match');
 
 assert(analysis.category === 'Pants', 'analysis fixture category is Pants');
 
+const boutiques = stores.filter((s) => s.isBoutique);
+assert(boutiques.length >= 2, `expected >=2 boutiques, got ${boutiques.length}`);
+
+const sizeM = oliveCargos.filter((i) => i.sizes.includes('M'));
+assert(sizeM.length >= 1, 'at least one olive cargo with size M');
+
+const missingSizeXL = oliveCargos.filter((i) => !i.sizes.includes('XL'));
+assert(missingSizeXL.length >= 1, 'some stores lack XL (size-gap demo)');
+
 if (failed > 0) {
   console.error(`\n${failed} assertion(s) failed`);
   process.exit(1);

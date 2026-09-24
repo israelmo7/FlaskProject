@@ -1,4 +1,5 @@
 import { Image, Text, View } from 'react-native';
+import { he } from '@/i18n/he';
 import type { BoundingBox, GarmentAnalysis } from '@/types';
 import { formatPriceILS } from '@/utils/stock';
 
@@ -46,26 +47,32 @@ export function GarmentOverlay({ analysis }: Props) {
         {analysis.boundingBoxes.map((box, index) => (
           <BoxOverlay key={`${box.label}-${index}`} box={box} />
         ))}
-        <View className="absolute bottom-3 right-3 rounded-md bg-ink/80 px-2 py-1">
+        <View className="absolute bottom-3 left-3 rounded-md bg-ink/80 px-2 py-1">
           <Text className="font-bodyMedium text-xs text-stone-light">
-            {Math.round(analysis.confidence * 100)}% match
+            {he.confidence} {Math.round(analysis.confidence * 100)}%
           </Text>
         </View>
       </View>
 
       <View className="mt-5">
-        <Text className="font-bodyMedium text-xs uppercase tracking-widest text-ink-muted">
-          AI breakdown
+        <Text className="text-right font-bodyMedium text-xs text-ink-muted">
+          {he.aiBreakdown}
         </Text>
-        <Text className="mt-2 font-display text-3xl text-ink">
+        <Text className="mt-2 text-right font-display text-3xl text-ink">
           {analysis.subcategory}
         </Text>
 
         <View className="mt-4 gap-3">
-          <Row label="Category" value={`${analysis.category} · ${analysis.fit}`} />
-          <Row label="Color & Pattern" value={`${analysis.color}, ${analysis.pattern}`} />
           <Row
-            label="Estimated Price"
+            label={he.category}
+            value={`${analysis.category} · ${analysis.fit}`}
+          />
+          <Row
+            label={he.colorPattern}
+            value={`${analysis.color}, ${analysis.pattern}`}
+          />
+          <Row
+            label={he.estimatedPrice}
             value={`${formatPriceILS(analysis.estimatedPriceMin)} – ${formatPriceILS(analysis.estimatedPriceMax)}`}
           />
         </View>
@@ -77,8 +84,10 @@ export function GarmentOverlay({ analysis }: Props) {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <View className="border-b border-stone-dark pb-3">
-      <Text className="font-body text-xs text-ink-muted">{label}</Text>
-      <Text className="mt-1 font-bodyMedium text-base text-ink">{value}</Text>
+      <Text className="text-right font-body text-xs text-ink-muted">{label}</Text>
+      <Text className="mt-1 text-right font-bodyMedium text-base text-ink">
+        {value}
+      </Text>
     </View>
   );
 }
