@@ -8,7 +8,17 @@ export const DEFAULT_FILTERS: SearchFilters = {
   preferredSize: 'All',
 };
 
-export const CATEGORY_OPTIONS = ['All', 'Pants', 'Shirts', 'Outerwear'] as const;
+export const CATEGORY_OPTIONS = [
+  'All',
+  'Pants',
+  'Shirts',
+  'Outerwear',
+  'Dresses',
+  'Underwear',
+  'Hats',
+  'Socks',
+  'Shoes',
+] as const;
 export const DISTANCE_OPTIONS = [1, 5, 10] as const;
 export const GENDER_OPTIONS = ['All', 'Men', 'Women', 'Unisex'] as const;
 

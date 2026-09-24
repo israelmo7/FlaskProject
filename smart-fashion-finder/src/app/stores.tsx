@@ -35,6 +35,7 @@ export default function StoresScreen() {
     distanceKm?: string;
     gender?: string;
     preferredSize?: string;
+    onTheWay?: string;
   }>();
   const { coords, label, permissionDenied } = useUserLocation();
 
@@ -46,6 +47,7 @@ export default function StoresScreen() {
   }
 
   const preferredSize = params.preferredSize ?? 'All';
+  const onTheWay = params.onTheWay === '1';
   const [onlyMySize, setOnlyMySize] = useState(
     Boolean(params.preferredSize && params.preferredSize !== 'All'),
   );
@@ -64,6 +66,7 @@ export default function StoresScreen() {
     analysis,
     filters,
     onlyMySize: onlyMySize && preferredSize !== 'All',
+    onTheWay,
   });
   const available = matches.filter((m) => m.item.stockStatus !== 'out_of_stock');
   const withSize = matches.filter((m) => m.hasPreferredSize);

@@ -15,7 +15,46 @@
       "city": "חיפה",
       "latitude": 32.7892,
       "longitude": 35.0084,
-      "isBoutique": false
+      "isBoutique": false,
+      "phone": "04-850-1111",
+      "whatsapp": "97248501111",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
     },
     {
       "id": "store-castro-gc",
@@ -27,7 +66,46 @@
       "city": "חיפה",
       "latitude": 32.7895,
       "longitude": 35.0088,
-      "isBoutique": false
+      "isBoutique": false,
+      "phone": "04-850-2222",
+      "whatsapp": "97248502222",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
     },
     {
       "id": "store-hm-lev",
@@ -39,7 +117,46 @@
       "city": "חיפה",
       "latitude": 32.8091,
       "longitude": 35.0492,
-      "isBoutique": false
+      "isBoutique": false,
+      "phone": "04-841-3333",
+      "whatsapp": "97248413333",
+      "hours": [
+        {
+          "day": 0,
+          "open": "09:00",
+          "close": "21:00"
+        },
+        {
+          "day": 1,
+          "open": "09:00",
+          "close": "21:00"
+        },
+        {
+          "day": 2,
+          "open": "09:00",
+          "close": "21:00"
+        },
+        {
+          "day": 3,
+          "open": "09:00",
+          "close": "21:00"
+        },
+        {
+          "day": 4,
+          "open": "09:00",
+          "close": "21:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
     },
     {
       "id": "store-fox-city",
@@ -51,7 +168,46 @@
       "city": "חיפה",
       "latitude": 32.8156,
       "longitude": 34.9841,
-      "isBoutique": false
+      "isBoutique": false,
+      "phone": "04-837-4444",
+      "whatsapp": "97248374444",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
     },
     {
       "id": "store-golf-gc",
@@ -63,7 +219,46 @@
       "city": "חיפה",
       "latitude": 32.7888,
       "longitude": 35.0079,
-      "isBoutique": false
+      "isBoutique": false,
+      "phone": "04-850-5555",
+      "whatsapp": "97248505555",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
     },
     {
       "id": "store-terminal-x",
@@ -75,7 +270,46 @@
       "city": "חיפה",
       "latitude": 32.8198,
       "longitude": 35.0021,
-      "isBoutique": false
+      "isBoutique": false,
+      "phone": "04-851-6666",
+      "whatsapp": "97248516666",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
     },
     {
       "id": "store-local-atelier",
@@ -87,7 +321,46 @@
       "city": "חיפה",
       "latitude": 32.8064,
       "longitude": 34.9947,
-      "isBoutique": true
+      "isBoutique": true,
+      "phone": "04-800-1006",
+      "whatsapp": "97248001006",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
     },
     {
       "id": "store-pullbear-ck",
@@ -99,7 +372,46 @@
       "city": "חיפה",
       "latitude": 32.7914,
       "longitude": 35.0356,
-      "isBoutique": false
+      "isBoutique": false,
+      "phone": "04-800-1007",
+      "whatsapp": "97248001007",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
     },
     {
       "id": "store-studio-neve",
@@ -111,7 +423,46 @@
       "city": "חיפה",
       "latitude": 32.7875,
       "longitude": 35.0142,
-      "isBoutique": true
+      "isBoutique": true,
+      "phone": "04-822-7777",
+      "whatsapp": "97248227777",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "19:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "19:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "19:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "19:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "19:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
     }
   ],
   "inventory": [
@@ -124,14 +475,23 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Unisex",
-      "sizes": [
-        "S",
-        "M",
-        "L"
-      ],
       "price": 249,
       "stockStatus": "in_stock",
-      "stockCount": 14
+      "stockCount": 14,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 4
+        },
+        {
+          "size": "M",
+          "qty": 4
+        },
+        {
+          "size": "L",
+          "qty": 4
+        }
+      ]
     },
     {
       "id": "inv-002",
@@ -142,14 +502,23 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Men",
-      "sizes": [
-        "30",
-        "32",
-        "34"
-      ],
       "price": 279,
       "stockStatus": "low_stock",
-      "stockCount": 3
+      "stockCount": 3,
+      "sizeStock": [
+        {
+          "size": "30",
+          "qty": 1
+        },
+        {
+          "size": "32",
+          "qty": 1
+        },
+        {
+          "size": "34",
+          "qty": 1
+        }
+      ]
     },
     {
       "id": "inv-003",
@@ -160,14 +529,23 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Women",
-      "sizes": [
-        "XS",
-        "S",
-        "M"
-      ],
       "price": 179,
       "stockStatus": "in_stock",
-      "stockCount": 9
+      "stockCount": 9,
+      "sizeStock": [
+        {
+          "size": "XS",
+          "qty": 3
+        },
+        {
+          "size": "S",
+          "qty": 3
+        },
+        {
+          "size": "M",
+          "qty": 3
+        }
+      ]
     },
     {
       "id": "inv-004",
@@ -178,13 +556,19 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Unisex",
-      "sizes": [
-        "S",
-        "M"
-      ],
       "price": 199,
       "stockStatus": "out_of_stock",
-      "stockCount": 0
+      "stockCount": 0,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 0
+        },
+        {
+          "size": "M",
+          "qty": 0
+        }
+      ]
     },
     {
       "id": "inv-005",
@@ -195,15 +579,27 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Women",
-      "sizes": [
-        "S",
-        "M",
-        "L",
-        "XL"
-      ],
       "price": 229,
       "stockStatus": "in_stock",
-      "stockCount": 7
+      "stockCount": 7,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 1
+        },
+        {
+          "size": "M",
+          "qty": 1
+        },
+        {
+          "size": "L",
+          "qty": 1
+        },
+        {
+          "size": "XL",
+          "qty": 1
+        }
+      ]
     },
     {
       "id": "inv-006",
@@ -214,15 +610,27 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Men",
-      "sizes": [
-        "31",
-        "32",
-        "33",
-        "34"
-      ],
       "price": 319,
       "stockStatus": "low_stock",
-      "stockCount": 2
+      "stockCount": 2,
+      "sizeStock": [
+        {
+          "size": "31",
+          "qty": 1
+        },
+        {
+          "size": "32",
+          "qty": 1
+        },
+        {
+          "size": "33",
+          "qty": 1
+        },
+        {
+          "size": "34",
+          "qty": 1
+        }
+      ]
     },
     {
       "id": "inv-007",
@@ -233,13 +641,19 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Unisex",
-      "sizes": [
-        "M",
-        "L"
-      ],
       "price": 389,
       "stockStatus": "in_stock",
-      "stockCount": 4
+      "stockCount": 4,
+      "sizeStock": [
+        {
+          "size": "M",
+          "qty": 2
+        },
+        {
+          "size": "L",
+          "qty": 2
+        }
+      ]
     },
     {
       "id": "inv-008",
@@ -250,14 +664,23 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Men",
-      "sizes": [
-        "S",
-        "M",
-        "L"
-      ],
       "price": 169,
       "stockStatus": "in_stock",
-      "stockCount": 11
+      "stockCount": 11,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 3
+        },
+        {
+          "size": "M",
+          "qty": 3
+        },
+        {
+          "size": "L",
+          "qty": 3
+        }
+      ]
     },
     {
       "id": "inv-009",
@@ -268,15 +691,27 @@
       "color": "Indigo",
       "pattern": "Solid",
       "gender": "Men",
-      "sizes": [
-        "30",
-        "32",
-        "34",
-        "36"
-      ],
       "price": 199,
       "stockStatus": "in_stock",
-      "stockCount": 18
+      "stockCount": 18,
+      "sizeStock": [
+        {
+          "size": "30",
+          "qty": 4
+        },
+        {
+          "size": "32",
+          "qty": 4
+        },
+        {
+          "size": "34",
+          "qty": 4
+        },
+        {
+          "size": "36",
+          "qty": 4
+        }
+      ]
     },
     {
       "id": "inv-010",
@@ -287,15 +722,27 @@
       "color": "Indigo",
       "pattern": "Solid",
       "gender": "Women",
-      "sizes": [
-        "25",
-        "26",
-        "27",
-        "28"
-      ],
       "price": 259,
       "stockStatus": "low_stock",
-      "stockCount": 3
+      "stockCount": 3,
+      "sizeStock": [
+        {
+          "size": "25",
+          "qty": 1
+        },
+        {
+          "size": "26",
+          "qty": 1
+        },
+        {
+          "size": "27",
+          "qty": 1
+        },
+        {
+          "size": "28",
+          "qty": 1
+        }
+      ]
     },
     {
       "id": "inv-011",
@@ -306,15 +753,27 @@
       "color": "White",
       "pattern": "Solid",
       "gender": "Unisex",
-      "sizes": [
-        "S",
-        "M",
-        "L",
-        "XL"
-      ],
       "price": 129,
       "stockStatus": "in_stock",
-      "stockCount": 22
+      "stockCount": 22,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 5
+        },
+        {
+          "size": "M",
+          "qty": 5
+        },
+        {
+          "size": "L",
+          "qty": 5
+        },
+        {
+          "size": "XL",
+          "qty": 5
+        }
+      ]
     },
     {
       "id": "inv-012",
@@ -325,13 +784,19 @@
       "color": "Navy Stripe",
       "pattern": "Striped",
       "gender": "Men",
-      "sizes": [
-        "M",
-        "L"
-      ],
       "price": 149,
       "stockStatus": "in_stock",
-      "stockCount": 8
+      "stockCount": 8,
+      "sizeStock": [
+        {
+          "size": "M",
+          "qty": 4
+        },
+        {
+          "size": "L",
+          "qty": 4
+        }
+      ]
     },
     {
       "id": "inv-013",
@@ -342,14 +807,23 @@
       "color": "Cream",
       "pattern": "Solid",
       "gender": "Women",
-      "sizes": [
-        "XS",
-        "S",
-        "M"
-      ],
       "price": 189,
       "stockStatus": "low_stock",
-      "stockCount": 2
+      "stockCount": 2,
+      "sizeStock": [
+        {
+          "size": "XS",
+          "qty": 1
+        },
+        {
+          "size": "S",
+          "qty": 1
+        },
+        {
+          "size": "M",
+          "qty": 1
+        }
+      ]
     },
     {
       "id": "inv-014",
@@ -360,14 +834,23 @@
       "color": "Light Wash",
       "pattern": "Solid",
       "gender": "Unisex",
-      "sizes": [
-        "S",
-        "M",
-        "L"
-      ],
       "price": 299,
       "stockStatus": "in_stock",
-      "stockCount": 6
+      "stockCount": 6,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 2
+        },
+        {
+          "size": "M",
+          "qty": 2
+        },
+        {
+          "size": "L",
+          "qty": 2
+        }
+      ]
     },
     {
       "id": "inv-015",
@@ -378,14 +861,23 @@
       "color": "Charcoal",
       "pattern": "Solid",
       "gender": "Men",
-      "sizes": [
-        "M",
-        "L",
-        "XL"
-      ],
       "price": 549,
       "stockStatus": "in_stock",
-      "stockCount": 5
+      "stockCount": 5,
+      "sizeStock": [
+        {
+          "size": "M",
+          "qty": 1
+        },
+        {
+          "size": "L",
+          "qty": 1
+        },
+        {
+          "size": "XL",
+          "qty": 1
+        }
+      ]
     },
     {
       "id": "inv-016",
@@ -396,13 +888,19 @@
       "color": "Camel",
       "pattern": "Solid",
       "gender": "Women",
-      "sizes": [
-        "S",
-        "M"
-      ],
       "price": 459,
       "stockStatus": "low_stock",
-      "stockCount": 1
+      "stockCount": 1,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 1
+        },
+        {
+          "size": "M",
+          "qty": 1
+        }
+      ]
     },
     {
       "id": "inv-017",
@@ -413,14 +911,23 @@
       "color": "Terracotta",
       "pattern": "Floral",
       "gender": "Women",
-      "sizes": [
-        "S",
-        "M",
-        "L"
-      ],
       "price": 420,
       "stockStatus": "in_stock",
-      "stockCount": 4
+      "stockCount": 4,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 1
+        },
+        {
+          "size": "M",
+          "qty": 1
+        },
+        {
+          "size": "L",
+          "qty": 1
+        }
+      ]
     },
     {
       "id": "inv-018",
@@ -431,15 +938,27 @@
       "color": "Black",
       "pattern": "Solid",
       "gender": "Unisex",
-      "sizes": [
-        "40",
-        "41",
-        "42",
-        "43"
-      ],
       "price": 219,
       "stockStatus": "in_stock",
-      "stockCount": 12
+      "stockCount": 12,
+      "sizeStock": [
+        {
+          "size": "40",
+          "qty": 3
+        },
+        {
+          "size": "41",
+          "qty": 3
+        },
+        {
+          "size": "42",
+          "qty": 3
+        },
+        {
+          "size": "43",
+          "qty": 3
+        }
+      ]
     },
     {
       "id": "inv-019",
@@ -450,13 +969,19 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Unisex",
-      "sizes": [
-        "S",
-        "M"
-      ],
       "price": 349,
       "stockStatus": "in_stock",
-      "stockCount": 3
+      "stockCount": 3,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 1
+        },
+        {
+          "size": "M",
+          "qty": 1
+        }
+      ]
     }
   ],
   "recentSearches": [

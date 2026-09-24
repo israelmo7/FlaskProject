@@ -1,11 +1,21 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import {
-  GenderPills,
+  CategoryPills,
   ProductGrid,
   StyleBanner,
+  type HomeCategoryFilter,
 } from '@/components/DiscoverySection';
 import { HeroAvatarSection } from '@/components/HeroAvatarSection';
 import { SiteHeader } from '@/components/SiteHeader';
@@ -17,12 +27,14 @@ import {
   wearPiece,
 } from '@/constants/avatar';
 import { DEFAULT_FILTERS } from '@/constants/filters';
-import { areaLabelForId, type ProductCard, type ShopGender } from '@/data/catalog';
+import { areaLabelForId, type ProductCard } from '@/data/catalog';
+import { useGarmentRecognition } from '@/hooks/useGarmentRecognition';
 import { useSavedProfile } from '@/hooks/useSavedProfile';
 import { he } from '@/i18n/he';
 import type {
   AvatarPersona,
   GarmentAnalysis,
+  LocationSearchMode,
   OutfitLayers,
   OutfitPiece,
   SearchFilters,
@@ -47,6 +59,7 @@ export default function HomeScreen() {
     updatePreferredSize,
     reload,
   } = useSavedProfile();
+  const { pickFromLibrary, snapWithCamera, isAnalyzing } = useGarmentRecognition();
 
   useFocusEffect(
     useCallback(() => {
@@ -55,7 +68,9 @@ export default function HomeScreen() {
   );
 
   const [query, setQuery] = useState('');
-  const [shopGender, setShopGender] = useState<ShopGender>('sale');
+  const [homeCategory, setHomeCategory] = useState<HomeCategoryFilter>('sale');
+  const [locationMode, setLocationMode] = useState<LocationSearchMode>('nearby');
+  const [listening, setListening] = useState(false);
   const [filters] = useState<SearchFilters>(DEFAULT_FILTERS);
 
   const focusPiece = useMemo(
@@ -101,12 +116,57 @@ export default function HomeScreen() {
     dressPiece({
       id: `search-${query}-${preferredSize || 'M'}`,
       label: query.trim(),
-      category: 'Pants',
+      category: homeCategory !== 'sale' && homeCategory !== 'All' ? homeCategory : 'Pants',
       subcategory: 'Search',
       color: 'Blue',
       size: preferredSize || 'M',
-      slot: 'bottom',
+      slot: categoryToSlot(
+        homeCategory !== 'sale' && homeCategory !== 'All' ? homeCategory : 'Pants',
+      ),
     });
+  };
+
+  const goToTag = async (source: 'upload' | 'camera') => {
+    const uri =
+      source === 'camera' ? await snapWithCamera() : await pickFromLibrary();
+    if (!uri) return;
+    router.push({
+      pathname: '/tag',
+      params: {
+        imageUri: uri,
+        source,
+        preferredSize: preferredSize || 'M',
+      },
+    });
+  };
+
+  const onVoiceSearch = () => {
+    if (Platform.OS !== 'web') {
+      Alert.alert(he.voiceSearch, he.voiceUnsupported);
+      return;
+    }
+    const w = globalThis as unknown as {
+      SpeechRecognition?: new () => SpeechRec;
+      webkitSpeechRecognition?: new () => SpeechRec;
+    };
+    const SR = w.SpeechRecognition || w.webkitSpeechRecognition;
+    if (!SR) {
+      Alert.alert(he.voiceSearch, he.voiceUnsupported);
+      return;
+    }
+    const rec = new SR();
+    rec.lang = 'he-IL';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    setListening(true);
+    rec.onresult = (event: { results: { [i: number]: { [j: number]: { transcript: string } } } }) => {
+      const text = event.results[0]?.[0]?.transcript ?? '';
+      if (text) setQuery(text);
+      setListening(false);
+    };
+    rec.onerror = () => setListening(false);
+    rec.onend = () => setListening(false);
+    rec.start();
   };
 
   const goToStores = () => {
@@ -138,6 +198,7 @@ export default function HomeScreen() {
         distanceKm: String(filters.distanceKm),
         gender: analysis.gender,
         preferredSize: size,
+        onTheWay: locationMode === 'onTheWay' ? '1' : '0',
       },
     });
   };
@@ -161,6 +222,10 @@ export default function HomeScreen() {
         onArea={() => router.push('/area')}
         areaLabel={areaLabelForId(areaId)}
         cartCount={countLayers(layers)}
+        locationMode={locationMode}
+        onLocationModeChange={setLocationMode}
+        onVoiceSearch={onVoiceSearch}
+        listening={listening}
       />
 
       <ScrollView
@@ -181,9 +246,29 @@ export default function HomeScreen() {
 
         <Text className="mt-3 px-4 text-right font-body text-xs text-ink-muted">
           {he.myPreferredSize}: {preferredSize}
+          {locationMode === 'onTheWay' ? ` · ${he.locOnTheWay}` : ''}
         </Text>
 
-        <GenderPills selected={shopGender} onSelect={setShopGender} />
+        <View className="mt-3 flex-row justify-center gap-3 px-4">
+          <Pressable
+            onPress={() => void goToTag('camera')}
+            disabled={isAnalyzing}
+            className="flex-row items-center rounded-full bg-ink px-4 py-2.5"
+          >
+            <Text className="ml-1.5 font-bodyBold text-sm text-white">{he.openCamera}</Text>
+            <Ionicons name="camera-outline" size={16} color="#fff" />
+          </Pressable>
+          <Pressable
+            onPress={() => void goToTag('upload')}
+            disabled={isAnalyzing}
+            className="flex-row items-center rounded-full border border-[#D5CFC6] px-4 py-2.5"
+          >
+            <Text className="ml-1.5 font-bodyBold text-sm text-ink">{he.openGallery}</Text>
+            <Ionicons name="image-outline" size={16} color="#12161C" />
+          </Pressable>
+        </View>
+
+        <CategoryPills selected={homeCategory} onSelect={setHomeCategory} />
 
         <StyleBanner />
 
@@ -199,8 +284,18 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        <ProductGrid onSelect={onProductSelect} />
+        <ProductGrid onSelect={onProductSelect} category={homeCategory} />
       </ScrollView>
     </View>
   );
 }
+
+type SpeechRec = {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onresult: ((event: { results: { [i: number]: { [j: number]: { transcript: string } } } }) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+};

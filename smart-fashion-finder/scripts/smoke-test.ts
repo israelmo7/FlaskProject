@@ -66,11 +66,21 @@ assert(analysis.category === 'Pants', 'analysis fixture category is Pants');
 const boutiques = stores.filter((s) => s.isBoutique);
 assert(boutiques.length >= 2, `expected >=2 boutiques, got ${boutiques.length}`);
 
-const sizeM = oliveCargos.filter((i) => i.sizes.includes('M'));
-assert(sizeM.length >= 1, 'at least one olive cargo with size M');
+const sizeM = oliveCargos.filter((i) =>
+  (i.sizeStock || []).some((s) => s.size === 'M' && s.qty > 0),
+);
+assert(sizeM.length >= 1, 'at least one olive cargo with size M in stock');
 
-const missingSizeXL = oliveCargos.filter((i) => !i.sizes.includes('XL'));
+const missingSizeXL = oliveCargos.filter(
+  (i) => !(i.sizeStock || []).some((s) => s.size === 'XL' && s.qty > 0),
+);
 assert(missingSizeXL.length >= 1, 'some stores lack XL (size-gap demo)');
+
+const withPhone = stores.filter((s) => Boolean(s.phone));
+assert(withPhone.length >= 3, 'stores have phone numbers for pilot');
+
+const withHours = stores.filter((s) => Array.isArray(s.hours) && s.hours.length > 0);
+assert(withHours.length >= 3, 'stores have opening hours');
 
 if (failed > 0) {
   console.error(`\n${failed} assertion(s) failed`);

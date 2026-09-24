@@ -8,6 +8,7 @@ import type {
   StoreMatch,
 } from '@/types';
 import { haversineKm, type Coordinates } from '@/utils/distance';
+import { hasSizeInStock } from '@/utils/storeMeta';
 
 const stores = inventoryData.stores as Store[];
 const inventory = inventoryData.inventory as InventoryItem[];
@@ -34,11 +35,6 @@ function matchesFilters(item: InventoryItem, filters: SearchFilters): boolean {
   return categoryOk && genderOk;
 }
 
-function hasSize(item: InventoryItem, preferredSize: string): boolean {
-  if (!preferredSize || preferredSize === 'All') return true;
-  return item.sizes.includes(preferredSize);
-}
-
 export function useNearbyStores(
   userCoords: Coordinates,
   options: {
@@ -46,13 +42,16 @@ export function useNearbyStores(
     filters?: SearchFilters;
     /** כשפועל — מציגים רק חנויות שיש בהן את המידה */
     onlyMySize?: boolean;
+    /** על הדרך — מרחיב מעט את הרדיוס (דמו פיילוט) */
+    onTheWay?: boolean;
   } = {},
 ): StoreMatch[] {
-  const { analysis, filters, onlyMySize = false } = options;
+  const { analysis, filters, onlyMySize = false, onTheWay = false } = options;
 
   return useMemo(() => {
     const matches: StoreMatch[] = [];
     const preferredSize = filters?.preferredSize ?? 'All';
+    const radiusBoost = onTheWay ? 1.5 : 1;
 
     for (const item of inventory) {
       if (analysis && !matchesAnalysis(item, analysis)) continue;
@@ -66,9 +65,9 @@ export function useNearbyStores(
         longitude: store.longitude,
       });
 
-      if (filters && distanceKm > filters.distanceKm) continue;
+      if (filters && distanceKm > filters.distanceKm * radiusBoost) continue;
 
-      const sizeMatch = hasSize(item, preferredSize);
+      const sizeMatch = hasSizeInStock(item, preferredSize);
       if (onlyMySize && preferredSize !== 'All' && !sizeMatch) continue;
 
       matches.push({
@@ -94,7 +93,7 @@ export function useNearbyStores(
       if (byStock !== 0) return byStock;
       return a.distanceKm - b.distanceKm;
     });
-  }, [userCoords, analysis, filters, onlyMySize]);
+  }, [userCoords, analysis, filters, onlyMySize, onTheWay]);
 }
 
 export function getStoreById(id: string): Store | undefined {

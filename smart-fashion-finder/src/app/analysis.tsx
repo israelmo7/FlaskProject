@@ -38,6 +38,11 @@ export default function AnalysisScreen() {
 
   return (
     <ScrollView className="flex-1 bg-stone" contentContainerClassName="px-5 py-5 pb-10">
+      {analysis.manuallyTagged ? (
+        <Text className="mb-3 text-right font-body text-xs text-teal">
+          {he.tagTitle} ✓
+        </Text>
+      ) : null}
       <GarmentOverlay analysis={analysis} />
 
       <Pressable
@@ -48,7 +53,7 @@ export default function AnalysisScreen() {
               payload: JSON.stringify(analysis),
               distanceKm: params.distanceKm ?? '5',
               gender: params.gender ?? analysis.gender,
-              preferredSize: params.preferredSize ?? 'All',
+              preferredSize: params.preferredSize ?? analysis.size ?? 'All',
             },
           })
         }

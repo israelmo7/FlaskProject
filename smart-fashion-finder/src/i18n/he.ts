@@ -69,6 +69,32 @@ export const he = {
     km: 'ק״מ',
   },
 
+  catDresses: 'שמלות',
+  catUnderwear: 'הלבשה תחתונה',
+  catHats: 'כובעים',
+  catSocks: 'גרביים',
+  catShoes: 'נעליים',
+  catBottoms: 'תחתונים',
+
+  tagTitle: 'תיוג הבגד',
+  tagHint: 'בחרו קטגוריה, צבע ומידה — ואז חפשו מלאי לידכם.',
+  tagConfirm: 'המשך לחיפוש חנויות',
+
+  openNow: 'פתוח עכשיו',
+  closedNow: 'סגור עכשיו',
+  callStore: 'התקשר',
+  whatsappStore: 'וואטסאפ',
+  holdItem: 'שמרו לי את הפריט',
+  noWhatsApp: 'אין וואטסאפ לחנות',
+  noWhatsAppHint: 'לחנות הזו עדיין אין מספר WhatsApp בפיילוט.',
+
+  locNearby: 'סביבי',
+  locOther: 'אחר',
+  locOnTheWay: 'על הדרך',
+  voiceSearch: 'חיפוש קולי',
+  voiceUnsupported: 'חיפוש קולי לא נתמך בדפדפן זה',
+  listening: 'מקשיבים…',
+
   recent: 'חיפושים אחרונים',
   trending: 'סגנונות שטרנדיים לידכם',
 
@@ -152,6 +178,11 @@ export const categoryLabel: Record<string, string> = {
   Pants: he.filters.pants,
   Shirts: he.filters.shirts,
   Outerwear: he.filters.outerwear,
+  Dresses: he.catDresses,
+  Underwear: he.catUnderwear,
+  Hats: he.catHats,
+  Socks: he.catSocks,
+  Shoes: he.catShoes,
 };
 
 export const genderLabel: Record<string, string> = {

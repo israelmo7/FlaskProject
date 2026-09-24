@@ -47,6 +47,9 @@ export const SIZE_OPTIONS_BY_CATEGORY: Record<GarmentCategory, string[]> = {
   Outerwear: ['XS', 'S', 'M', 'L', 'XL'],
   Dresses: ['XS', 'S', 'M', 'L', 'XL'],
   Shoes: ['36', '37', '38', '39', '40', '41', '42', '43'],
+  Underwear: ['XS', 'S', 'M', 'L', 'XL'],
+  Hats: ['S', 'M', 'L'],
+  Socks: ['S', 'M', 'L'],
 };
 
 export function isFemalePersona(persona: AvatarPersona): boolean {
@@ -79,10 +82,13 @@ export function heightScale(heightCm: number, persona: AvatarPersona): number {
 export function categoryToSlot(category: GarmentCategory): OutfitSlot {
   switch (category) {
     case 'Shirts':
+    case 'Underwear':
       return 'top';
     case 'Pants':
+    case 'Socks':
       return 'bottom';
     case 'Outerwear':
+    case 'Hats':
       return 'outer';
     case 'Dresses':
       return 'dress';

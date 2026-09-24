@@ -75,6 +75,10 @@ export default function RootLayout() {
           name="area"
           options={{ title: he.areaTitle, presentation: 'card' }}
         />
+        <Stack.Screen
+          name="tag"
+          options={{ title: he.tagTitle, presentation: 'card' }}
+        />
       </Stack>
     </View>
   );
