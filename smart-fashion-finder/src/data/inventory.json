@@ -982,6 +982,137 @@
           "qty": 1
         }
       ]
+    },
+    {
+      "id": "inv-dress-1",
+      "storeId": "store-castro-gc",
+      "name": "שמלה חומה מידי",
+      "category": "Dresses",
+      "subcategory": "Midi Dress",
+      "color": "Brown",
+      "pattern": "Solid",
+      "gender": "Women",
+      "price": 199,
+      "stockStatus": "in_stock",
+      "stockCount": 6,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 2
+        },
+        {
+          "size": "M",
+          "qty": 3
+        },
+        {
+          "size": "L",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "id": "inv-dress-2",
+      "storeId": "store-studio-neve",
+      "name": "שמלה חומה בוטיק",
+      "category": "Dresses",
+      "subcategory": "Midi Dress",
+      "color": "Brown",
+      "pattern": "Solid",
+      "gender": "Women",
+      "price": 289,
+      "stockStatus": "low_stock",
+      "stockCount": 2,
+      "sizeStock": [
+        {
+          "size": "M",
+          "qty": 1
+        },
+        {
+          "size": "L",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "id": "inv-hat-1",
+      "storeId": "store-fox-city",
+      "name": "כובע בייסבול",
+      "category": "Hats",
+      "subcategory": "Cap",
+      "color": "Black",
+      "pattern": "Solid",
+      "gender": "Unisex",
+      "price": 79,
+      "stockStatus": "in_stock",
+      "stockCount": 8,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 2
+        },
+        {
+          "size": "M",
+          "qty": 4
+        },
+        {
+          "size": "L",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "inv-socks-1",
+      "storeId": "store-hm-lev",
+      "name": "גרביים כותנה",
+      "category": "Socks",
+      "subcategory": "Socks",
+      "color": "White",
+      "pattern": "Solid",
+      "gender": "Unisex",
+      "price": 39,
+      "stockStatus": "in_stock",
+      "stockCount": 20,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 5
+        },
+        {
+          "size": "M",
+          "qty": 10
+        },
+        {
+          "size": "L",
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "id": "inv-uw-1",
+      "storeId": "store-golf-gc",
+      "name": "הלבשה תחתונה",
+      "category": "Underwear",
+      "subcategory": "Underwear",
+      "color": "Black",
+      "pattern": "Solid",
+      "gender": "Women",
+      "price": 89,
+      "stockStatus": "in_stock",
+      "stockCount": 12,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 3
+        },
+        {
+          "size": "M",
+          "qty": 5
+        },
+        {
+          "size": "L",
+          "qty": 4
+        }
+      ]
     }
   ],
   "recentSearches": [
