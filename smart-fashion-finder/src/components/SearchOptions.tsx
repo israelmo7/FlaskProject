@@ -1,5 +1,6 @@
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { he } from '@/i18n/he';
 
 type Props = {
   onUpload: () => void;
@@ -31,17 +32,21 @@ function OptionButton({
       accessibilityLabel={title}
     >
       <View
-        className={`mr-4 h-11 w-11 items-center justify-center rounded-lg ${
+        className={`ml-4 h-11 w-11 items-center justify-center rounded-lg ${
           accent ? 'bg-teal-deep' : 'bg-ink-soft'
         }`}
       >
         <Ionicons name={icon} size={22} color="#FAF7F2" />
       </View>
       <View className="flex-1">
-        <Text className="font-bodyBold text-base text-stone-light">{title}</Text>
-        <Text className="mt-0.5 font-body text-sm text-stone-dark">{subtitle}</Text>
+        <Text className="text-right font-bodyBold text-base text-stone-light">
+          {title}
+        </Text>
+        <Text className="mt-0.5 text-right font-body text-sm text-stone-dark">
+          {subtitle}
+        </Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color="#E4DDD2" />
+      <Ionicons name="chevron-back" size={18} color="#E4DDD2" />
     </Pressable>
   );
 }
@@ -51,9 +56,7 @@ export function SearchOptions({ onUpload, onCamera, onAvatar, loading }: Props) 
     return (
       <View className="items-center justify-center rounded-xl bg-ink py-10">
         <ActivityIndicator color="#FAF7F2" size="large" />
-        <Text className="mt-3 font-bodyMedium text-stone-light">
-          Identifying garment…
-        </Text>
+        <Text className="mt-3 font-bodyMedium text-stone-light">{he.analyzing}</Text>
       </View>
     );
   }
@@ -62,21 +65,21 @@ export function SearchOptions({ onUpload, onCamera, onAvatar, loading }: Props) 
     <View>
       <OptionButton
         icon="image-outline"
-        title="Upload Photo"
-        subtitle="Pick a look from your gallery"
+        title={he.upload}
+        subtitle={he.uploadSub}
         onPress={onUpload}
       />
       <OptionButton
         icon="camera-outline"
-        title="Camera Snap"
-        subtitle="Capture an item you spotted"
+        title={he.camera}
+        subtitle={he.cameraSub}
         onPress={onCamera}
         accent
       />
       <OptionButton
         icon="body-outline"
-        title="AI Avatar Customization"
-        subtitle="Style a body type, then find it nearby"
+        title={he.avatarCta}
+        subtitle={he.avatarSub}
         onPress={onAvatar}
       />
     </View>
