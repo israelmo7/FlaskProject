@@ -52,17 +52,17 @@ export function DressableFigure({
   const baseImage = PERSONA_BASE_IMAGES[profile.persona];
 
   return (
-    <View className="items-center">
+    <View className="items-start">
       <View
-        className="overflow-hidden rounded-2xl bg-[#12161C]"
-        style={{ width: dollW + 40, paddingVertical: compact ? 12 : 18 }}
+        className="overflow-visible bg-transparent"
+        style={{ width: dollW + 24, paddingVertical: compact ? 8 : 12 }}
       >
-        <Text className="mb-1 text-center font-display text-base text-stone-light">
+        <Text className="mb-1 text-left font-display text-base text-ink">
           {personaLabel} · {profile.heightCm} ס״מ
         </Text>
 
         <View
-          className="items-center justify-center self-center overflow-hidden"
+          className="items-center justify-center self-start overflow-hidden"
           style={{ width: dollW, height: dollH, borderRadius: 16 }}
         >
           <Image
