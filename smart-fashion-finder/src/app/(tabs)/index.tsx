@@ -10,13 +10,8 @@ import {
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import {
-  CategoryPills,
-  ProductGrid,
-  StyleBanner,
-  type HomeCategoryFilter,
-} from '@/components/DiscoverySection';
+import { BrandCircles, ProductGrid, StyleBanner } from '@/components/DiscoverySection';
+import { CategoryDrawer } from '@/components/CategoryDrawer';
 import { HeroAvatarSection } from '@/components/HeroAvatarSection';
 import { SiteHeader } from '@/components/SiteHeader';
 import {
@@ -32,6 +27,7 @@ import { useSavedProfile } from '@/hooks/useSavedProfile';
 import { he } from '@/i18n/he';
 import type {
   GarmentAnalysis,
+  GarmentCategory,
   LocationSearchMode,
   OutfitLayers,
   OutfitPiece,
@@ -72,7 +68,10 @@ export default function HomeScreen() {
   }, [ready, onboardingComplete]);
 
   const [query, setQuery] = useState('');
-  const [homeCategory, setHomeCategory] = useState<HomeCategoryFilter>('sale');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [filterCategory, setFilterCategory] = useState<GarmentCategory | null>(null);
+  const [filterSub, setFilterSub] = useState<string | null>(null);
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [locationMode, setLocationMode] = useState<LocationSearchMode>('nearby');
   const [listening, setListening] = useState(false);
   const [filters] = useState<SearchFilters>(DEFAULT_FILTERS);
@@ -97,16 +96,17 @@ export default function HomeScreen() {
   };
 
   const onProductSelect = (product: ProductCard) => {
+    const size = preferredSize || 'M';
     dressPiece({
-      id: `home-${product.id}-${preferredSize || 'M'}`,
+      id: product.layerId
+        ? `${product.layerId}-${size}`
+        : `home-${product.id}-${size}`,
       label: product.title,
-      category: product.category === 'Dresses' ? 'Dresses' : product.category,
+      category: product.category,
       subcategory: product.subcategory,
       color: product.color,
-      size: preferredSize || 'M',
-      slot: categoryToSlot(
-        product.category === 'Dresses' ? 'Dresses' : product.category,
-      ),
+      size,
+      slot: categoryToSlot(product.category),
     });
   };
 
@@ -115,17 +115,16 @@ export default function HomeScreen() {
     dressPiece({
       id: `search-${query}-${preferredSize || 'M'}`,
       label: query.trim(),
-      category: homeCategory !== 'sale' && homeCategory !== 'All' ? homeCategory : 'Pants',
-      subcategory: 'Search',
+      category: filterCategory || 'Pants',
+      subcategory: filterSub || 'Search',
       color: 'Blue',
       size: preferredSize || 'M',
-      slot: categoryToSlot(
-        homeCategory !== 'sale' && homeCategory !== 'All' ? homeCategory : 'Pants',
-      ),
+      slot: categoryToSlot(filterCategory || 'Pants'),
     });
   };
 
   const goToTag = async (source: 'upload' | 'camera') => {
+    if (isAnalyzing) return;
     const uri =
       source === 'camera' ? await snapWithCamera() : await pickFromLibrary();
     if (!uri) return;
@@ -223,12 +222,26 @@ export default function HomeScreen() {
         onCart={() => router.push('/cart')}
         onProfile={openProfile}
         onArea={() => router.push('/area')}
+        onMenu={() => setMenuOpen(true)}
+        onCamera={() => void goToTag('camera')}
+        onGallery={() => void goToTag('upload')}
         areaLabel={areaLabelForId(areaId)}
         cartCount={countLayers(layers)}
         locationMode={locationMode}
         onLocationModeChange={setLocationMode}
         onVoiceSearch={onVoiceSearch}
         listening={listening}
+      />
+
+      <CategoryDrawer
+        visible={menuOpen}
+        selectedCategory={filterCategory}
+        selectedSub={filterSub}
+        onSelect={(category, subcategory) => {
+          setFilterCategory(category);
+          setFilterSub(subcategory);
+        }}
+        onClose={() => setMenuOpen(false)}
       />
 
       <ScrollView
@@ -251,30 +264,16 @@ export default function HomeScreen() {
           {locationMode === 'onTheWay' ? ` · ${he.locOnTheWay}` : ''}
         </Text>
 
-        <View className="mt-3 flex-row justify-center gap-3 px-4">
-          <Pressable
-            onPress={() => void goToTag('camera')}
-            disabled={isAnalyzing}
-            className="flex-row items-center rounded-full bg-ink px-4 py-2.5"
-          >
-            <Text className="ml-1.5 font-bodyBold text-sm text-white">{he.openCamera}</Text>
-            <Ionicons name="camera-outline" size={16} color="#fff" />
-          </Pressable>
-          <Pressable
-            onPress={() => void goToTag('upload')}
-            disabled={isAnalyzing}
-            className="flex-row items-center rounded-full border border-[#D5CFC6] px-4 py-2.5"
-          >
-            <Text className="ml-1.5 font-bodyBold text-sm text-ink">{he.openGallery}</Text>
-            <Ionicons name="image-outline" size={16} color="#12161C" />
-          </Pressable>
-        </View>
-
-        <CategoryPills selected={homeCategory} onSelect={setHomeCategory} />
+        <BrandCircles
+          selectedId={selectedBrand}
+          onSelect={(id) =>
+            setSelectedBrand((prev) => (prev === id ? null : id))
+          }
+        />
 
         <StyleBanner />
 
-        <View className="mt-2 flex-row items-center justify-between px-4">
+        <View className="mt-3 flex-row items-center justify-between px-4">
           <Pressable
             onPress={goToStores}
             className="rounded-full bg-ink px-4 py-2"
@@ -282,11 +281,17 @@ export default function HomeScreen() {
             <Text className="font-bodyBold text-sm text-white">{he.findNearMe}</Text>
           </Pressable>
           <Text className="font-bodyMedium text-sm text-ink-muted">
-            לחצו על מוצר כדי להלביש את הבובה
+            {filterSub
+              ? `קטגוריה: ${filterSub}`
+              : 'בחרו קטגוריה מהתפריט או מוצר להלבשה'}
           </Text>
         </View>
 
-        <ProductGrid onSelect={onProductSelect} category={homeCategory} />
+        <ProductGrid
+          onSelect={onProductSelect}
+          category={filterCategory}
+          subcategory={filterSub}
+        />
       </ScrollView>
     </View>
   );

@@ -63,6 +63,9 @@ export const he = {
   closeMenu: 'סגור',
   openCamera: 'מצלמה',
   openGallery: 'גלריה',
+  captureTitle: 'צילום או גלריה',
+  brandsTitle: 'מותגים',
+  noProductsInCategory: 'אין מוצרים בקטגוריה הזו כרגע — נסו קטגוריה אחרת מהתפריט',
   homeBrandHint: 'StyleNear',
 
   filters: {

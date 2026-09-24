@@ -11,6 +11,9 @@ type Props = {
   onCart?: () => void;
   onProfile?: () => void;
   onArea?: () => void;
+  onMenu?: () => void;
+  onCamera?: () => void;
+  onGallery?: () => void;
   areaLabel?: string;
   cartCount?: number;
   locationMode?: LocationSearchMode;
@@ -32,6 +35,9 @@ export function SiteHeader({
   onCart,
   onProfile,
   onArea,
+  onMenu,
+  onCamera,
+  onGallery,
   areaLabel,
   cartCount = 0,
   locationMode = 'nearby',
@@ -40,6 +46,7 @@ export function SiteHeader({
   listening = false,
 }: Props) {
   const [locMenuOpen, setLocMenuOpen] = useState(false);
+  const [cameraMenuOpen, setCameraMenuOpen] = useState(false);
 
   const locLabel =
     LOC_OPTIONS.find((o) => o.id === locationMode)?.label ?? he.locNearby;
@@ -53,7 +60,8 @@ export function SiteHeader({
   return (
     <View className="border-b border-[#E8E4DE] bg-white px-4 pb-3 pt-2">
       <View className="flex-row flex-wrap items-center justify-between gap-y-3">
-        <View className="flex-row items-center gap-3">
+        {/* צד שמאל ויזואלי ב־LTR של הסרגל: אייקונים + חיפוש */}
+        <View className="flex-row items-center gap-2">
           <HeaderIcon
             icon="location-outline"
             label={areaLabel || he.area}
@@ -75,8 +83,20 @@ export function SiteHeader({
             ) : null}
           </View>
 
-          {/* סרגל חיפוש: מיקרופון + תפריט מיקום משמאל, שדה מימין */}
-          <View className="ml-1 min-w-[200px] max-w-[280px] flex-row items-center rounded-full border border-[#D9D3C9] bg-[#FAF8F5] px-2 py-1.5">
+          <View
+            className="ml-1 min-w-[210px] max-w-[300px] flex-row items-center rounded-full border border-[#D9D3C9] bg-[#FAF8F5] px-2 py-1.5"
+            style={{ direction: 'ltr' }}
+          >
+            {/* מצלמה בצד שמאל של החיפוש */}
+            <Pressable
+              onPress={() => setCameraMenuOpen(true)}
+              hitSlop={8}
+              accessibilityLabel={he.openCamera}
+              className="px-1"
+            >
+              <Ionicons name="camera-outline" size={20} color="#1A1A1A" />
+            </Pressable>
+
             <Pressable
               onPress={onVoiceSearch}
               hitSlop={8}
@@ -92,7 +112,7 @@ export function SiteHeader({
 
             <Pressable
               onPress={() => setLocMenuOpen(true)}
-              className="mr-1 flex-row items-center rounded-full bg-white px-2 py-1"
+              className="mx-1 flex-row items-center rounded-full bg-white px-2 py-1"
               hitSlop={6}
             >
               <Text className="font-bodyMedium text-[10px] text-ink">{locLabel}</Text>
@@ -104,19 +124,68 @@ export function SiteHeader({
               value={query}
               onChangeText={onQueryChange}
               onSubmitEditing={onSearchSubmit}
-              placeholder={
-                listening ? he.listening : he.searchPlaceholder
-              }
+              placeholder={listening ? he.listening : he.searchPlaceholder}
               placeholderTextColor="#8A847C"
-              className="mr-2 flex-1 text-right font-body text-sm text-ink"
+              className="ml-1 flex-1 font-body text-sm text-ink"
               returnKeyType="search"
               textAlign="right"
+              style={{ direction: 'rtl' }}
             />
           </View>
         </View>
 
-        <Text className="font-displayBold text-2xl text-ink">{he.brand}</Text>
+        <View className="flex-row items-center gap-3">
+          <Text className="font-displayBold text-2xl text-ink">{he.brand}</Text>
+          {/* המבורגר קטגוריות — צד ימין עליון */}
+          <Pressable
+            onPress={onMenu}
+            hitSlop={10}
+            accessibilityLabel={he.menuCategories}
+            className="rounded-lg bg-[#F3F0EB] p-2"
+          >
+            <Ionicons name="menu" size={24} color="#12161C" />
+          </Pressable>
+        </View>
       </View>
+
+      {/* תפריט מצלמה / גלריה */}
+      <Modal
+        visible={cameraMenuOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCameraMenuOpen(false)}
+      >
+        <Pressable
+          className="flex-1 justify-end bg-ink/45"
+          onPress={() => setCameraMenuOpen(false)}
+        >
+          <View className="rounded-t-3xl bg-white px-5 pb-10 pt-4">
+            <Text className="mb-4 text-center font-display text-xl text-ink">
+              {he.captureTitle}
+            </Text>
+            <Pressable
+              onPress={() => {
+                setCameraMenuOpen(false);
+                onCamera?.();
+              }}
+              className="mb-2 flex-row items-center justify-between rounded-xl bg-[#F3F0EB] px-4 py-4"
+            >
+              <Ionicons name="camera" size={22} color="#12161C" />
+              <Text className="font-bodyBold text-base text-ink">{he.openCamera}</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                setCameraMenuOpen(false);
+                onGallery?.();
+              }}
+              className="flex-row items-center justify-between rounded-xl bg-[#F3F0EB] px-4 py-4"
+            >
+              <Ionicons name="images-outline" size={22} color="#12161C" />
+              <Text className="font-bodyBold text-base text-ink">{he.openGallery}</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
 
       <Modal
         visible={locMenuOpen}

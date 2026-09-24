@@ -1,8 +1,6 @@
 import { ImageSourcePropType } from 'react-native';
 import type { GarmentCategory } from '@/types';
 
-export type ShopGender = 'women' | 'men' | 'accessories' | 'sale';
-
 export type ProductCard = {
   id: string;
   title: string;
@@ -12,37 +10,192 @@ export type ProductCard = {
   color: string;
   subcategory: string;
   badge?: string;
+  /** מזהה שכבה להלבשת הבובה (אופציונלי) */
+  layerId?: string;
 };
 
-/** מוצרים אמיתיים בלבד — בלי כרטיסי קולאז׳ / close-up דקורטיביים */
+/** ~10 פריטים להלבשה דרך קטגוריות */
 export const PRODUCTS: ProductCard[] = [
   {
-    id: 'p1',
+    id: 'p-tshirt',
+    title: 'טי שירט שחורה',
+    price: 89,
+    image: require('../../assets/images/product-tshirt.png'),
+    category: 'Shirts',
+    color: 'Black',
+    subcategory: 'טי שירט',
+    layerId: 'w-black-shirt',
+  },
+  {
+    id: 'p-hoodie',
+    title: 'קפוצ׳ון אוברסייז',
+    price: 179,
+    image: require('../../assets/images/product-hoodie.png'),
+    category: 'Shirts',
+    color: 'Beige',
+    subcategory: 'אוברסייז',
+  },
+  {
+    id: 'p-oxford',
+    title: 'אוקספורד לבן',
+    price: 149,
+    image: require('../../assets/images/layers/white-shirt.png'),
+    category: 'Shirts',
+    color: 'White',
+    subcategory: 'אוקספורד',
+    layerId: 'w-white-oxford',
+  },
+  {
+    id: 'p-turtleneck',
+    title: 'חולצת גולף',
+    price: 129,
+    image: require('../../assets/images/product-turtleneck.png'),
+    category: 'Shirts',
+    color: 'Navy',
+    subcategory: 'גולף',
+  },
+  {
+    id: 'p-jeans',
+    title: 'ג׳ינס כחול',
+    price: 219,
+    image: require('../../assets/images/product-jeans.png'),
+    category: 'Pants',
+    color: 'Blue',
+    subcategory: 'ג׳ינס',
+    layerId: 'w-blue-jeans',
+  },
+  {
+    id: 'p-shorts',
+    title: 'ג׳ינס קצר',
+    price: 159,
+    image: require('../../assets/images/product-denim-shorts.png'),
+    category: 'Pants',
+    color: 'Light Wash',
+    subcategory: 'ג׳ינס קצר',
+  },
+  {
+    id: 'p-cargo',
+    title: 'קרגו זית',
+    price: 199,
+    image: require('../../assets/images/product-cargo.png'),
+    category: 'Pants',
+    color: 'Olive Green',
+    subcategory: 'קרגו',
+    layerId: 'w-olive-cargo',
+  },
+  {
+    id: 'p-sport',
+    title: 'מכנס ספורט',
+    price: 139,
+    image: require('../../assets/images/product-sport-pants.png'),
+    category: 'Pants',
+    color: 'Navy',
+    subcategory: 'מכנס ספורט',
+  },
+  {
+    id: 'p-denim-jkt',
+    title: 'ג׳קט ג׳ינס',
+    price: 279,
+    image: require('../../assets/images/product-denim-jacket.png'),
+    category: 'Outerwear',
+    color: 'Light Wash',
+    subcategory: 'ג׳קט ג׳ינס',
+    layerId: 'w-denim-jacket',
+  },
+  {
+    id: 'p-leather',
     title: 'ז׳קט עור',
     price: 350,
     image: require('../../assets/images/product-leather.png'),
     category: 'Outerwear',
     color: 'Brown',
-    subcategory: 'Leather Jacket',
+    subcategory: 'ז׳קט עור',
   },
   {
-    id: 'p2',
+    id: 'p-dress',
     title: 'שמלה חומה',
     price: 199,
     image: require('../../assets/images/product-dress.png'),
     category: 'Dresses',
     color: 'Brown',
-    subcategory: 'Midi Dress',
+    subcategory: 'שמלה',
   },
   {
-    id: 'p5',
-    title: 'חולצת גולף',
-    price: 199,
-    image: require('../../assets/images/product-turtleneck.png'),
-    category: 'Shirts',
-    color: 'Navy',
-    subcategory: 'Turtleneck',
+    id: 'p-sneakers',
+    title: 'סניקרס לבנות',
+    price: 329,
+    image: require('../../assets/images/product-sneakers.png'),
+    category: 'Shoes',
+    color: 'White',
+    subcategory: 'סניקרס',
   },
+];
+
+export type MenuCategory = {
+  id: GarmentCategory;
+  label: string;
+  subs: string[];
+};
+
+export const MENU_CATEGORIES: MenuCategory[] = [
+  {
+    id: 'Shirts',
+    label: 'חולצות',
+    subs: ['טי שירט', 'אוברסייז', 'גולף', 'אוקספורד'],
+  },
+  {
+    id: 'Pants',
+    label: 'מכנסיים',
+    subs: ['ג׳ינס', 'ג׳ינס קצר', 'בגד ים', 'מכנס ספורט', 'קרגו'],
+  },
+  {
+    id: 'Outerwear',
+    label: 'עליוניות',
+    subs: ['ג׳קט ג׳ינס', 'ז׳קט עור'],
+  },
+  {
+    id: 'Underwear',
+    label: 'הלבשה תחתונה',
+    subs: ['הלבשה תחתונה'],
+  },
+  {
+    id: 'Dresses',
+    label: 'שמלות',
+    subs: ['שמלה'],
+  },
+  {
+    id: 'Shoes',
+    label: 'נעליים',
+    subs: ['סניקרס'],
+  },
+  {
+    id: 'Hats',
+    label: 'כובעים',
+    subs: ['כובע'],
+  },
+  {
+    id: 'Socks',
+    label: 'גרביים',
+    subs: ['גרביים'],
+  },
+];
+
+export type BrandCircle = {
+  id: string;
+  name: string;
+  color: string;
+  initials: string;
+};
+
+export const BRANDS: BrandCircle[] = [
+  { id: 'zara', name: 'Zara', color: '#1A1A1A', initials: 'ZA' },
+  { id: 'castro', name: 'Castro', color: '#C45C26', initials: 'CA' },
+  { id: 'adidas', name: 'Adidas', color: '#000000', initials: 'AD' },
+  { id: 'nike', name: 'Nike', color: '#111111', initials: 'NK' },
+  { id: 'footlocker', name: 'Foot Locker', color: '#E31837', initials: 'FL' },
+  { id: 'victoria', name: 'Victoria', color: '#8B4557', initials: 'VI' },
+  { id: 'eli-gadi', name: 'אלי וגדי', color: '#2E5A3C', initials: 'אג' },
+  { id: 'rami', name: 'רמי', color: '#1E3A5F', initials: 'רמ' },
 ];
 
 export const PILOT_AREAS = [
@@ -57,4 +210,16 @@ export type PilotAreaId = (typeof PILOT_AREAS)[number]['id'];
 export function areaLabelForId(id: string | undefined): string {
   const found = PILOT_AREAS.find((a) => a.id === id);
   return found?.label ?? 'אזור';
+}
+
+export function filterProducts(opts: {
+  category?: GarmentCategory | 'All' | null;
+  subcategory?: string | null;
+}): ProductCard[] {
+  const { category, subcategory } = opts;
+  return PRODUCTS.filter((p) => {
+    if (category && category !== 'All' && p.category !== category) return false;
+    if (subcategory && p.subcategory !== subcategory) return false;
+    return true;
+  });
 }
