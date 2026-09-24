@@ -22,11 +22,16 @@ function openNavigation(lat: number, lng: number, label: string) {
 export function StoreCard({ match, preferredSize = 'All' }: Props) {
   const { store, item, distanceKm, hasPreferredSize } = match;
   const showSizeHint = preferredSize !== 'All';
+  const highlight = showSizeHint && hasPreferredSize;
 
   return (
     <View
-      className={`mb-4 overflow-hidden border-b pb-4 ${
-        store.isBoutique ? 'border-teal/40' : 'border-stone-dark'
+      className={`mb-4 overflow-hidden rounded-xl border p-3 ${
+        highlight
+          ? 'border-teal bg-teal/5'
+          : store.isBoutique
+            ? 'border-teal/40 bg-transparent'
+            : 'border-stone-dark bg-transparent'
       }`}
     >
       <View className="flex-row items-start">
@@ -88,7 +93,7 @@ export function StoreCard({ match, preferredSize = 'All' }: Props) {
                 hasPreferredSize ? 'text-stock-high' : 'text-stock-out'
               }`}
             >
-              {hasPreferredSize ? he.sizeAvailable : he.sizeMissing}
+              {hasPreferredSize ? he.mySizeBadge : he.sizeMissing}
             </Text>
           )}
 
@@ -97,12 +102,14 @@ export function StoreCard({ match, preferredSize = 'All' }: Props) {
               onPress={() =>
                 openNavigation(store.latitude, store.longitude, store.name)
               }
-              className="flex-row items-center rounded-md bg-ink px-3 py-2"
+              className={`flex-row items-center rounded-md px-3 py-2.5 ${
+                highlight ? 'bg-teal' : 'bg-ink'
+              }`}
               accessibilityRole="button"
               accessibilityLabel={`${he.navigate} ${store.name}`}
             >
-              <Text className="ml-1.5 font-bodyMedium text-xs text-stone-light">
-                {he.navigate}
+              <Text className="ml-1.5 font-bodyBold text-xs text-stone-light">
+                {highlight ? he.navigateNow : he.navigate}
               </Text>
               <Ionicons name="navigate" size={14} color="#FAF7F2" />
             </Pressable>
@@ -118,9 +125,14 @@ export function StoreCard({ match, preferredSize = 'All' }: Props) {
                   ? ` · ${he.left} ${item.stockCount}`
                   : ''}
               </Text>
-              <View className="mr-1.5 h-1.5 w-1.5 rounded-full bg-white" />
             </View>
           </View>
+
+          {highlight ? (
+            <Text className="mt-2 text-right font-body text-[10px] text-teal">
+              {he.walkingHint}
+            </Text>
+          ) : null}
         </View>
 
         <View

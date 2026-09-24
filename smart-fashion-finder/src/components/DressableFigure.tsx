@@ -13,13 +13,22 @@ type Props = {
   profile: AvatarProfile;
   layers: OutfitLayers;
   onRemovePiece?: (piece: OutfitPiece) => void;
-  /** קומפקטי ל-Hero בדף הבית */
   compact?: boolean;
 };
 
+/** מידה משפיעה על רוחב הבגד על הגוף */
+function sizeFitScale(size: string): number {
+  const s = size.toUpperCase();
+  if (s === 'XS' || s === '30') return 0.88;
+  if (s === 'S' || s === '32') return 0.94;
+  if (s === 'M' || s === '34') return 1;
+  if (s === 'L' || s === '36') return 1.08;
+  if (s === 'XL' || Number(s) >= 38) return 1.16;
+  return 1;
+}
+
 /**
- * בובה פוטוריאליסטית לפי גיל/מין + שכבות בגדים שנבחרו.
- * הבסיס הוא דמות איכותית; הבגדים נערמים מעליה ונשארים.
+ * בובה פוטוריאליסטית לפי גיל/מין + שכבות בגדים צמודות לגוף.
  */
 export function DressableFigure({
   profile,
@@ -33,8 +42,8 @@ export function DressableFigure({
   const personaLabel =
     PERSONA_OPTIONS.find((p) => p.id === profile.persona)?.label ?? '';
 
-  const dollW = (compact ? 200 : 240) * Math.min(1.15, Math.max(0.85, wScale));
-  const dollH = (compact ? 300 : 360) * Math.min(1.15, Math.max(0.85, hScale));
+  const dollW = (compact ? 200 : 248) * Math.min(1.18, Math.max(0.82, wScale));
+  const dollH = (compact ? 310 : 380) * Math.min(1.18, Math.max(0.82, hScale));
 
   const worn = [layers.dress, layers.top, layers.bottom, layers.outer, layers.shoes].filter(
     Boolean,
@@ -46,64 +55,60 @@ export function DressableFigure({
     <View className="items-center">
       <View
         className="overflow-hidden rounded-2xl bg-[#12161C]"
-        style={{ width: dollW + 48, paddingVertical: compact ? 12 : 20 }}
+        style={{ width: dollW + 40, paddingVertical: compact ? 12 : 18 }}
       >
         <Text className="mb-1 text-center font-display text-base text-stone-light">
           {personaLabel} · {profile.heightCm} ס״מ
         </Text>
 
-        <View className="items-center justify-center" style={{ height: dollH }}>
+        <View
+          className="items-center justify-center self-center overflow-hidden"
+          style={{ width: dollW, height: dollH, borderRadius: 16 }}
+        >
           <Image
             source={baseImage}
-            style={{
-              width: dollW,
-              height: dollH,
-              resizeMode: 'contain',
-            }}
+            style={{ width: dollW, height: dollH, resizeMode: 'cover' }}
           />
 
-          {/* שכבות בגדים מעל הבסיס */}
+          {/* מכנסיים — צמודים יותר לפלג תחתון */}
           {layers.bottom && !layers.dress ? (
-            <GarmentOverlay
+            <FittedGarment
               piece={layers.bottom}
-              style={{
-                bottom: dollH * 0.02,
-                width: dollW * 0.55,
-                height: dollH * 0.42,
-              }}
+              bodyW={dollW}
+              bodyH={dollH}
+              region="bottom"
+              buildScale={wScale}
             />
           ) : null}
 
+          {/* חולצה */}
           {layers.top && !layers.dress ? (
-            <GarmentOverlay
+            <FittedGarment
               piece={layers.top}
-              style={{
-                top: dollH * 0.22,
-                width: dollW * 0.58,
-                height: dollH * 0.28,
-              }}
+              bodyW={dollW}
+              bodyH={dollH}
+              region="top"
+              buildScale={wScale}
             />
           ) : null}
 
           {layers.dress ? (
-            <GarmentOverlay
+            <FittedGarment
               piece={layers.dress}
-              style={{
-                top: dollH * 0.2,
-                width: dollW * 0.6,
-                height: dollH * 0.55,
-              }}
+              bodyW={dollW}
+              bodyH={dollH}
+              region="dress"
+              buildScale={wScale}
             />
           ) : null}
 
           {layers.outer ? (
-            <GarmentOverlay
+            <FittedGarment
               piece={layers.outer}
-              style={{
-                top: dollH * 0.18,
-                width: dollW * 0.62,
-                height: dollH * 0.32,
-              }}
+              bodyW={dollW}
+              bodyH={dollH}
+              region="outer"
+              buildScale={wScale}
             />
           ) : null}
         </View>
@@ -137,42 +142,104 @@ export function DressableFigure({
   );
 }
 
-function GarmentOverlay({
+function FittedGarment({
   piece,
-  style,
+  bodyW,
+  bodyH,
+  region,
+  buildScale,
 }: {
   piece: OutfitPiece;
-  style: {
-    top?: number;
-    bottom?: number;
-    width: number;
-    height: number;
-  };
+  bodyW: number;
+  bodyH: number;
+  region: 'top' | 'bottom' | 'dress' | 'outer';
+  buildScale: number;
 }) {
   const src = layerImageForPieceId(piece.id);
+  const fit = sizeFitScale(piece.size) * Math.min(1.12, Math.max(0.9, buildScale));
+
+  const layout =
+    region === 'top'
+      ? { top: bodyH * 0.18, width: bodyW * 0.72 * fit, height: bodyH * 0.34, radius: 18 }
+      : region === 'bottom'
+        ? {
+            top: bodyH * 0.48,
+            width: bodyW * 0.58 * fit,
+            height: bodyH * 0.46,
+            radius: 14,
+          }
+        : region === 'dress'
+          ? {
+              top: bodyH * 0.18,
+              width: bodyW * 0.7 * fit,
+              height: bodyH * 0.62,
+              radius: 20,
+            }
+          : {
+              top: bodyH * 0.16,
+              width: bodyW * 0.78 * fit,
+              height: bodyH * 0.38,
+              radius: 20,
+            };
+
   return (
     <View
       pointerEvents="none"
       style={{
         position: 'absolute',
+        top: layout.top,
         alignSelf: 'center',
-        ...style,
-        borderRadius: 12,
+        width: layout.width,
+        height: layout.height,
+        borderRadius: layout.radius,
         overflow: 'hidden',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: src ? 'transparent' : garmentColorHex(piece.color),
-        borderWidth: src ? 0 : 1,
-        borderColor: 'rgba(255,255,255,0.35)',
+        // צל רך כדי שהבגד “ישב” על הגוף
+        shadowColor: '#000',
+        shadowOpacity: 0.35,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 4,
+        backgroundColor: src ? 'rgba(0,0,0,0.05)' : garmentColorHex(piece.color),
       }}
     >
       {src ? (
-        <Image source={src} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
-      ) : null}
-      <View className="absolute bottom-1 rounded bg-black/65 px-1.5 py-0.5">
-        <Text className="font-bodyMedium text-[9px] text-white">
-          {piece.label} · {piece.size}
-        </Text>
+        <Image
+          source={src}
+          style={{ width: '100%', height: '100%', opacity: 0.96 }}
+          resizeMode="cover"
+        />
+      ) : (
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: garmentColorHex(piece.color),
+            opacity: 0.92,
+          }}
+        />
+      )}
+      {/* שכבת כהות קלה בקצוות — תחושת עומק */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          top: 0,
+          bottom: 0,
+          borderWidth: 1,
+          borderColor: 'rgba(0,0,0,0.18)',
+          borderRadius: layout.radius,
+        }}
+      />
+      <View
+        className="absolute left-1 right-1"
+        style={{ bottom: 6 }}
+      >
+        <View className="self-center rounded-full bg-black/70 px-2 py-0.5">
+          <Text className="font-bodyMedium text-[9px] text-white">
+            {piece.label} · {piece.size}
+          </Text>
+        </View>
       </View>
     </View>
   );

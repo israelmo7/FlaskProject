@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -10,7 +10,6 @@ import {
 import { HeroAvatarSection } from '@/components/HeroAvatarSection';
 import { SiteHeader } from '@/components/SiteHeader';
 import {
-  DEFAULT_AVATAR_PROFILE,
   HEIGHT_RANGE,
   categoryToSlot,
   personaToGenderFilter,
@@ -19,10 +18,10 @@ import {
 } from '@/constants/avatar';
 import { DEFAULT_FILTERS } from '@/constants/filters';
 import type { ProductCard, ShopGender } from '@/data/catalog';
+import { useSavedProfile } from '@/hooks/useSavedProfile';
 import { he } from '@/i18n/he';
 import type {
   AvatarPersona,
-  AvatarProfile,
   GarmentAnalysis,
   OutfitLayers,
   OutfitPiece,
@@ -31,11 +30,32 @@ import type {
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const {
+    ready,
+    profile,
+    preferredSize,
+    layers,
+    updateProfile,
+    updateLayers,
+    updatePreferredSize,
+  } = useSavedProfile();
+
   const [query, setQuery] = useState('');
-  const [shopGender, setShopGender] = useState<ShopGender>('women');
+  const [shopGender, setShopGender] = useState<ShopGender>(
+    profile.persona === 'man' || profile.persona === 'teenBoy' || profile.persona === 'boy'
+      ? 'men'
+      : 'women',
+  );
   const [filters] = useState<SearchFilters>(DEFAULT_FILTERS);
-  const [profile, setProfile] = useState<AvatarProfile>(DEFAULT_AVATAR_PROFILE);
-  const [layers, setLayers] = useState<OutfitLayers>({});
+
+  useEffect(() => {
+    if (!ready) return;
+    if (profile.persona === 'man' || profile.persona === 'teenBoy' || profile.persona === 'boy') {
+      setShopGender('men');
+    } else {
+      setShopGender('women');
+    }
+  }, [ready, profile.persona]);
 
   const focusPiece = useMemo(
     () => layers.top || layers.bottom || layers.dress || layers.outer || layers.shoes,
@@ -44,7 +64,7 @@ export default function HomeScreen() {
 
   const setPersona = (persona: AvatarPersona) => {
     const range = HEIGHT_RANGE[persona];
-    setProfile((p) => ({ ...p, persona, heightCm: range.default }));
+    updateProfile({ ...profile, persona, heightCm: range.default });
   };
 
   const onShopGender = (g: ShopGender) => {
@@ -53,22 +73,28 @@ export default function HomeScreen() {
     if (g === 'women') setPersona('woman');
   };
 
+  const setLayers = (updater: (prev: OutfitLayers) => OutfitLayers) => {
+    updateLayers(updater(layers));
+  };
+
   const dressPiece = (piece: Omit<OutfitPiece, 'id'> & { id?: string }) => {
+    const size = piece.size || preferredSize || 'M';
     const full: OutfitPiece = {
       ...piece,
-      id: piece.id ?? `${piece.category}-${piece.size}-${Date.now()}`,
+      size,
+      id: piece.id ?? `${piece.category}-${size}-${Date.now()}`,
     };
     setLayers((prev) => wearPiece(prev, full));
   };
 
   const onProductSelect = (product: ProductCard) => {
     dressPiece({
-      id: `home-${product.id}-M`,
+      id: `home-${product.id}-${preferredSize || 'M'}`,
       label: product.title,
       category: product.category === 'Dresses' ? 'Dresses' : product.category,
       subcategory: product.subcategory,
       color: product.color,
-      size: 'M',
+      size: preferredSize || 'M',
       slot: categoryToSlot(
         product.category === 'Dresses' ? 'Dresses' : product.category,
       ),
@@ -77,12 +103,12 @@ export default function HomeScreen() {
 
   const onQuickDenim = () => {
     dressPiece({
-      id: 'w-blue-jeans-M',
+      id: `w-blue-jeans-${preferredSize || 'M'}`,
       label: 'ג׳ינס כחול',
       category: 'Pants',
       subcategory: 'Slim Fit Jeans',
       color: 'Blue',
-      size: 'M',
+      size: preferredSize || 'M',
       slot: 'bottom',
     });
   };
@@ -92,6 +118,8 @@ export default function HomeScreen() {
       Alert.alert(he.chooseGarmentAlert);
       return;
     }
+    const size = focusPiece.size || preferredSize || 'M';
+    updatePreferredSize(size);
     const analysis: GarmentAnalysis = {
       id: `home-${Date.now()}`,
       category: focusPiece.category,
@@ -105,7 +133,7 @@ export default function HomeScreen() {
       confidence: 0.9,
       boundingBoxes: [],
       source: 'avatar',
-      size: focusPiece.size,
+      size,
     };
     router.push({
       pathname: '/stores',
@@ -113,10 +141,18 @@ export default function HomeScreen() {
         payload: JSON.stringify(analysis),
         distanceKm: String(filters.distanceKm),
         gender: analysis.gender,
-        preferredSize: focusPiece.size,
+        preferredSize: size,
       },
     });
   };
+
+  if (!ready) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white">
+        <ActivityIndicator color="#1F6B63" />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
@@ -127,7 +163,7 @@ export default function HomeScreen() {
           if (query.trim()) onQuickDenim();
         }}
         onCart={() => Alert.alert(he.cart, 'עגלת הקניות תתווסף בגרסה הבאה.')}
-        onProfile={() => Alert.alert(he.profile, 'פרופיל משתמש יתווסף בקרוב.')}
+        onProfile={() => router.push('/avatar')}
         onArea={() => Alert.alert(he.area, he.pilotBadge)}
       />
 
@@ -147,6 +183,10 @@ export default function HomeScreen() {
           onEditAvatar={() => router.push('/avatar')}
           onQuickDenim={onQuickDenim}
         />
+
+        <Text className="mt-3 px-4 text-right font-body text-xs text-ink-muted">
+          {he.myPreferredSize}: {preferredSize}
+        </Text>
 
         <GenderPills selected={shopGender} onSelect={onShopGender} />
 

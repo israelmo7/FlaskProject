@@ -103,6 +103,14 @@ export const he = {
   left: 'נותרו',
   away: 'משם',
   yourSizeFirst: 'קודם חנויות עם המידה שלך',
+  onlyMySize: 'רק מידה שלי',
+  showAllSizes: 'כל המידות',
+  mySizeBadge: 'המידה שלך במלאי',
+  navigateNow: 'נווט עכשיו',
+  profileSaved: 'הפרופיל נשמר',
+  myPreferredSize: 'המידה הקבועה שלי',
+  saveProfile: 'שמירת הפרופיל שלי',
+  walkingHint: 'ניווט לחנות עם המידה שלך',
 
   avatarTitle: 'סטודיו בובה',
   avatarHint:

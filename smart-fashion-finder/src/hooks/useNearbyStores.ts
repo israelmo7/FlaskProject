@@ -44,9 +44,11 @@ export function useNearbyStores(
   options: {
     analysis?: GarmentAnalysis | null;
     filters?: SearchFilters;
+    /** כשפועל — מציגים רק חנויות שיש בהן את המידה */
+    onlyMySize?: boolean;
   } = {},
 ): StoreMatch[] {
-  const { analysis, filters } = options;
+  const { analysis, filters, onlyMySize = false } = options;
 
   return useMemo(() => {
     const matches: StoreMatch[] = [];
@@ -67,8 +69,8 @@ export function useNearbyStores(
       if (filters && distanceKm > filters.distanceKm) continue;
 
       const sizeMatch = hasSize(item, preferredSize);
-      // אם נבחרה מידה — עדיין מציגים חנויות בלי המידה (כדי לראות איפה חסר),
-      // אבל מסמנים hasPreferredSize למיון והדגשה.
+      if (onlyMySize && preferredSize !== 'All' && !sizeMatch) continue;
+
       matches.push({
         store,
         item,
@@ -78,11 +80,9 @@ export function useNearbyStores(
     }
 
     return matches.sort((a, b) => {
-      // 1) חנויות עם המידה המבוקשת קודם
       if (a.hasPreferredSize !== b.hasPreferredSize) {
         return a.hasPreferredSize ? -1 : 1;
       }
-      // 2) בוטיקים מקומיים מקבלים דחיפה קלה (פרסום לפיילוט)
       const boutiqueBoost =
         Number(Boolean(b.store.isBoutique)) - Number(Boolean(a.store.isBoutique));
       if (boutiqueBoost !== 0 && a.item.stockStatus !== 'out_of_stock') {
@@ -94,7 +94,7 @@ export function useNearbyStores(
       if (byStock !== 0) return byStock;
       return a.distanceKm - b.distanceKm;
     });
-  }, [userCoords, analysis, filters]);
+  }, [userCoords, analysis, filters, onlyMySize]);
 }
 
 export function getStoreById(id: string): Store | undefined {

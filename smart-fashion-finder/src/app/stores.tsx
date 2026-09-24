@@ -46,6 +46,9 @@ export default function StoresScreen() {
   }
 
   const preferredSize = params.preferredSize ?? 'All';
+  const [onlyMySize, setOnlyMySize] = useState(
+    Boolean(params.preferredSize && params.preferredSize !== 'All'),
+  );
 
   const filters: SearchFilters = useMemo(
     () => ({
@@ -57,7 +60,11 @@ export default function StoresScreen() {
     [analysis?.category, params.distanceKm, params.gender, preferredSize],
   );
 
-  const matches = useNearbyStores(coords, { analysis, filters });
+  const matches = useNearbyStores(coords, {
+    analysis,
+    filters,
+    onlyMySize: onlyMySize && preferredSize !== 'All',
+  });
   const available = matches.filter((m) => m.item.stockStatus !== 'out_of_stock');
   const withSize = matches.filter((m) => m.hasPreferredSize);
 
@@ -79,10 +86,26 @@ export default function StoresScreen() {
           </Text>
         )}
         {preferredSize !== 'All' && (
-          <Text className="mt-1 text-right font-bodyMedium text-xs text-ink-soft">
-            {he.yourSizeFirst}: {preferredSize} · {withSize.length}{' '}
-            {he.storesWithStock}
-          </Text>
+          <View className="mt-3 flex-row items-center justify-between">
+            <Pressable
+              onPress={() => setOnlyMySize((v) => !v)}
+              className={`rounded-full px-3 py-1.5 ${
+                onlyMySize ? 'bg-teal' : 'bg-stone-dark'
+              }`}
+            >
+              <Text
+                className={`font-bodyMedium text-xs ${
+                  onlyMySize ? 'text-stone-light' : 'text-ink-soft'
+                }`}
+              >
+                {onlyMySize ? he.onlyMySize : he.showAllSizes}
+              </Text>
+            </Pressable>
+            <Text className="font-bodyMedium text-xs text-ink-soft">
+              {he.yourSizeFirst}: {preferredSize} · {withSize.length}{' '}
+              {he.storesWithStock}
+            </Text>
+          </View>
         )}
 
         <View className="mt-4 flex-row rounded-lg bg-stone-dark p-1">

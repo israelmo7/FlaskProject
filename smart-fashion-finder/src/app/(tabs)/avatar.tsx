@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Pressable,
   ScrollView,
@@ -11,7 +12,6 @@ import { router } from 'expo-router';
 import { DressableFigure } from '@/components/DressableFigure';
 import {
   BUILD_OPTIONS,
-  DEFAULT_AVATAR_PROFILE,
   HEIGHT_RANGE,
   PERSONA_OPTIONS,
   SIZE_OPTIONS_BY_CATEGORY,
@@ -23,6 +23,7 @@ import {
   wearPiece,
   type WardrobeItem,
 } from '@/constants/avatar';
+import { useSavedProfile } from '@/hooks/useSavedProfile';
 import { he } from '@/i18n/he';
 import type {
   AvatarPersona,
@@ -34,13 +35,29 @@ import type {
 } from '@/types';
 
 export default function AvatarScreen() {
-  const [profile, setProfile] = useState<AvatarProfile>(DEFAULT_AVATAR_PROFILE);
-  const [heightText, setHeightText] = useState(String(DEFAULT_AVATAR_PROFILE.heightCm));
-  const [layers, setLayers] = useState<OutfitLayers>({});
+  const {
+    ready,
+    profile,
+    preferredSize,
+    layers,
+    updateProfile,
+    updatePreferredSize,
+    updateLayers,
+    saveAll,
+  } = useSavedProfile();
+
+  const [heightText, setHeightText] = useState(String(profile.heightCm));
   const [selectedItem, setSelectedItem] = useState<WardrobeItem | null>(
     WARDROBE_ITEMS[0],
   );
-  const [selectedSize, setSelectedSize] = useState('L');
+  const [selectedSize, setSelectedSize] = useState(preferredSize || 'M');
+
+  useEffect(() => {
+    if (ready) {
+      setHeightText(String(profile.heightCm));
+      setSelectedSize(preferredSize || 'M');
+    }
+  }, [ready, profile.heightCm, preferredSize]);
 
   const sizeOptions = useMemo(() => {
     if (!selectedItem) return ['S', 'M', 'L', 'XL'];
@@ -49,7 +66,12 @@ export default function AvatarScreen() {
 
   const setPersona = (persona: AvatarPersona) => {
     const range = HEIGHT_RANGE[persona];
-    setProfile((p) => ({ ...p, persona, heightCm: range.default }));
+    const next: AvatarProfile = {
+      ...profile,
+      persona,
+      heightCm: range.default,
+    };
+    updateProfile(next);
     setHeightText(String(range.default));
   };
 
@@ -59,7 +81,11 @@ export default function AvatarScreen() {
     if (!Number.isFinite(n)) return;
     const range = HEIGHT_RANGE[profile.persona];
     const clamped = Math.min(range.max, Math.max(range.min, n));
-    setProfile((p) => ({ ...p, heightCm: clamped }));
+    updateProfile({ ...profile, heightCm: clamped });
+  };
+
+  const setLayers = (updater: (prev: OutfitLayers) => OutfitLayers) => {
+    updateLayers(updater(layers));
   };
 
   const addToOutfit = () => {
@@ -78,6 +104,13 @@ export default function AvatarScreen() {
       slot: categoryToSlot(selectedItem.category),
     };
     setLayers((prev) => wearPiece(prev, piece));
+    updatePreferredSize(selectedSize);
+  };
+
+  const saveProfile = () => {
+    saveAll({ profile, preferredSize: selectedSize || preferredSize, layers });
+    updatePreferredSize(selectedSize || preferredSize);
+    Alert.alert(he.profileSaved, `${he.myPreferredSize}: ${selectedSize || preferredSize}`);
   };
 
   const findNearMe = () => {
@@ -87,6 +120,8 @@ export default function AvatarScreen() {
       Alert.alert(he.chooseGarmentAlert);
       return;
     }
+    const size = focus.size || preferredSize || 'M';
+    updatePreferredSize(size);
     const analysis: GarmentAnalysis = {
       id: `avatar-${Date.now()}`,
       category: focus.category,
@@ -102,7 +137,7 @@ export default function AvatarScreen() {
         { x: 0.2, y: 0.2, width: 0.6, height: 0.6, label: focus.label },
       ],
       source: 'avatar',
-      size: focus.size,
+      size,
     };
     router.push({
       pathname: '/stores',
@@ -110,10 +145,18 @@ export default function AvatarScreen() {
         payload: JSON.stringify(analysis),
         distanceKm: '5',
         gender: analysis.gender,
-        preferredSize: focus.size,
+        preferredSize: size,
       },
     });
   };
+
+  if (!ready) {
+    return (
+      <View className="flex-1 items-center justify-center bg-stone">
+        <ActivityIndicator color="#1F6B63" />
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -129,7 +172,6 @@ export default function AvatarScreen() {
         {he.layersStay}
       </Text>
 
-      {/* בחירת דמות */}
       <Text className="mb-2 mt-6 text-right font-bodyMedium text-xs text-ink-muted">
         {he.personaLabel}
       </Text>
@@ -156,7 +198,6 @@ export default function AvatarScreen() {
         })}
       </View>
 
-      {/* גובה */}
       <Text className="mb-2 mt-4 text-right font-bodyMedium text-xs text-ink-muted">
         {he.heightLabel}
       </Text>
@@ -170,12 +211,8 @@ export default function AvatarScreen() {
           className="w-24 rounded-xl bg-stone-light px-3 py-2.5 text-center font-bodyBold text-base text-ink"
           maxLength={3}
         />
-        <Text className="mr-3 font-body text-xs text-ink-muted">
-          {HEIGHT_RANGE[profile.persona].min}–{HEIGHT_RANGE[profile.persona].max}
-        </Text>
       </View>
 
-      {/* מבנה גוף */}
       <Text className="mb-2 mt-4 text-right font-bodyMedium text-xs text-ink-muted">
         {he.buildLabel}
       </Text>
@@ -185,7 +222,9 @@ export default function AvatarScreen() {
           return (
             <Pressable
               key={opt.id}
-              onPress={() => setProfile((p) => ({ ...p, build: opt.id as BodyBuild }))}
+              onPress={() =>
+                updateProfile({ ...profile, build: opt.id as BodyBuild })
+              }
               className={`mb-2 ml-2 rounded-xl px-3 py-2 ${
                 active ? 'bg-ink' : 'bg-stone-dark'
               }`}
@@ -209,6 +248,35 @@ export default function AvatarScreen() {
         })}
       </View>
 
+      <Text className="mb-2 mt-4 text-right font-bodyMedium text-xs text-ink-muted">
+        {he.myPreferredSize}
+      </Text>
+      <View className="flex-row flex-wrap justify-end">
+        {['XS', 'S', 'M', 'L', 'XL'].map((size) => {
+          const active = preferredSize === size;
+          return (
+            <Pressable
+              key={size}
+              onPress={() => {
+                updatePreferredSize(size);
+                setSelectedSize(size);
+              }}
+              className={`mb-2 ml-2 min-w-[44px] items-center rounded-md px-3 py-2 ${
+                active ? 'bg-teal' : 'bg-stone-dark'
+              }`}
+            >
+              <Text
+                className={`font-bodyBold text-sm ${
+                  active ? 'text-stone-light' : 'text-ink-soft'
+                }`}
+              >
+                {size}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
       <View className="mt-5">
         <DressableFigure
           profile={profile}
@@ -223,7 +291,6 @@ export default function AvatarScreen() {
         {outfitSummary(layers)}
       </Text>
 
-      {/* בחירת פריט + מידה */}
       <Text className="mb-2 mt-6 text-right font-bodyMedium text-xs text-ink-muted">
         {he.overlayGarment}
       </Text>
@@ -236,13 +303,21 @@ export default function AvatarScreen() {
               onPress={() => {
                 setSelectedItem(item);
                 const sizes = SIZE_OPTIONS_BY_CATEGORY[item.category];
-                setSelectedSize(sizes.includes('L') ? 'L' : sizes[Math.floor(sizes.length / 2)]);
+                setSelectedSize(
+                  sizes.includes(preferredSize)
+                    ? preferredSize
+                    : sizes.includes('M')
+                      ? 'M'
+                      : sizes[0],
+                );
               }}
               className={`mb-2 ml-2 rounded-xl px-3 py-2 ${
                 active ? 'bg-coral' : 'bg-ink'
               }`}
             >
-              <Text className="font-bodyMedium text-sm text-stone-light">{item.label}</Text>
+              <Text className="font-bodyMedium text-sm text-stone-light">
+                {item.label}
+              </Text>
             </Pressable>
           );
         })}
@@ -285,7 +360,16 @@ export default function AvatarScreen() {
       </Pressable>
 
       <Pressable
-        onPress={() => setLayers({})}
+        onPress={saveProfile}
+        className="mt-3 items-center rounded-xl bg-teal py-3.5"
+      >
+        <Text className="font-bodyBold text-base text-stone-light">
+          {he.saveProfile}
+        </Text>
+      </Pressable>
+
+      <Pressable
+        onPress={() => updateLayers({})}
         className="mt-3 items-center rounded-xl border border-stone-dark py-3"
       >
         <Text className="font-bodyMedium text-sm text-ink-muted">{he.clearOutfit}</Text>
