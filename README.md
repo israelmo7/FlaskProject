@@ -5,9 +5,10 @@ Session-based knock authentication built with Flask and MySQL.
 
 ## Features
 
-- Blueprint-based structure (`core`, `rooms`, `admin`)
+- Blueprint-based structure (`core`/`data`, `rooms`, `api`)
 - Progressive knock sequence stored in Flask sessions
 - MySQL storage for keys, guests, and rooms
+- React room UI: `rtype` picks Chat vs AdminPanel (and future pages)
 
 ## Setup
 

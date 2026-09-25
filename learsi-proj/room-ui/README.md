@@ -1,26 +1,31 @@
-# Knocknok room chat (React) — how to learn & run this UI
+# Knocknok room UI (React)
 
-This folder is a **Vite + React** front end for one feature: room chat.
+Vite + React island. Flask owns knock, keys, and auth. React picks the page
+from `data-room-type` and fetches JSON from `/api/...`.
 
-Flask still owns knock, keys, and auth. React only draws the chat and calls:
+## Blueprints (Flask)
 
-- `GET  /room/<id>/api/messages`  → `{ "messages": ["line1", "line2"] }`
-- `POST /room/<id>/api/messages`  → `{ "message": "hello" }` then updated list
+| Prefix | Job |
+|--------|-----|
+| `/data` | Knock |
+| `/room` | Enter room, serve React shell |
+| `/api` | JSON for React (`/<path>/messages`, `/admin/rooms`, `/admin/guests`) |
 
-Chat is still **one string column** in MySQL (`rooms.chat`). Lines are plain text
-(no guest name prefix).
+## Room types
+
+Flask sets `data-room-type` from `rooms.rtype`. `App.jsx` switches:
+
+- `chat` → `Chat.jsx` → `/api/<path>/messages`
+- `admin` → `AdminPanel.jsx` → `/api/admin/rooms` + `/api/admin/guests`
 
 ## Learn by reading
 
-1. `index.html` — Vite **must** have this at the project root (entry HTML + `/src/main.jsx` script)
-2. `src/main.jsx` — mounts React into `#root`
-3. `src/App.jsx` — picks Chat vs AdminPanel; Chat does `useState` / `useEffect` / `fetch`
-4. `vite.config.js` — build output goes to `../srcs/static/room-ui/`
+1. `index.html` — Vite entry
+2. `src/main.jsx` — mounts into `#root`
+3. `src/App.jsx` — picks page by room type
+4. `vite.config.js` — build → `../srcs/static/room-ui/`
 
-## Dev (hot reload)
-
-Terminal A — Flask on port 5000  
-Terminal B:
+## Dev
 
 ```bash
 cd learsi-proj/room-ui
@@ -28,27 +33,13 @@ npm install
 npm run dev
 ```
 
-Open the Vite URL, or better: knock + enter room in Flask, then open
-`/room/<id>/app` (session cookie must be on localhost).
+Vite proxies `/api`, `/room`, `/data` → Flask `:5000`.
 
-Vite proxies `/room` → Flask (`vite.config.js`).
-
-## Production-ish (what Flask serves)
+## Build (Flask serves static)
 
 ```bash
 cd learsi-proj/room-ui
 npm run build
 ```
 
-Then open `/room/<id>/app` on the Flask app. Template:
-`srcs/templates/room_app.html`.
-
-## Concepts you practiced
-
-| React idea | Where |
-|------------|--------|
-| Component | `App` |
-| State | `messages`, `draft` |
-| Effects / polling | `useEffect` + `setInterval` |
-| Events | form `onSubmit`, input `onChange` |
-| Talking to backend | `fetch` + `credentials: 'include'` |
+Then open `/room/<path>/app` (or `/room/adminPanel` for admin).

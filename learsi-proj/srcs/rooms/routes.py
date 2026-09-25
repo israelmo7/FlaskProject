@@ -3,11 +3,15 @@ import time
 
 from flask import Blueprint, redirect, render_template, request, session
 
+from srcs.db import ADMIN_KEY_ID
 from srcs.utils import fdebug
 
 rooms_bp = Blueprint(
     'rooms_bp', __name__, template_folder='templates', static_folder='static'
 )
+
+# Special room path (.adminPanel. in DB). Enter like any room: /room/adminPanel
+ADMIN_ROOM_PATH = 'adminPanel'
 
 rooms_c, keys_c, guests_c = 0, 0, 0
 _cleaner_started = False
@@ -55,9 +59,7 @@ def path_room_to_id(room_path):
 
 
 def room_type_for(room_path, room_id):
-    """chat | admin — DB rtype when present, else path adminPanel."""
-    from srcs.admin.routes import ADMIN_ROOM_PATH
-
+    """chat | admin — from DB rtype, else path fallback."""
     rtype = rooms_c.get_rtype(room_id) if rooms_c else None
     if rtype in ('chat', 'admin'):
         return rtype
@@ -86,11 +88,25 @@ def has_right_key(room_id, guest_id):
     return None
 
 
+def has_admin_key(guest_id):
+    """True if guest currently holds builtin ADMIN_KEY_ID."""
+    matches = keys_c.find_key_by_session(guest_id) or []
+    return any(m[0] == ADMIN_KEY_ID for m in matches)
+
+
+def render_room_shell(room_path, room_type, gid):
+    """One React shell; App.jsx picks Chat vs AdminPanel from data-room-type."""
+    return render_template(
+        "room_app.html",
+        room_path=room_path,
+        room_type=room_type,
+        se=gid,
+    )
+
+
 @rooms_bp.route('/<value>', methods=['GET'])
 def enter_room(value):
-    """Same door for every room; admin rtype page is owned by admin_bp."""
-    from srcs.admin.routes import render_admin_room_page
-
+    """Same door for every room type. React types get the shell immediately."""
     ans = redirect('/room/')
 
     gid = session.get('id')
@@ -105,7 +121,6 @@ def enter_room(value):
         rtype = room_type_for(value, rid)
 
         kid = has_right_key(rid, gid)
-        # adminPanel: if already authenticated (any key), grant 999 in code then recheck.
         if kid is None and rtype == 'admin' and keys_c.find_key_by_session(gid):
             keys_c.grant_admin_key(gid)
             kid = has_right_key(rid, gid)
@@ -113,13 +128,11 @@ def enter_room(value):
         if kid is not None:
             if not guests_c.get_guest(gid):
                 guests_c.add_guest(gid, kid)
-            # Chat rooms: builtin grant so guest can later enter /room/adminPanel.
             if rtype != 'admin':
                 keys_c.grant_admin_key(gid)
 
             if rtype == 'admin':
-                # Door = rooms; page = admin blueprint helper (not chat panel).
-                ans = render_admin_room_page(value, gid)
+                ans = render_room_shell(value, 'admin', gid)
             else:
                 ans = render_template(
                     "panel.html",
@@ -189,9 +202,7 @@ def send_message(room_path):
 
 @rooms_bp.route('/<room_path>/app', methods=['GET'])
 def room_app(room_path):
-    """Chat rooms: React Chat. adminPanel: delegate page to admin_bp."""
-    from srcs.admin.routes import render_admin_room_page
-
+    """Serve React shell; room_type tells App.jsx what to show."""
     gid = session.get('id')
     room_id = path_room_to_id(room_path)
 
@@ -207,16 +218,10 @@ def room_app(room_path):
         if has_right_key(room_id, gid) is None:
             return redirect('/')
 
-    if rtype == 'admin':
-        return render_admin_room_page(room_path, gid)
+    if rtype != 'admin':
+        keys_c.grant_admin_key(gid)
 
-    keys_c.grant_admin_key(gid)
-    return render_template(
-        "room_app.html",
-        room_path=room_path,
-        room_type='chat',
-        se=gid,
-    )
+    return render_room_shell(room_path, rtype, gid)
 
 
 @rooms_bp.route('/', methods=['GET'])

@@ -5,10 +5,9 @@ from pathlib import Path
 
 from flask import Flask, jsonify, redirect, render_template, request
 
-from srcs.admin.routes import admin_bp, init_db_adm
 from srcs.core.routes import core_bp, init_db_c
 from srcs.db import get_package
-from srcs.rooms.routes import init_db_r, rooms_bp
+from srcs.rooms.routes import ADMIN_ROOM_PATH, init_db_r, rooms_bp
 from srcs.api.routes import api_bp, init_db_a
 
 logger = logging.getLogger(__name__)
@@ -55,9 +54,9 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    # Three blueprints: rooms (door), data (knock), api (React JSON)
     app.register_blueprint(rooms_bp, url_prefix='/room')
     app.register_blueprint(core_bp, url_prefix='/data')
-    app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(api_bp, url_prefix='/api')
     
     if not app.config.get('SKIP_MYSQL'):
@@ -68,7 +67,6 @@ def create_app(test_config=None):
         init_db_r(rooms_c, keys_c, guests_c)
         init_db_c(rooms_c, keys_c, guests_c)
         init_db_a(rooms_c, keys_c, guests_c)
-        init_db_adm(rooms_c, keys_c, guests_c)
         
         app.extensions['mysql'] = mysql
         app.extensions['rooms_c'] = rooms_c
@@ -112,9 +110,15 @@ def create_app(test_config=None):
                             (value,),
                         )
                         mysql_ext.connection.commit()
-                    ret = redirect('/room/adminPanel')
+                    ret = redirect(f'/room/{ADMIN_ROOM_PATH}')
 
         return ret
+
+    @app.route('/admin/', methods=['GET'])
+    @app.route('/admin', methods=['GET'])
+    def admin_shortcut():
+        """Optional shortcut — adminPanel is still a normal /room/… room."""
+        return redirect(f'/room/{ADMIN_ROOM_PATH}')
 
     if os.environ.get("FLASK_ENABLE_TEST_ROUTE") == "1":
 

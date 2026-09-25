@@ -1,6 +1,8 @@
+"""JSON APIs for React (chat + adminPanel lists). Auth still checked here."""
+
 from flask import Blueprint, jsonify, request, session
 
-from srcs.rooms.routes import has_right_key, path_room_to_id
+from srcs.rooms.routes import has_admin_key, has_right_key, path_room_to_id
 
 api_bp = Blueprint(
     'api_bp', __name__, template_folder='templates', static_folder='static'
@@ -33,7 +35,7 @@ def _require_guest():
 
 @api_bp.route('/<room_path>/messages', methods=['GET'])
 def api_get_messages(room_path):
-    """JSON list of chat lines for the React room UI."""
+    """JSON list of chat lines for Chat.jsx."""
     gid = _require_guest()
     if not gid:
         return jsonify(error='unauthorized'), 401
@@ -46,7 +48,7 @@ def api_get_messages(room_path):
 
 @api_bp.route('/<room_path>/messages', methods=['POST'])
 def api_send_message(room_path):
-    """Append one plain message string; returns updated line list."""
+    """Append one plain message; returns updated line list."""
     gid = _require_guest()
     if not gid:
         return jsonify(error='unauthorized'), 401
@@ -61,6 +63,28 @@ def api_send_message(room_path):
 
     rooms_c.set_chat_messages(room_id, message)
     return jsonify(messages=_chat_lines(room_id)), 201
+
+
+@api_bp.route('/admin/rooms', methods=['GET'])
+def api_admin_rooms():
+    """Live room list for AdminPanel.jsx (needs builtin key 999)."""
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    if not has_admin_key(gid):
+        return jsonify(error='forbidden'), 403
+    return jsonify(rooms=rooms_c.list_rooms())
+
+
+@api_bp.route('/admin/guests', methods=['GET'])
+def api_admin_guests():
+    """Live guest list for AdminPanel.jsx (needs builtin key 999)."""
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    if not has_admin_key(gid):
+        return jsonify(error='forbidden'), 403
+    return jsonify(guests=guests_c.list_guests())
 
 
 @api_bp.route('/', methods=['GET'])

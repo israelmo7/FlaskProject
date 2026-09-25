@@ -2,22 +2,27 @@ import Chat from './Chat'
 import AdminPanel from './AdminPanel'
 
 /**
- * Room path + type come from Flask:
- *   <div id="root" data-room-id="lobby" data-room-type="chat">
- * Admin rooms use data-room-type="admin" → AdminPanel; else Chat.
+ * Flask sets data-room-type on #root (from rooms.rtype).
+ * React only picks which page to show — auth stays on the server.
+ *
+ * Add more types later the same way:
+ *   board → <BoardGame />
  */
 
 function readRoomType() {
   const fromDom = document.getElementById('root')?.dataset?.roomType
-  if (fromDom === 'admin' || fromDom === 'chat') return fromDom
+  if (fromDom) return fromDom
   const q = new URLSearchParams(window.location.search).get('type')
-  return q === 'admin' ? 'admin' : 'chat'
+  return q || 'chat'
 }
 
 export default function App() {
   const roomType = readRoomType()
+
   if (roomType === 'admin') {
     return <AdminPanel />
   }
+
+  // default / chat (and unknown types fall back to chat for now)
   return <Chat />
 }
