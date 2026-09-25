@@ -3,7 +3,7 @@ from flask import Flask
 
 from srcs import create_app
 from srcs.core.routes import is_valid_knock_letter, should_reset_knock_buffer
-from srcs.db import Keys_c, Rooms_c
+from srcs.db import ADMIN_KEY_ID, Keys_c, Rooms_c
 
 
 @pytest.fixture
@@ -28,10 +28,10 @@ def test_gindex_renders(client):
     assert b'/data/' in response.data
 
 
-def test_admin_route_without_session(client):
+def test_admin_route_redirects_to_admin_room(client):
     response = client.get('/admin/')
-    assert response.status_code == 200
-    assert b'You Got it!' in response.data
+    assert response.status_code in (301, 302)
+    assert '/room/adminPanel' in response.headers.get('Location', '')
 
 
 @pytest.mark.parametrize(
@@ -150,7 +150,8 @@ def test_find_key_partial_match():
 
     assert result == [(1,), (2,)]
     assert 'LIKE' in cursor.query
-    assert cursor.params == ('%ab%',)
+    assert cursor.params == ('%ab%', ADMIN_KEY_ID)
+    assert 'id !=' in cursor.query
 
 
 def test_find_key_exact_match():
@@ -162,7 +163,7 @@ def test_find_key_exact_match():
 
     assert result == [(1,)]
     assert 'seq = %s' in cursor.query
-    assert cursor.params == ('abc',)
+    assert cursor.params == ('abc', ADMIN_KEY_ID)
 
 
 def test_find_key_by_session():
@@ -189,16 +190,16 @@ def test_get_room_reads_rooms_doors():
     assert cursor.params == (1,)
 
 
-def test_set_chat_messages_appends_and_tags_guest():
+def test_set_chat_messages_appends_plain_text():
     import json
 
     cursor = FakeCursor(results=[(json.dumps('old\n'),)])
     app = Flask(__name__)
     rooms = Rooms_c(app, FakeMySQL(cursor))
 
-    rooms.set_chat_messages(1, 'hello', gid='guest001')
+    rooms.set_chat_messages(1, 'hello')
 
     assert 'UPDATE rooms SET chat' in cursor.query
     stored = json.loads(cursor.params[0])
-    assert stored == 'old\n[guest001] hello\n'
+    assert stored == 'old\nhello\n'
     assert cursor.params[1] == 1

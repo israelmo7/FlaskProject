@@ -77,8 +77,9 @@
             <div class="card">
                 <h3>Dashboard Overview</h3>
                 <p>You have successfully entered the room.</p>
-                {% if room_id %}
-                <p><a href="/room/{{ room_id }}/messages">Open room chat</a></p>
+                {% if room_path %}
+                <p><a href="/room/{{ room_path }}/messages">Open room chat (HTML)</a></p>
+                <p><a href="/room/{{ room_path }}/app">Open room chat (React)</a></p>
                 {% endif %}
             </div>
         </main>

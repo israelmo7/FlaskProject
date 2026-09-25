@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room {{ room_path }}{% if room_type == 'admin' %} — adminPanel{% else %} chat{% endif %}</title>
+    <link rel="stylesheet" href="/static/room-ui/assets/index.css">
+</head>
+<body>
+    {# data-room-type picks Chat vs AdminPanel in React App.jsx #}
+    <div
+        id="root"
+        data-room-id="{{ room_path }}"
+        data-room-type="{{ room_type|default('chat') }}"
+        data-guest="{{ se }}"
+    ></div>
+    <script type="module" src="/static/room-ui/assets/index.js"></script>
+</body>
+</html>
