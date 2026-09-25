@@ -59,71 +59,20 @@ export function SiteHeader({
 
   return (
     <View className="border-b border-[#E8E4DE] bg-white px-4 pb-3 pt-2">
-      <View className="flex-row flex-wrap items-center justify-between gap-y-3">
-        {/* המבורגר בצד ימין הפיזי (ראשון ב־RTL) */}
+      {/* שורה עליונה: המבורגר · מותג · אייקונים */}
+      <View className="mb-2.5 flex-row items-center justify-between">
         <Pressable
           onPress={onMenu}
           hitSlop={10}
           accessibilityLabel={he.menuCategories}
-          className="rounded-lg bg-[#F3F0EB] p-2"
+          className="rounded-xl bg-[#F3F0EB] p-2.5"
         >
           <Ionicons name="menu" size={24} color="#12161C" />
         </Pressable>
 
-        <Text className="font-displayBold text-2xl text-ink">{he.brand}</Text>
+        <Text className="font-displayBold text-[26px] text-ink">{he.brand}</Text>
 
-        {/* חיפוש + אייקונים — צד שמאל ויזואלי */}
-        <View className="flex-row items-center gap-2">
-          <View
-            className="flex-row items-center rounded-full border border-[#D9D3C9] bg-[#FAF8F5] px-3.5 py-3"
-            style={{ direction: 'ltr', minWidth: 300, maxWidth: 440, flexGrow: 1 }}
-          >
-            {/* מצלמה בצד שמאל של החיפוש */}
-            <Pressable
-              onPress={() => setCameraMenuOpen(true)}
-              hitSlop={8}
-              accessibilityLabel={he.openCamera}
-              className="px-1"
-            >
-              <Ionicons name="camera-outline" size={22} color="#1A1A1A" />
-            </Pressable>
-
-            <Pressable
-              onPress={onVoiceSearch}
-              hitSlop={8}
-              accessibilityLabel={he.voiceSearch}
-              className="px-1"
-            >
-              <Ionicons
-                name={listening ? 'mic' : 'mic-outline'}
-                size={18}
-                color={listening ? '#E07A4F' : '#6B6560'}
-              />
-            </Pressable>
-
-            <Pressable
-              onPress={() => setLocMenuOpen(true)}
-              className="mx-1 flex-row items-center rounded-full bg-white px-2 py-1"
-              hitSlop={6}
-            >
-              <Text className="font-bodyMedium text-[10px] text-ink">{locLabel}</Text>
-              <Ionicons name="chevron-down" size={12} color="#6B6560" />
-            </Pressable>
-
-            <Ionicons name="search" size={16} color="#6B6560" />
-            <TextInput
-              value={query}
-              onChangeText={onQueryChange}
-              onSubmitEditing={onSearchSubmit}
-              placeholder={listening ? he.listening : he.searchPlaceholder}
-              placeholderTextColor="#8A847C"
-              className="ml-1.5 flex-1 font-body text-base text-ink"
-              returnKeyType="search"
-              textAlign="right"
-              style={{ direction: 'rtl' }}
-            />
-          </View>
-
+        <View className="flex-row items-center gap-1">
           <View className="relative">
             <HeaderIcon icon="cart-outline" label={he.cart} onPress={onCart} />
             {cartCount > 0 ? (
@@ -147,7 +96,56 @@ export function SiteHeader({
         </View>
       </View>
 
-      {/* תפריט מצלמה / גלריה */}
+      {/* שורת חיפוש מלאה ורחבה */}
+      <View
+        className="flex-row items-center rounded-2xl border border-[#D9D3C9] bg-[#FAF8F5] px-3 py-3"
+        style={{ direction: 'ltr' }}
+      >
+        <Pressable
+          onPress={() => setCameraMenuOpen(true)}
+          hitSlop={8}
+          accessibilityLabel={he.openCamera}
+          className="rounded-full bg-white p-2"
+        >
+          <Ionicons name="camera-outline" size={22} color="#1A1A1A" />
+        </Pressable>
+
+        <Pressable
+          onPress={onVoiceSearch}
+          hitSlop={8}
+          accessibilityLabel={he.voiceSearch}
+          className="mx-1 rounded-full p-2"
+        >
+          <Ionicons
+            name={listening ? 'mic' : 'mic-outline'}
+            size={20}
+            color={listening ? '#E07A4F' : '#6B6560'}
+          />
+        </Pressable>
+
+        <Pressable
+          onPress={() => setLocMenuOpen(true)}
+          className="mr-2 flex-row items-center rounded-full bg-white px-2.5 py-1.5"
+          hitSlop={6}
+        >
+          <Text className="font-bodyMedium text-xs text-ink">{locLabel}</Text>
+          <Ionicons name="chevron-down" size={14} color="#6B6560" />
+        </Pressable>
+
+        <Ionicons name="search" size={18} color="#6B6560" />
+        <TextInput
+          value={query}
+          onChangeText={onQueryChange}
+          onSubmitEditing={onSearchSubmit}
+          placeholder={listening ? he.listening : he.searchPlaceholder}
+          placeholderTextColor="#8A847C"
+          className="ml-2 flex-1 font-body text-base text-ink"
+          returnKeyType="search"
+          textAlign="right"
+          style={{ direction: 'rtl', minHeight: 28 }}
+        />
+      </View>
+
       <Modal
         visible={cameraMenuOpen}
         transparent
@@ -196,7 +194,7 @@ export function SiteHeader({
           className="flex-1 bg-ink/40"
           onPress={() => setLocMenuOpen(false)}
         >
-          <View className="absolute left-4 right-4 top-24 rounded-2xl bg-white p-3">
+          <View className="absolute left-4 right-4 top-28 rounded-2xl bg-white p-3">
             <Text className="mb-2 text-right font-bodyBold text-sm text-ink">
               {he.area}
             </Text>
@@ -237,8 +235,8 @@ function HeaderIcon({
   onPress?: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} className="items-center px-1" hitSlop={8}>
-      <Ionicons name={icon} size={20} color="#1A1A1A" />
+    <Pressable onPress={onPress} className="items-center px-1.5" hitSlop={8}>
+      <Ionicons name={icon} size={22} color="#1A1A1A" />
       <Text className="mt-0.5 font-body text-[10px] text-ink-muted" numberOfLines={1}>
         {label}
       </Text>

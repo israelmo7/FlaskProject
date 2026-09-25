@@ -11,7 +11,7 @@ type Props = {
   onSaveLook?: () => number;
 };
 
-/** גיבור בית — בובה גדולה משמאל + שמירת לוק / מצא לידך */
+/** גיבור בית — בובה גדולה משמאל + שמירת לוק / מצא לידך מימינה */
 export function HeroAvatarSection({
   profile,
   layers,
@@ -20,7 +20,6 @@ export function HeroAvatarSection({
   onSaveLook,
 }: Props) {
   const { width } = useWindowDimensions();
-  // בובה גדולה גם במובייל — רק במסכים צרים מאוד מצמצמים
   const compact = width < 360;
 
   const onSave = () => {
@@ -34,32 +33,48 @@ export function HeroAvatarSection({
   };
 
   return (
-    <View className="mx-4 mt-3 bg-white">
+    <View className="mx-3 mt-3 rounded-2xl bg-[#FAF8F5] px-3 pb-4 pt-3">
       <View
-        className="flex-row items-end"
-        style={{ direction: 'ltr', justifyContent: 'flex-start' }}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'flex-end',
+          justifyContent: 'flex-start',
+          direction: 'ltr',
+        }}
       >
-        <View className="items-start">
-          <DressableFigure
-            compact={compact}
-            profile={profile}
-            layers={layers}
-            onRemovePiece={onRemovePiece}
-          />
-        </View>
+        <DressableFigure
+          compact={compact}
+          profile={profile}
+          layers={layers}
+          onRemovePiece={onRemovePiece}
+        />
 
-        <View className="mb-8 ml-3 flex-1 items-start gap-2.5 pb-2">
+        <View
+          style={{
+            flex: 1,
+            marginLeft: 12,
+            marginBottom: 72,
+            gap: 12,
+            alignItems: 'flex-start',
+          }}
+        >
           <Pressable
             onPress={onSave}
-            className="rounded-full bg-ink px-5 py-3 shadow-sm"
+            className="rounded-2xl bg-ink px-6 py-3.5 shadow-sm"
+            style={{ minWidth: 148 }}
           >
-            <Text className="font-bodyBold text-sm text-white">{he.saveLook}</Text>
+            <Text className="text-center font-bodyBold text-[15px] text-white">
+              {he.saveLook}
+            </Text>
           </Pressable>
           <Pressable
             onPress={onFindNearMe}
-            className="rounded-full bg-[#E07A4F] px-5 py-3 shadow-sm"
+            className="rounded-2xl bg-[#E07A4F] px-6 py-3.5 shadow-sm"
+            style={{ minWidth: 148 }}
           >
-            <Text className="font-bodyBold text-sm text-white">{he.findNearMe}</Text>
+            <Text className="text-center font-bodyBold text-[15px] text-white">
+              {he.findNearMe}
+            </Text>
           </Pressable>
         </View>
       </View>
