@@ -3,7 +3,9 @@ import {
   CATEGORY_OPTIONS,
   DISTANCE_OPTIONS,
   GENDER_OPTIONS,
+  SIZE_OPTIONS,
 } from '@/constants/filters';
+import { categoryLabel, genderLabel, he } from '@/i18n/he';
 import type { DistanceRadius, GarmentCategory, GenderFilter, SearchFilters } from '@/types';
 
 type Props = {
@@ -23,7 +25,7 @@ function Chip({
   return (
     <Pressable
       onPress={onPress}
-      className={`mr-2 mb-2 rounded-md px-3 py-2 ${
+      className={`mb-2 ml-2 rounded-md px-3 py-2 ${
         active ? 'bg-teal' : 'bg-stone-dark/70'
       }`}
       accessibilityRole="button"
@@ -43,14 +45,14 @@ function Chip({
 export function FilterChips({ filters, onChange }: Props) {
   return (
     <View className="mt-4">
-      <Text className="mb-2 font-bodyMedium text-xs uppercase tracking-widest text-ink-muted">
-        Category
+      <Text className="mb-2 font-bodyMedium text-xs text-ink-muted">
+        {he.filters.category}
       </Text>
       <View className="flex-row flex-wrap">
         {CATEGORY_OPTIONS.map((option) => (
           <Chip
             key={option}
-            label={option}
+            label={categoryLabel[option] ?? option}
             active={filters.category === option}
             onPress={() =>
               onChange({
@@ -62,14 +64,28 @@ export function FilterChips({ filters, onChange }: Props) {
         ))}
       </View>
 
-      <Text className="mb-2 mt-3 font-bodyMedium text-xs uppercase tracking-widest text-ink-muted">
-        Distance
+      <Text className="mb-2 mt-3 font-bodyMedium text-xs text-ink-muted">
+        {he.filters.size}
+      </Text>
+      <View className="flex-row flex-wrap">
+        {SIZE_OPTIONS.map((size) => (
+          <Chip
+            key={size}
+            label={size === 'All' ? he.filters.all : size}
+            active={filters.preferredSize === size}
+            onPress={() => onChange({ ...filters, preferredSize: size })}
+          />
+        ))}
+      </View>
+
+      <Text className="mb-2 mt-3 font-bodyMedium text-xs text-ink-muted">
+        {he.filters.distance}
       </Text>
       <View className="flex-row flex-wrap">
         {DISTANCE_OPTIONS.map((km) => (
           <Chip
             key={km}
-            label={`${km} km`}
+            label={`${km} ${he.filters.km}`}
             active={filters.distanceKm === km}
             onPress={() =>
               onChange({ ...filters, distanceKm: km as DistanceRadius })
@@ -78,14 +94,14 @@ export function FilterChips({ filters, onChange }: Props) {
         ))}
       </View>
 
-      <Text className="mb-2 mt-3 font-bodyMedium text-xs uppercase tracking-widest text-ink-muted">
-        Gender
+      <Text className="mb-2 mt-3 font-bodyMedium text-xs text-ink-muted">
+        {he.filters.gender}
       </Text>
       <View className="flex-row flex-wrap">
         {GENDER_OPTIONS.map((option) => (
           <Chip
             key={option}
-            label={option}
+            label={genderLabel[option] ?? option}
             active={filters.gender === option}
             onPress={() =>
               onChange({

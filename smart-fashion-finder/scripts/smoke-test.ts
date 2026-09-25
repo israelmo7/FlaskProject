@@ -63,6 +63,41 @@ assert(inStock.length >= 1, 'at least one in-stock olive cargo match');
 
 assert(analysis.category === 'Pants', 'analysis fixture category is Pants');
 
+const boutiques = stores.filter((s) => s.isBoutique);
+assert(boutiques.length >= 2, `expected >=2 boutiques, got ${boutiques.length}`);
+
+const sizeM = oliveCargos.filter((i) =>
+  (i.sizeStock || []).some((s) => s.size === 'M' && s.qty > 0),
+);
+assert(sizeM.length >= 1, 'at least one olive cargo with size M in stock');
+
+const missingSizeXL = oliveCargos.filter(
+  (i) => !(i.sizeStock || []).some((s) => s.size === 'XL' && s.qty > 0),
+);
+assert(missingSizeXL.length >= 1, 'some stores lack XL (size-gap demo)');
+
+const withPhone = stores.filter((s) => Boolean(s.phone));
+assert(withPhone.length >= 3, 'stores have phone numbers for pilot');
+
+const withHours = stores.filter((s) => Array.isArray(s.hours) && s.hours.length > 0);
+assert(withHours.length >= 3, 'stores have opening hours');
+
+// Size / height fit helpers
+import {
+  heightScale,
+  sizeFitScale,
+  sizeRelativeToHeight,
+} from '../src/constants/avatar';
+
+assert(heightScale(140) < heightScale(165), '140cm doll shorter than 165cm');
+assert(heightScale(190) > heightScale(165), '190cm doll taller than 165cm');
+assert(sizeFitScale('S') < sizeFitScale('M'), 'S garment smaller than M');
+assert(sizeFitScale('L') > sizeFitScale('M'), 'L garment larger than M');
+assert(
+  sizeRelativeToHeight('S', 178) < sizeRelativeToHeight('M', 178),
+  'S on 178cm looks smaller than M',
+);
+
 if (failed > 0) {
   console.error(`\n${failed} assertion(s) failed`);
   process.exit(1);

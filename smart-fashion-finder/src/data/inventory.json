@@ -1,8 +1,8 @@
 {
   "userDefaultLocation": {
-    "latitude": 32.7940,
+    "latitude": 32.794,
     "longitude": 34.9896,
-    "label": "Haifa Center"
+    "label": "מרכז חיפה"
   },
   "stores": [
     {
@@ -10,88 +10,459 @@
       "name": "Zara",
       "brand": "Zara",
       "logoColor": "#1A1A1A",
-      "mall": "Grand Canyon Haifa",
+      "mall": "גרנד קניון חיפה",
       "address": "Simcha Golan 54",
-      "city": "Haifa",
+      "city": "חיפה",
       "latitude": 32.7892,
-      "longitude": 35.0084
+      "longitude": 35.0084,
+      "isBoutique": false,
+      "phone": "04-850-1111",
+      "whatsapp": "97248501111",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
     },
     {
       "id": "store-castro-gc",
       "name": "Castro",
       "brand": "Castro",
       "logoColor": "#C45C26",
-      "mall": "Grand Canyon Haifa",
+      "mall": "גרנד קניון חיפה",
       "address": "Simcha Golan 54",
-      "city": "Haifa",
+      "city": "חיפה",
       "latitude": 32.7895,
-      "longitude": 35.0088
+      "longitude": 35.0088,
+      "isBoutique": false,
+      "phone": "04-850-2222",
+      "whatsapp": "97248502222",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
     },
     {
       "id": "store-hm-lev",
       "name": "H&M",
       "brand": "H&M",
       "logoColor": "#E50010",
-      "mall": "Lev HaMifratz",
+      "mall": "לב המפרץ",
       "address": "HaHistadrut Ave 55",
-      "city": "Haifa",
+      "city": "חיפה",
       "latitude": 32.8091,
-      "longitude": 35.0492
+      "longitude": 35.0492,
+      "isBoutique": false,
+      "phone": "04-841-3333",
+      "whatsapp": "97248413333",
+      "hours": [
+        {
+          "day": 0,
+          "open": "09:00",
+          "close": "21:00"
+        },
+        {
+          "day": 1,
+          "open": "09:00",
+          "close": "21:00"
+        },
+        {
+          "day": 2,
+          "open": "09:00",
+          "close": "21:00"
+        },
+        {
+          "day": 3,
+          "open": "09:00",
+          "close": "21:00"
+        },
+        {
+          "day": 4,
+          "open": "09:00",
+          "close": "21:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
     },
     {
       "id": "store-fox-city",
       "name": "Fox",
       "brand": "Fox",
       "logoColor": "#0B3D5C",
-      "mall": "City Center Haifa",
+      "mall": "סיטי סנטר חיפה",
       "address": "HaNassi Ave 122",
-      "city": "Haifa",
+      "city": "חיפה",
       "latitude": 32.8156,
-      "longitude": 34.9841
+      "longitude": 34.9841,
+      "isBoutique": false,
+      "phone": "04-837-4444",
+      "whatsapp": "97248374444",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
     },
     {
       "id": "store-golf-gc",
       "name": "Golf & Co",
       "brand": "Golf",
       "logoColor": "#2E5A3C",
-      "mall": "Grand Canyon Haifa",
+      "mall": "גרנד קניון חיפה",
       "address": "Simcha Golan 54",
-      "city": "Haifa",
+      "city": "חיפה",
       "latitude": 32.7888,
-      "longitude": 35.0079
+      "longitude": 35.0079,
+      "isBoutique": false,
+      "phone": "04-850-5555",
+      "whatsapp": "97248505555",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "22:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
     },
     {
       "id": "store-terminal-x",
       "name": "Terminal X",
       "brand": "Terminal X",
       "logoColor": "#111827",
-      "mall": "Haifa Port Outlet",
+      "mall": "אאוטלט נמל חיפה",
       "address": "HaNamal St 12",
-      "city": "Haifa",
+      "city": "חיפה",
       "latitude": 32.8198,
-      "longitude": 35.0021
+      "longitude": 35.0021,
+      "isBoutique": false,
+      "phone": "04-851-6666",
+      "whatsapp": "97248516666",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "20:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
     },
     {
       "id": "store-local-atelier",
       "name": "Atelier Carmel",
       "brand": "Local Boutique",
       "logoColor": "#6B4F3A",
-      "mall": "Hadar Street Market",
+      "mall": "שוק הדר",
       "address": "Herzl St 28",
-      "city": "Haifa",
+      "city": "חיפה",
       "latitude": 32.8064,
-      "longitude": 34.9947
+      "longitude": 34.9947,
+      "isBoutique": true,
+      "phone": "04-800-1006",
+      "whatsapp": "97248001006",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
     },
     {
       "id": "store-pullbear-ck",
       "name": "Pull&Bear",
       "brand": "Pull&Bear",
       "logoColor": "#3F3F46",
-      "mall": "Check Post Mall",
+      "mall": "קניון הצ׳קפוסט",
       "address": "HaHashmonaim 1",
-      "city": "Haifa",
+      "city": "חיפה",
       "latitude": 32.7914,
-      "longitude": 35.0356
+      "longitude": 35.0356,
+      "isBoutique": false,
+      "phone": "04-800-1007",
+      "whatsapp": "97248001007",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
+    },
+    {
+      "id": "store-studio-neve",
+      "name": "סטודיו נווה",
+      "brand": "Local Boutique",
+      "logoColor": "#8B4557",
+      "mall": "נווה שאנן",
+      "address": "רח׳ טרומפלדור 15",
+      "city": "חיפה",
+      "latitude": 32.7875,
+      "longitude": 35.0142,
+      "isBoutique": true,
+      "phone": "04-822-7777",
+      "whatsapp": "97248227777",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "19:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "19:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "19:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "19:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "19:00"
+        },
+        {
+          "day": 5,
+          "open": "10:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
     }
   ],
   "inventory": [
@@ -104,10 +475,23 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Unisex",
-      "sizes": ["S", "M", "L"],
       "price": 249,
       "stockStatus": "in_stock",
-      "stockCount": 14
+      "stockCount": 14,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 4
+        },
+        {
+          "size": "M",
+          "qty": 4
+        },
+        {
+          "size": "L",
+          "qty": 4
+        }
+      ]
     },
     {
       "id": "inv-002",
@@ -118,10 +502,23 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Men",
-      "sizes": ["30", "32", "34"],
       "price": 279,
       "stockStatus": "low_stock",
-      "stockCount": 3
+      "stockCount": 3,
+      "sizeStock": [
+        {
+          "size": "30",
+          "qty": 1
+        },
+        {
+          "size": "32",
+          "qty": 1
+        },
+        {
+          "size": "34",
+          "qty": 1
+        }
+      ]
     },
     {
       "id": "inv-003",
@@ -132,10 +529,23 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Women",
-      "sizes": ["XS", "S", "M"],
       "price": 179,
       "stockStatus": "in_stock",
-      "stockCount": 9
+      "stockCount": 9,
+      "sizeStock": [
+        {
+          "size": "XS",
+          "qty": 3
+        },
+        {
+          "size": "S",
+          "qty": 3
+        },
+        {
+          "size": "M",
+          "qty": 3
+        }
+      ]
     },
     {
       "id": "inv-004",
@@ -146,10 +556,19 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Unisex",
-      "sizes": ["S", "M"],
       "price": 199,
       "stockStatus": "out_of_stock",
-      "stockCount": 0
+      "stockCount": 0,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 0
+        },
+        {
+          "size": "M",
+          "qty": 0
+        }
+      ]
     },
     {
       "id": "inv-005",
@@ -160,10 +579,27 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Women",
-      "sizes": ["S", "M", "L", "XL"],
       "price": 229,
       "stockStatus": "in_stock",
-      "stockCount": 7
+      "stockCount": 7,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 1
+        },
+        {
+          "size": "M",
+          "qty": 1
+        },
+        {
+          "size": "L",
+          "qty": 1
+        },
+        {
+          "size": "XL",
+          "qty": 1
+        }
+      ]
     },
     {
       "id": "inv-006",
@@ -174,10 +610,27 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Men",
-      "sizes": ["31", "32", "33", "34"],
       "price": 319,
       "stockStatus": "low_stock",
-      "stockCount": 2
+      "stockCount": 2,
+      "sizeStock": [
+        {
+          "size": "31",
+          "qty": 1
+        },
+        {
+          "size": "32",
+          "qty": 1
+        },
+        {
+          "size": "33",
+          "qty": 1
+        },
+        {
+          "size": "34",
+          "qty": 1
+        }
+      ]
     },
     {
       "id": "inv-007",
@@ -188,10 +641,19 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Unisex",
-      "sizes": ["M", "L"],
       "price": 389,
       "stockStatus": "in_stock",
-      "stockCount": 4
+      "stockCount": 4,
+      "sizeStock": [
+        {
+          "size": "M",
+          "qty": 2
+        },
+        {
+          "size": "L",
+          "qty": 2
+        }
+      ]
     },
     {
       "id": "inv-008",
@@ -202,10 +664,23 @@
       "color": "Olive Green",
       "pattern": "Solid",
       "gender": "Men",
-      "sizes": ["S", "M", "L"],
       "price": 169,
       "stockStatus": "in_stock",
-      "stockCount": 11
+      "stockCount": 11,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 3
+        },
+        {
+          "size": "M",
+          "qty": 3
+        },
+        {
+          "size": "L",
+          "qty": 3
+        }
+      ]
     },
     {
       "id": "inv-009",
@@ -216,10 +691,27 @@
       "color": "Indigo",
       "pattern": "Solid",
       "gender": "Men",
-      "sizes": ["30", "32", "34", "36"],
       "price": 199,
       "stockStatus": "in_stock",
-      "stockCount": 18
+      "stockCount": 18,
+      "sizeStock": [
+        {
+          "size": "30",
+          "qty": 4
+        },
+        {
+          "size": "32",
+          "qty": 4
+        },
+        {
+          "size": "34",
+          "qty": 4
+        },
+        {
+          "size": "36",
+          "qty": 4
+        }
+      ]
     },
     {
       "id": "inv-010",
@@ -230,10 +722,27 @@
       "color": "Indigo",
       "pattern": "Solid",
       "gender": "Women",
-      "sizes": ["25", "26", "27", "28"],
       "price": 259,
       "stockStatus": "low_stock",
-      "stockCount": 3
+      "stockCount": 3,
+      "sizeStock": [
+        {
+          "size": "25",
+          "qty": 1
+        },
+        {
+          "size": "26",
+          "qty": 1
+        },
+        {
+          "size": "27",
+          "qty": 1
+        },
+        {
+          "size": "28",
+          "qty": 1
+        }
+      ]
     },
     {
       "id": "inv-011",
@@ -244,10 +753,27 @@
       "color": "White",
       "pattern": "Solid",
       "gender": "Unisex",
-      "sizes": ["S", "M", "L", "XL"],
       "price": 129,
       "stockStatus": "in_stock",
-      "stockCount": 22
+      "stockCount": 22,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 5
+        },
+        {
+          "size": "M",
+          "qty": 5
+        },
+        {
+          "size": "L",
+          "qty": 5
+        },
+        {
+          "size": "XL",
+          "qty": 5
+        }
+      ]
     },
     {
       "id": "inv-012",
@@ -258,10 +784,19 @@
       "color": "Navy Stripe",
       "pattern": "Striped",
       "gender": "Men",
-      "sizes": ["M", "L"],
       "price": 149,
       "stockStatus": "in_stock",
-      "stockCount": 8
+      "stockCount": 8,
+      "sizeStock": [
+        {
+          "size": "M",
+          "qty": 4
+        },
+        {
+          "size": "L",
+          "qty": 4
+        }
+      ]
     },
     {
       "id": "inv-013",
@@ -272,10 +807,23 @@
       "color": "Cream",
       "pattern": "Solid",
       "gender": "Women",
-      "sizes": ["XS", "S", "M"],
       "price": 189,
       "stockStatus": "low_stock",
-      "stockCount": 2
+      "stockCount": 2,
+      "sizeStock": [
+        {
+          "size": "XS",
+          "qty": 1
+        },
+        {
+          "size": "S",
+          "qty": 1
+        },
+        {
+          "size": "M",
+          "qty": 1
+        }
+      ]
     },
     {
       "id": "inv-014",
@@ -286,10 +834,23 @@
       "color": "Light Wash",
       "pattern": "Solid",
       "gender": "Unisex",
-      "sizes": ["S", "M", "L"],
       "price": 299,
       "stockStatus": "in_stock",
-      "stockCount": 6
+      "stockCount": 6,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 2
+        },
+        {
+          "size": "M",
+          "qty": 2
+        },
+        {
+          "size": "L",
+          "qty": 2
+        }
+      ]
     },
     {
       "id": "inv-015",
@@ -300,10 +861,23 @@
       "color": "Charcoal",
       "pattern": "Solid",
       "gender": "Men",
-      "sizes": ["M", "L", "XL"],
       "price": 549,
       "stockStatus": "in_stock",
-      "stockCount": 5
+      "stockCount": 5,
+      "sizeStock": [
+        {
+          "size": "M",
+          "qty": 1
+        },
+        {
+          "size": "L",
+          "qty": 1
+        },
+        {
+          "size": "XL",
+          "qty": 1
+        }
+      ]
     },
     {
       "id": "inv-016",
@@ -314,10 +888,19 @@
       "color": "Camel",
       "pattern": "Solid",
       "gender": "Women",
-      "sizes": ["S", "M"],
       "price": 459,
       "stockStatus": "low_stock",
-      "stockCount": 1
+      "stockCount": 1,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 1
+        },
+        {
+          "size": "M",
+          "qty": 1
+        }
+      ]
     },
     {
       "id": "inv-017",
@@ -328,10 +911,23 @@
       "color": "Terracotta",
       "pattern": "Floral",
       "gender": "Women",
-      "sizes": ["S", "M", "L"],
       "price": 420,
       "stockStatus": "in_stock",
-      "stockCount": 4
+      "stockCount": 4,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 1
+        },
+        {
+          "size": "M",
+          "qty": 1
+        },
+        {
+          "size": "L",
+          "qty": 1
+        }
+      ]
     },
     {
       "id": "inv-018",
@@ -342,30 +938,201 @@
       "color": "Black",
       "pattern": "Solid",
       "gender": "Unisex",
-      "sizes": ["40", "41", "42", "43"],
       "price": 219,
       "stockStatus": "in_stock",
-      "stockCount": 12
+      "stockCount": 12,
+      "sizeStock": [
+        {
+          "size": "40",
+          "qty": 3
+        },
+        {
+          "size": "41",
+          "qty": 3
+        },
+        {
+          "size": "42",
+          "qty": 3
+        },
+        {
+          "size": "43",
+          "qty": 3
+        }
+      ]
+    },
+    {
+      "id": "inv-019",
+      "storeId": "store-studio-neve",
+      "name": "קרגו זית בעבודת יד",
+      "category": "Pants",
+      "subcategory": "Cargo Pants",
+      "color": "Olive Green",
+      "pattern": "Solid",
+      "gender": "Unisex",
+      "price": 349,
+      "stockStatus": "in_stock",
+      "stockCount": 3,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 1
+        },
+        {
+          "size": "M",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "id": "inv-dress-1",
+      "storeId": "store-castro-gc",
+      "name": "שמלה חומה מידי",
+      "category": "Dresses",
+      "subcategory": "Midi Dress",
+      "color": "Brown",
+      "pattern": "Solid",
+      "gender": "Women",
+      "price": 199,
+      "stockStatus": "in_stock",
+      "stockCount": 6,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 2
+        },
+        {
+          "size": "M",
+          "qty": 3
+        },
+        {
+          "size": "L",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "id": "inv-dress-2",
+      "storeId": "store-studio-neve",
+      "name": "שמלה חומה בוטיק",
+      "category": "Dresses",
+      "subcategory": "Midi Dress",
+      "color": "Brown",
+      "pattern": "Solid",
+      "gender": "Women",
+      "price": 289,
+      "stockStatus": "low_stock",
+      "stockCount": 2,
+      "sizeStock": [
+        {
+          "size": "M",
+          "qty": 1
+        },
+        {
+          "size": "L",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "id": "inv-hat-1",
+      "storeId": "store-fox-city",
+      "name": "כובע בייסבול",
+      "category": "Hats",
+      "subcategory": "Cap",
+      "color": "Black",
+      "pattern": "Solid",
+      "gender": "Unisex",
+      "price": 79,
+      "stockStatus": "in_stock",
+      "stockCount": 8,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 2
+        },
+        {
+          "size": "M",
+          "qty": 4
+        },
+        {
+          "size": "L",
+          "qty": 2
+        }
+      ]
+    },
+    {
+      "id": "inv-socks-1",
+      "storeId": "store-hm-lev",
+      "name": "גרביים כותנה",
+      "category": "Socks",
+      "subcategory": "Socks",
+      "color": "White",
+      "pattern": "Solid",
+      "gender": "Unisex",
+      "price": 39,
+      "stockStatus": "in_stock",
+      "stockCount": 20,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 5
+        },
+        {
+          "size": "M",
+          "qty": 10
+        },
+        {
+          "size": "L",
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "id": "inv-uw-1",
+      "storeId": "store-golf-gc",
+      "name": "הלבשה תחתונה",
+      "category": "Underwear",
+      "subcategory": "Underwear",
+      "color": "Black",
+      "pattern": "Solid",
+      "gender": "Women",
+      "price": 89,
+      "stockStatus": "in_stock",
+      "stockCount": 12,
+      "sizeStock": [
+        {
+          "size": "S",
+          "qty": 3
+        },
+        {
+          "size": "M",
+          "qty": 5
+        },
+        {
+          "size": "L",
+          "qty": 4
+        }
+      ]
     }
   ],
   "recentSearches": [
     {
       "id": "rs-1",
-      "label": "Olive cargo pants",
+      "label": "מכנסי קרגו זית",
       "category": "Pants",
       "color": "Olive Green",
       "timestamp": "2026-09-22T08:30:00Z"
     },
     {
       "id": "rs-2",
-      "label": "White oxford shirt",
+      "label": "חולצת אוקספורד לבנה",
       "category": "Shirts",
       "color": "White",
       "timestamp": "2026-09-21T16:10:00Z"
     },
     {
       "id": "rs-3",
-      "label": "Denim jacket",
+      "label": "ג׳קט ג׳ינס",
       "category": "Outerwear",
       "color": "Light Wash",
       "timestamp": "2026-09-20T11:45:00Z"
@@ -374,31 +1141,31 @@
   "trendingStyles": [
     {
       "id": "tr-1",
-      "title": "Utility Olive",
+      "title": "זית יוטיליטי",
       "category": "Pants",
       "color": "Olive Green",
-      "tag": "Trending near you"
+      "tag": "טרנד לידכם"
     },
     {
       "id": "tr-2",
-      "title": "Coastal Linen",
+      "title": "פשתן חופי",
       "category": "Shirts",
       "color": "Navy Stripe",
-      "tag": "Week's pick"
+      "tag": "בחירת השבוע"
     },
     {
       "id": "tr-3",
-      "title": "Soft Camel Layer",
+      "title": "שכבת קאמל רכה",
       "category": "Outerwear",
       "color": "Camel",
-      "tag": "Fall edit"
+      "tag": "קולקציית סתיו"
     },
     {
       "id": "tr-4",
-      "title": "Indigo Slim",
+      "title": "אינדיגו צמוד",
       "category": "Pants",
       "color": "Indigo",
-      "tag": "Most searched"
+      "tag": "הכי מחפשים"
     }
   ]
 }

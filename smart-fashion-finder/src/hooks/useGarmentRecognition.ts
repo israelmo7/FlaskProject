@@ -64,8 +64,9 @@ function pickMockByHint(
 }
 
 /**
- * Mock garment recognition — swap `analyzeImage` body with
- * Google Cloud Vision / OpenAI Vision when API keys are available.
+ * Garment recognition entry points.
+ * Photo/camera currently route to manual tagging (`/tag`).
+ * Swap `analyzeImage` for Google Cloud Vision / OpenAI Vision when keys exist.
  */
 export function useGarmentRecognition() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
