@@ -63,10 +63,10 @@ export function DressableFigure({
         >
           <Image
             source={baseImage}
+            resizeMode="contain"
             style={{
               width: dollW,
               height: dollH,
-              resizeMode: 'contain',
             }}
           />
 
@@ -186,38 +186,38 @@ function FittedGarment({
   const layout =
     region === 'top'
       ? {
-          top: bodyH * 0.15,
-          width: bodyW * 0.64 * fit,
-          height: bodyH * 0.3 * Math.min(1.1, Math.max(0.88, fit)),
+          top: bodyH * 0.14,
+          width: bodyW * 0.78 * fit,
+          height: bodyH * 0.34 * Math.min(1.12, Math.max(0.9, fit)),
         }
       : region === 'bottom'
         ? {
-            top: bodyH * 0.4,
-            width: bodyW * 0.52 * fit,
-            height: bodyH * 0.52,
+            top: bodyH * 0.38,
+            width: bodyW * 0.58 * fit,
+            height: bodyH * 0.55,
           }
         : region === 'dress'
           ? {
-              top: bodyH * 0.15,
-              width: bodyW * 0.6 * fit,
-              height: bodyH * 0.62,
+              top: bodyH * 0.14,
+              width: bodyW * 0.72 * fit,
+              height: bodyH * 0.66,
             }
           : region === 'hat'
             ? {
-                top: bodyH * 0.02,
-                width: bodyW * 0.42 * Math.min(1.15, Math.max(0.9, fit)),
-                height: bodyH * 0.14,
+                top: bodyH * 0.04,
+                width: bodyW * 0.48 * Math.min(1.12, Math.max(0.92, fit)),
+                height: bodyH * 0.13,
               }
             : region === 'shoes'
               ? {
-                  top: bodyH * 0.86,
-                  width: bodyW * 0.48 * Math.min(1.1, Math.max(0.9, fit)),
-                  height: bodyH * 0.12,
+                  top: bodyH * 0.88,
+                  width: bodyW * 0.52 * Math.min(1.1, Math.max(0.9, fit)),
+                  height: bodyH * 0.1,
                 }
               : {
-                  top: bodyH * 0.13,
-                  width: bodyW * 0.7 * fit,
-                  height: bodyH * 0.34 * Math.min(1.1, Math.max(0.88, fit)),
+                  top: bodyH * 0.12,
+                  width: bodyW * 0.82 * fit,
+                  height: bodyH * 0.38 * Math.min(1.12, Math.max(0.9, fit)),
                 };
 
   return (
@@ -238,10 +238,10 @@ function FittedGarment({
       {src ? (
         <Image
           source={src}
+          resizeMode="contain"
           style={{
             width: '100%',
             height: '100%',
-            resizeMode: 'contain',
             backgroundColor: 'transparent',
           }}
         />
