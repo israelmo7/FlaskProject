@@ -283,15 +283,15 @@ function BodyGarment({
     );
   }
 
-  // top / outer / dress — חזה / גוף
+  // top / outer / dress — חזה / גוף בצורת גוף (לא ריבוע)
   const isDress = region === 'dress';
   const isOuter = region === 'outer';
   const w =
     bodyW *
-    (isOuter ? 0.72 : isDress ? 0.58 : 0.62) *
+    (isOuter ? 0.68 : isDress ? 0.55 : 0.55) *
     fit;
-  const h = bodyH * (isDress ? 0.52 : isOuter ? 0.3 : 0.28);
-  const top = bodyH * (isOuter ? 0.15 : 0.16);
+  const h = bodyH * (isDress ? 0.48 : isOuter ? 0.26 : 0.24);
+  const top = bodyH * (isOuter ? 0.17 : 0.18);
 
   return (
     <View
@@ -302,45 +302,58 @@ function BodyGarment({
         left: (bodyW - w) / 2,
         width: w,
         height: h,
-        borderTopLeftRadius: isOuter ? 18 : 22,
-        borderTopRightRadius: isOuter ? 18 : 22,
-        borderBottomLeftRadius: isDress ? 28 : 14,
-        borderBottomRightRadius: isDress ? 28 : 14,
-        backgroundColor: color,
-        overflow: 'hidden',
-        opacity: 0.96,
+        alignItems: 'center',
       }}
     >
-      {texture ? (
-        <Image
-          source={texture}
-          resizeMode="cover"
-          style={{ width: '100%', height: '100%', opacity: 0.55 }}
-        />
-      ) : null}
-      {/* שרוולים קצרים לחולצה */}
+      {/* גוף החולצה — רחב בכתפיים, צר במותן */}
+      <View
+        style={{
+          width: '100%',
+          height: '100%',
+          borderTopLeftRadius: w * 0.22,
+          borderTopRightRadius: w * 0.22,
+          borderBottomLeftRadius: isDress ? w * 0.28 : w * 0.18,
+          borderBottomRightRadius: isDress ? w * 0.28 : w * 0.18,
+          backgroundColor: color,
+          overflow: 'hidden',
+          opacity: 0.92,
+          transform: [{ scaleX: 0.92 }],
+        }}
+      >
+        {texture ? (
+          <Image
+            source={texture}
+            resizeMode="cover"
+            style={{ width: '100%', height: '100%', opacity: 0.45 }}
+          />
+        ) : null}
+      </View>
       {!isDress ? (
         <>
           <View
             style={{
               position: 'absolute',
-              top: h * 0.08,
-              left: -w * 0.18,
-              width: w * 0.28,
-              height: h * 0.42,
-              borderRadius: 12,
+              top: h * 0.06,
+              left: -w * 0.14,
+              width: w * 0.26,
+              height: h * 0.38,
+              borderRadius: 14,
               backgroundColor: color,
+              opacity: 0.92,
+              transform: [{ rotate: '-12deg' }],
             }}
           />
           <View
             style={{
               position: 'absolute',
-              top: h * 0.08,
-              right: -w * 0.18,
-              width: w * 0.28,
-              height: h * 0.42,
-              borderRadius: 12,
+              top: h * 0.06,
+              right: -w * 0.14,
+              width: w * 0.26,
+              height: h * 0.38,
+              borderRadius: 14,
               backgroundColor: color,
+              opacity: 0.92,
+              transform: [{ rotate: '12deg' }],
             }}
           />
         </>
