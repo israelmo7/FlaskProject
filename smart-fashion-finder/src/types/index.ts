@@ -38,6 +38,13 @@ export interface OutfitPiece {
   color: string;
   size: string;
   slot: OutfitSlot;
+  price?: number;
+}
+
+/** פריט בסל קניות (לוק שמור) */
+export interface CartItem extends OutfitPiece {
+  price: number;
+  addedAt: string;
 }
 
 export interface OutfitLayers {

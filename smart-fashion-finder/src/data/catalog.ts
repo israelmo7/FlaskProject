@@ -128,6 +128,17 @@ export const PRODUCTS: ProductCard[] = [
     category: 'Shoes',
     color: 'White',
     subcategory: 'סניקרס',
+    layerId: 'w-sneakers',
+  },
+  {
+    id: 'p-hat',
+    title: 'כובע שחור',
+    price: 79,
+    image: require('../../assets/images/product-hat.png'),
+    category: 'Hats',
+    color: 'Black',
+    subcategory: 'כובע',
+    layerId: 'w-hat',
   },
 ];
 

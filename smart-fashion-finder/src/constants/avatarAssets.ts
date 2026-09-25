@@ -17,13 +17,28 @@ export const GARMENT_LAYER_IMAGES: Record<string, ImageSourcePropType> = {
   'w-olive-cargo': require('../../assets/images/layers/olive-pants.png'),
   'w-blue-jeans': require('../../assets/images/layers/blue-jeans.png'),
   'w-denim-jacket': require('../../assets/images/layers/denim-jacket.png'),
+  'w-hat': require('../../assets/images/layers/hat.png'),
+  'w-sneakers': require('../../assets/images/layers/sneakers.png'),
+  // product fallbacks — תמונות מוצר ב־contain במקום ריבוע צבע
+  'p-tshirt': require('../../assets/images/product-tshirt.png'),
+  'p-hoodie': require('../../assets/images/product-hoodie.png'),
+  'p-oxford': require('../../assets/images/layers/white-shirt.png'),
+  'p-turtleneck': require('../../assets/images/product-turtleneck.png'),
+  'p-jeans': require('../../assets/images/product-jeans.png'),
+  'p-shorts': require('../../assets/images/product-denim-shorts.png'),
+  'p-cargo': require('../../assets/images/product-cargo.png'),
+  'p-sport': require('../../assets/images/product-sport-pants.png'),
+  'p-denim-jkt': require('../../assets/images/product-denim-jacket.png'),
+  'p-leather': require('../../assets/images/product-leather.png'),
+  'p-dress': require('../../assets/images/product-dress.png'),
+  'p-sneakers': require('../../assets/images/layers/sneakers.png'),
+  'p-hat': require('../../assets/images/layers/hat.png'),
 };
 
 export function layerImageForPieceId(pieceId: string): ImageSourcePropType | null {
-  const baseId = pieceId.replace(/-\d+$/, '').replace(/-(XS|S|M|L|XL|\d{2,3})-\d+$/, '');
-  // ids look like: w-black-shirt-L-171...
+  // ids: w-black-shirt-L / home-p-hoodie-M / cart-home-p-hat-S-...
   for (const key of Object.keys(GARMENT_LAYER_IMAGES)) {
-    if (pieceId.startsWith(key)) return GARMENT_LAYER_IMAGES[key];
+    if (pieceId.includes(key)) return GARMENT_LAYER_IMAGES[key];
   }
-  return GARMENT_LAYER_IMAGES[baseId] ?? null;
+  return null;
 }

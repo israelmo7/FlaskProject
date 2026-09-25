@@ -5,6 +5,8 @@ import {
   garmentColorHex,
   heightScale,
   isFemalePersona,
+  sizeFitScale,
+  sizeRelativeToHeight,
 } from '@/constants/avatar';
 import { PERSONA_BASE_IMAGES, layerImageForPieceId } from '@/constants/avatarAssets';
 import type { AvatarProfile, OutfitLayers, OutfitPiece } from '@/types';
@@ -16,19 +18,10 @@ type Props = {
   compact?: boolean;
 };
 
-/** מידה משפיעה על רוחב הבגד על הגוף */
-function sizeFitScale(size: string): number {
-  const s = size.toUpperCase();
-  if (s === 'XS' || s === '30') return 0.88;
-  if (s === 'S' || s === '32') return 0.94;
-  if (s === 'M' || s === '34') return 1;
-  if (s === 'L' || s === '36') return 1.08;
-  if (s === 'XL' || Number(s) >= 38) return 1.16;
-  return 1;
-}
+type Region = 'top' | 'bottom' | 'dress' | 'outer' | 'hat' | 'shoes';
 
 /**
- * בובה פוטוריאליסטית לפי גיל/מין + שכבות בגדים צמודות לגוף.
+ * בובה גדולה עם רגליים גלויות + בגדים לפי מידה וגובה (contain, לא ריבוע).
  */
 export function DressableFigure({
   profile,
@@ -42,35 +35,43 @@ export function DressableFigure({
   const personaLabel =
     PERSONA_OPTIONS.find((p) => p.id === profile.persona)?.label ?? '';
 
-  const dollW = (compact ? 200 : 248) * Math.min(1.18, Math.max(0.82, wScale));
-  const dollH = (compact ? 310 : 380) * Math.min(1.18, Math.max(0.82, hScale));
+  const baseW = compact ? 248 : 300;
+  const baseH = compact ? 440 : 530;
+  const dollW = baseW * Math.min(1.22, Math.max(0.78, wScale));
+  const dollH = baseH * hScale;
 
   const worn = [layers.dress, layers.top, layers.bottom, layers.outer, layers.shoes].filter(
     Boolean,
   ) as OutfitPiece[];
 
   const baseImage = PERSONA_BASE_IMAGES[profile.persona];
+  const outerIsHat = layers.outer?.category === 'Hats';
 
   return (
     <View className="items-start">
-      <View
-        className="overflow-visible bg-transparent"
-        style={{ width: dollW + 24, paddingVertical: compact ? 8 : 12 }}
-      >
-        <Text className="mb-1 text-left font-display text-base text-ink">
+      <View style={{ width: dollW + 20, paddingVertical: 6 }}>
+        <Text className="mb-1.5 text-left font-display text-sm text-ink">
           {personaLabel} · {profile.heightCm} ס״מ
         </Text>
 
         <View
-          className="items-center justify-center self-start overflow-hidden"
-          style={{ width: dollW, height: dollH, borderRadius: 16 }}
+          className="self-start overflow-visible"
+          style={{
+            width: dollW,
+            height: dollH,
+            borderRadius: 8,
+            backgroundColor: '#FAF8F5',
+          }}
         >
           <Image
             source={baseImage}
-            style={{ width: dollW, height: dollH, resizeMode: 'cover' }}
+            style={{
+              width: dollW,
+              height: dollH,
+              resizeMode: 'contain',
+            }}
           />
 
-          {/* מכנסיים — צמודים יותר לפלג תחתון */}
           {layers.bottom && !layers.dress ? (
             <FittedGarment
               piece={layers.bottom}
@@ -78,10 +79,10 @@ export function DressableFigure({
               bodyH={dollH}
               region="bottom"
               buildScale={wScale}
+              heightCm={profile.heightCm}
             />
           ) : null}
 
-          {/* חולצה */}
           {layers.top && !layers.dress ? (
             <FittedGarment
               piece={layers.top}
@@ -89,6 +90,7 @@ export function DressableFigure({
               bodyH={dollH}
               region="top"
               buildScale={wScale}
+              heightCm={profile.heightCm}
             />
           ) : null}
 
@@ -99,31 +101,47 @@ export function DressableFigure({
               bodyH={dollH}
               region="dress"
               buildScale={wScale}
+              heightCm={profile.heightCm}
             />
           ) : null}
 
-          {layers.outer ? (
+          {layers.outer && !outerIsHat ? (
             <FittedGarment
               piece={layers.outer}
               bodyW={dollW}
               bodyH={dollH}
               region="outer"
               buildScale={wScale}
+              heightCm={profile.heightCm}
+            />
+          ) : null}
+
+          {layers.outer && outerIsHat ? (
+            <FittedGarment
+              piece={layers.outer}
+              bodyW={dollW}
+              bodyH={dollH}
+              region="hat"
+              buildScale={wScale}
+              heightCm={profile.heightCm}
+            />
+          ) : null}
+
+          {layers.shoes ? (
+            <FittedGarment
+              piece={layers.shoes}
+              bodyW={dollW}
+              bodyH={dollH}
+              region="shoes"
+              buildScale={wScale}
+              heightCm={profile.heightCm}
             />
           ) : null}
         </View>
-
-        <Text className="mt-2 px-1 text-left font-body text-xs text-ink-muted">
-          {worn.length === 0
-            ? female
-              ? 'בסיס בלי בגדים חיצוניים — מוכנה להלבשה'
-              : 'בסיס בלי בגדים חיצוניים — מוכן להלבשה'
-            : 'הפריטים שבחרת נשארים על הבובה'}
-        </Text>
       </View>
 
       {worn.length > 0 ? (
-        <View className="mt-3 w-full flex-row flex-wrap justify-start">
+        <View className="mt-2 w-full flex-row flex-wrap justify-start">
           {worn.map((piece) => (
             <Pressable
               key={piece.id}
@@ -137,7 +155,11 @@ export function DressableFigure({
             </Pressable>
           ))}
         </View>
-      ) : null}
+      ) : (
+        <Text className="mt-1 font-body text-[11px] text-ink-muted">
+          {female ? 'מוכנה להלבשה' : 'מוכן להלבשה'}
+        </Text>
+      )}
     </View>
   );
 }
@@ -148,39 +170,57 @@ function FittedGarment({
   bodyH,
   region,
   buildScale,
+  heightCm,
 }: {
   piece: OutfitPiece;
   bodyW: number;
   bodyH: number;
-  region: 'top' | 'bottom' | 'dress' | 'outer';
+  region: Region;
   buildScale: number;
+  heightCm: number;
 }) {
   const src = layerImageForPieceId(piece.id);
-  const fit = sizeFitScale(piece.size) * Math.min(1.12, Math.max(0.9, buildScale));
+  const fit =
+    sizeFitScale(piece.size) *
+    sizeRelativeToHeight(piece.size, heightCm) *
+    Math.min(1.15, Math.max(0.85, buildScale));
 
   const layout =
     region === 'top'
-      ? { top: bodyH * 0.18, width: bodyW * 0.72 * fit, height: bodyH * 0.34, radius: 18 }
+      ? {
+          top: bodyH * 0.15,
+          width: bodyW * 0.64 * fit,
+          height: bodyH * 0.3 * Math.min(1.1, Math.max(0.88, fit)),
+        }
       : region === 'bottom'
         ? {
-            top: bodyH * 0.48,
-            width: bodyW * 0.58 * fit,
-            height: bodyH * 0.46,
-            radius: 14,
+            top: bodyH * 0.4,
+            width: bodyW * 0.52 * fit,
+            height: bodyH * 0.52,
           }
         : region === 'dress'
           ? {
-              top: bodyH * 0.18,
-              width: bodyW * 0.7 * fit,
+              top: bodyH * 0.15,
+              width: bodyW * 0.6 * fit,
               height: bodyH * 0.62,
-              radius: 20,
             }
-          : {
-              top: bodyH * 0.16,
-              width: bodyW * 0.78 * fit,
-              height: bodyH * 0.38,
-              radius: 20,
-            };
+          : region === 'hat'
+            ? {
+                top: bodyH * 0.02,
+                width: bodyW * 0.42 * Math.min(1.15, Math.max(0.9, fit)),
+                height: bodyH * 0.14,
+              }
+            : region === 'shoes'
+              ? {
+                  top: bodyH * 0.86,
+                  width: bodyW * 0.48 * Math.min(1.1, Math.max(0.9, fit)),
+                  height: bodyH * 0.12,
+                }
+              : {
+                  top: bodyH * 0.13,
+                  width: bodyW * 0.7 * fit,
+                  height: bodyH * 0.34 * Math.min(1.1, Math.max(0.88, fit)),
+                };
 
   return (
     <View
@@ -188,59 +228,41 @@ function FittedGarment({
       style={{
         position: 'absolute',
         top: layout.top,
-        alignSelf: 'center',
+        left: (bodyW - layout.width) / 2,
         width: layout.width,
         height: layout.height,
-        borderRadius: layout.radius,
-        overflow: 'hidden',
-        // צל רך כדי שהבגד “ישב” על הגוף
-        shadowColor: '#000',
-        shadowOpacity: 0.35,
-        shadowRadius: 8,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 4,
-        backgroundColor: src ? 'rgba(0,0,0,0.05)' : garmentColorHex(piece.color),
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
     >
       {src ? (
         <Image
           source={src}
-          style={{ width: '100%', height: '100%', opacity: 0.96 }}
-          resizeMode="cover"
+          style={{
+            width: '100%',
+            height: '100%',
+            resizeMode: 'contain',
+          }}
         />
       ) : (
         <View
           style={{
-            flex: 1,
+            width: region === 'hat' ? '70%' : '78%',
+            height: region === 'shoes' ? '55%' : '88%',
+            borderRadius: region === 'bottom' || region === 'shoes' ? 14 : 18,
             backgroundColor: garmentColorHex(piece.color),
-            opacity: 0.92,
+            opacity: 0.9,
           }}
         />
       )}
-      {/* שכבת כהות קלה בקצוות — תחושת עומק */}
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          top: 0,
-          bottom: 0,
-          borderWidth: 1,
-          borderColor: 'rgba(0,0,0,0.18)',
-          borderRadius: layout.radius,
-        }}
-      />
-      <View
-        className="absolute left-1 right-1"
-        style={{ bottom: 6 }}
-      >
-        <View className="self-center rounded-full bg-black/70 px-2 py-0.5">
-          <Text className="font-bodyMedium text-[9px] text-white">
-            {piece.label} · {piece.size}
-          </Text>
+      {region !== 'shoes' && region !== 'hat' ? (
+        <View
+          className="absolute rounded-full bg-black/65 px-2 py-0.5"
+          style={{ bottom: 2 }}
+        >
+          <Text className="font-bodyMedium text-[9px] text-white">{piece.size}</Text>
         </View>
-      </View>
+      ) : null}
     </View>
   );
 }

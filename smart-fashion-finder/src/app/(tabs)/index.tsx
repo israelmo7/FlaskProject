@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BrandCircles, ProductGrid, StyleBanner } from '@/components/DiscoverySection';
+import { BrandCircles, ProductGrid } from '@/components/DiscoverySection';
 import { CategoryDrawer } from '@/components/CategoryDrawer';
 import { HeroAvatarSection } from '@/components/HeroAvatarSection';
 import { SiteHeader } from '@/components/SiteHeader';
@@ -34,12 +34,6 @@ import type {
   SearchFilters,
 } from '@/types';
 
-function countLayers(layers: OutfitLayers): number {
-  return [layers.dress, layers.top, layers.bottom, layers.outer, layers.shoes].filter(
-    Boolean,
-  ).length;
-}
-
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const {
@@ -47,10 +41,12 @@ export default function HomeScreen() {
     profile,
     preferredSize,
     layers,
+    cart,
     areaId,
     onboardingComplete,
     updateLayers,
     updatePreferredSize,
+    saveLookToCart,
     reload,
   } = useSavedProfile();
   const { pickFromLibrary, snapWithCamera, isAnalyzing } = useGarmentRecognition();
@@ -107,6 +103,7 @@ export default function HomeScreen() {
       color: product.color,
       size,
       slot: categoryToSlot(product.category),
+      price: product.price,
     });
   };
 
@@ -205,6 +202,8 @@ export default function HomeScreen() {
 
   const openProfile = () => router.push('/onboarding');
 
+  const onSaveLook = () => saveLookToCart();
+
   if (!ready || !onboardingComplete) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
@@ -226,7 +225,7 @@ export default function HomeScreen() {
         onCamera={() => void goToTag('camera')}
         onGallery={() => void goToTag('upload')}
         areaLabel={areaLabelForId(areaId)}
-        cartCount={countLayers(layers)}
+        cartCount={cart.length}
         locationMode={locationMode}
         onLocationModeChange={setLocationMode}
         onVoiceSearch={onVoiceSearch}
@@ -256,13 +255,8 @@ export default function HomeScreen() {
             setLayers((prev) => removeSlot(prev, piece.slot))
           }
           onFindNearMe={goToStores}
-          onEditAvatar={openProfile}
+          onSaveLook={onSaveLook}
         />
-
-        <Text className="mt-3 px-4 text-right font-body text-xs text-ink-muted">
-          {he.myPreferredSize}: {preferredSize}
-          {locationMode === 'onTheWay' ? ` · ${he.locOnTheWay}` : ''}
-        </Text>
 
         <BrandCircles
           selectedId={selectedBrand}
@@ -271,21 +265,21 @@ export default function HomeScreen() {
           }
         />
 
-        <StyleBanner />
-
-        <View className="mt-3 flex-row items-center justify-between px-4">
-          <Pressable
-            onPress={goToStores}
-            className="rounded-full bg-ink px-4 py-2"
-          >
-            <Text className="font-bodyBold text-sm text-white">{he.findNearMe}</Text>
-          </Pressable>
-          <Text className="font-bodyMedium text-sm text-ink-muted">
-            {filterSub
-              ? `קטגוריה: ${filterSub}`
-              : 'בחרו קטגוריה מהתפריט או מוצר להלבשה'}
-          </Text>
-        </View>
+        {filterSub ? (
+          <View className="mt-2 flex-row items-center justify-end px-4">
+            <Pressable
+              onPress={() => {
+                setFilterCategory(null);
+                setFilterSub(null);
+              }}
+              className="rounded-full bg-[#F3F0EB] px-3 py-1.5"
+            >
+              <Text className="font-bodyMedium text-xs text-ink-muted">
+                {filterSub} ✕
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
 
         <ProductGrid
           onSelect={onProductSelect}

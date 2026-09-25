@@ -2,26 +2,21 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-nati
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback } from 'react';
-import { personaToGenderFilter, removeSlot } from '@/constants/avatar';
+import { personaToGenderFilter } from '@/constants/avatar';
 import { useSavedProfile } from '@/hooks/useSavedProfile';
 import { he } from '@/i18n/he';
-import type { GarmentAnalysis, OutfitPiece } from '@/types';
+import type { CartItem, GarmentAnalysis } from '@/types';
 import { formatPriceILS } from '@/utils/stock';
-
-function layersToList(layers: ReturnType<typeof useSavedProfile>['layers']): OutfitPiece[] {
-  return [layers.dress, layers.top, layers.bottom, layers.outer, layers.shoes].filter(
-    Boolean,
-  ) as OutfitPiece[];
-}
 
 export default function CartScreen() {
   const {
     ready,
-    layers,
+    cart,
     preferredSize,
     profile,
-    updateLayers,
     updatePreferredSize,
+    removeCartItem,
+    clearCart,
     reload,
   } = useSavedProfile();
 
@@ -31,17 +26,7 @@ export default function CartScreen() {
     }, [reload]),
   );
 
-  const items = layersToList(layers);
-
-  const removeItem = (piece: OutfitPiece) => {
-    updateLayers(removeSlot(layers, piece.slot));
-  };
-
-  const clearAll = () => {
-    updateLayers({});
-  };
-
-  const findNearMe = (piece: OutfitPiece) => {
+  const findNearMe = (piece: CartItem) => {
     const size = piece.size || preferredSize || 'M';
     updatePreferredSize(size);
     const analysis: GarmentAnalysis = {
@@ -52,8 +37,8 @@ export default function CartScreen() {
       pattern: 'Solid',
       fit: 'Regular',
       gender: personaToGenderFilter(profile.persona),
-      estimatedPriceMin: 120,
-      estimatedPriceMax: 350,
+      estimatedPriceMin: Math.max(50, piece.price - 40),
+      estimatedPriceMax: piece.price + 40,
       confidence: 0.9,
       boundingBoxes: [],
       source: 'avatar',
@@ -69,6 +54,8 @@ export default function CartScreen() {
       },
     });
   };
+
+  const total = cart.reduce((sum, item) => sum + item.price, 0);
 
   if (!ready) {
     return (
@@ -87,17 +74,17 @@ export default function CartScreen() {
         {he.cartTitle}
       </Text>
       <Text className="mb-5 text-right font-body text-sm text-ink-muted">
-        {he.cartHint}
+        {he.cartLookHint}
       </Text>
 
-      {items.length === 0 ? (
+      {cart.length === 0 ? (
         <View className="items-center rounded-2xl bg-white px-6 py-12">
           <Ionicons name="cart-outline" size={40} color="#8A847C" />
           <Text className="mt-3 text-center font-bodyBold text-base text-ink">
             {he.cartEmpty}
           </Text>
           <Text className="mt-2 text-center font-body text-sm text-ink-muted">
-            {he.cartEmptyHint}
+            {he.cartEmptyHintLook}
           </Text>
           <Pressable
             onPress={() => router.back()}
@@ -108,13 +95,13 @@ export default function CartScreen() {
         </View>
       ) : (
         <>
-          {items.map((piece) => (
+          {cart.map((piece) => (
             <View
               key={piece.id}
               className="mb-3 rounded-2xl border border-[#E8E4DE] bg-white px-4 py-4"
             >
               <View className="flex-row items-start justify-between">
-                <Pressable onPress={() => removeItem(piece)} hitSlop={10}>
+                <Pressable onPress={() => removeCartItem(piece.id)} hitSlop={10}>
                   <Ionicons name="trash-outline" size={20} color="#C45C4A" />
                 </Pressable>
                 <View className="flex-1 items-end pl-3">
@@ -123,25 +110,35 @@ export default function CartScreen() {
                     {he.sizeLabel}: {piece.size || preferredSize}
                   </Text>
                   <Text className="mt-0.5 font-body text-xs text-ink-muted">
-                    {piece.color}
+                    {piece.subcategory}
                   </Text>
-                  <Text className="mt-2 font-bodyBold text-sm text-teal">
-                    {formatPriceILS(189)}
+                  <Text className="mt-2 font-bodyBold text-base text-teal">
+                    {formatPriceILS(piece.price)}
                   </Text>
                 </View>
               </View>
               <Pressable
                 onPress={() => findNearMe(piece)}
-                className="mt-3 items-center rounded-full bg-[#E07A4F] py-2.5"
+                className="mt-3 flex-row items-center justify-center rounded-full bg-[#E07A4F] py-3"
               >
-                <Text className="font-bodyBold text-sm text-white">{he.findNearMe}</Text>
+                <Text className="ml-1.5 font-bodyBold text-sm text-white">
+                  {he.navigate}
+                </Text>
+                <Ionicons name="navigate" size={16} color="#fff" />
               </Pressable>
             </View>
           ))}
 
+          <View className="mb-3 flex-row items-center justify-between rounded-2xl bg-white px-4 py-3">
+            <Text className="font-bodyBold text-base text-ink">
+              {formatPriceILS(total)}
+            </Text>
+            <Text className="font-bodyMedium text-sm text-ink-muted">{he.cartTotal}</Text>
+          </View>
+
           <Pressable
-            onPress={clearAll}
-            className="mt-2 items-center rounded-full border border-[#D5CFC6] py-3"
+            onPress={clearCart}
+            className="mt-1 items-center rounded-full border border-[#D5CFC6] py-3"
           >
             <Text className="font-bodyMedium text-sm text-ink-soft">{he.clearCart}</Text>
           </Pressable>

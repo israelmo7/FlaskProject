@@ -13,10 +13,18 @@ export const he = {
 
   cartTitle: 'עגלת קניות',
   cartHint: 'הפריטים שלבשתם על הבובה — מכאן מחפשים מלאי בחנויות.',
+  cartLookHint: 'הלוק ששמרתם מהבובה — לכל פריט מחיר וניווט לחנות.',
   cartEmpty: 'העגלה ריקה',
   cartEmptyHint: 'הלבישו פריט על הבובה בדף הבית כדי להוסיף אותו לכאן.',
+  cartEmptyHintLook: 'לחצו «שמירת לוקים» על הבובה כדי להעביר את הפריטים לכאן.',
+  cartTotal: 'סה״כ',
   clearCart: 'ריקון העגלה',
   backToHome: 'חזרה לבית',
+
+  saveLook: 'שמירת לוקים',
+  saveLookEmpty: 'אין פריטים על הבובה',
+  saveLookDone: 'הלוק נשמר',
+  saveLookDoneHint: '{n} פריטים נוספו לסל הקניות',
 
   areaTitle: 'בחירת אזור',
   areaHint: 'בחרו איפה לחפש מלאי בפיילוט חיפה.',

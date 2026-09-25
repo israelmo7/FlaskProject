@@ -1,4 +1,4 @@
-import { Pressable, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { DressableFigure } from '@/components/DressableFigure';
 import { he } from '@/i18n/he';
 import type { AvatarProfile, OutfitLayers, OutfitPiece } from '@/types';
@@ -8,50 +8,56 @@ type Props = {
   layers: OutfitLayers;
   onRemovePiece?: (piece: OutfitPiece) => void;
   onFindNearMe?: () => void;
-  onEditAvatar?: () => void;
+  onSaveLook?: () => number;
 };
 
-/** גיבור בית — בובה משמאל בלי רקע ובלי בחירת גיל/מין (נקבע באונבורדינג) */
+/** גיבור בית — בובה גדולה משמאל + שמירת לוק / מצא לידך */
 export function HeroAvatarSection({
   profile,
   layers,
   onRemovePiece,
   onFindNearMe,
-  onEditAvatar,
+  onSaveLook,
 }: Props) {
   const { width } = useWindowDimensions();
-  const compact = width < 500;
+  // בובה גדולה גם במובייל — רק במסכים צרים מאוד מצמצמים
+  const compact = width < 360;
+
+  const onSave = () => {
+    if (!onSaveLook) return;
+    const count = onSaveLook();
+    if (count === 0) {
+      Alert.alert(he.saveLookEmpty);
+      return;
+    }
+    Alert.alert(he.saveLookDone, he.saveLookDoneHint.replace('{n}', String(count)));
+  };
 
   return (
-    <View className="mx-4 mt-4 bg-white">
-      <Text className="text-right font-display text-2xl text-ink">{he.heroTitle}</Text>
-      <Text className="mt-1 text-right font-body text-xs text-ink-muted">
-        {he.homeDressHint}
-      </Text>
-
+    <View className="mx-4 mt-3 bg-white">
       <View
-        className="mt-3 flex-row items-end"
+        className="flex-row items-end"
         style={{ direction: 'ltr', justifyContent: 'flex-start' }}
       >
-        <Pressable onPress={onEditAvatar} className="items-start">
+        <View className="items-start">
           <DressableFigure
             compact={compact}
             profile={profile}
             layers={layers}
             onRemovePiece={onRemovePiece}
           />
-        </Pressable>
+        </View>
 
-        <View className="mb-6 ml-3 flex-1 items-start gap-2 pb-2">
+        <View className="mb-8 ml-3 flex-1 items-start gap-2.5 pb-2">
           <Pressable
-            onPress={onEditAvatar}
-            className="rounded-full border border-[#D5CFC6] px-4 py-2"
+            onPress={onSave}
+            className="rounded-full bg-ink px-5 py-3 shadow-sm"
           >
-            <Text className="font-bodyMedium text-sm text-ink">{he.editProfile}</Text>
+            <Text className="font-bodyBold text-sm text-white">{he.saveLook}</Text>
           </Pressable>
           <Pressable
             onPress={onFindNearMe}
-            className="rounded-full bg-[#E07A4F] px-4 py-2"
+            className="rounded-full bg-[#E07A4F] px-5 py-3 shadow-sm"
           >
             <Text className="font-bodyBold text-sm text-white">{he.findNearMe}</Text>
           </Pressable>

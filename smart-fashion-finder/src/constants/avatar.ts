@@ -83,10 +83,40 @@ export function buildWidthScale(build: BodyBuild): number {
   }
 }
 
-export function heightScale(heightCm: number, persona: AvatarPersona): number {
-  const range = HEIGHT_RANGE[persona];
-  const mid = (range.min + range.max) / 2;
-  return Math.min(1.2, Math.max(0.75, heightCm / mid));
+export function heightScale(heightCm: number, _persona?: AvatarPersona): number {
+  // 140ס״מ ≈ 0.78 · 165 ≈ 1 · 190 ≈ 1.15
+  return Math.min(1.22, Math.max(0.72, heightCm / 165));
+}
+
+/** כמה הבגד גדול/קטן ביחס לגובה הגוף */
+export function sizeRelativeToHeight(size: string, heightCm: number): number {
+  const ideal =
+    heightCm < 155 ? 0 : heightCm < 168 ? 1 : heightCm < 178 ? 2 : heightCm < 188 ? 3 : 4;
+  const map: Record<string, number> = {
+    XS: 0,
+    S: 1,
+    M: 2,
+    L: 3,
+    XL: 4,
+    '30': 1,
+    '32': 2,
+    '34': 3,
+    '36': 4,
+  };
+  const idx = map[size.toUpperCase()] ?? 2;
+  const delta = idx - ideal;
+  // S על 178ס״מ → שלילי → חולצה קטנה יותר
+  return Math.min(1.28, Math.max(0.72, 1 + delta * 0.1));
+}
+
+export function sizeFitScale(size: string): number {
+  const s = size.toUpperCase();
+  if (s === 'XS' || s === '30') return 0.78;
+  if (s === 'S' || s === '32') return 0.88;
+  if (s === 'M' || s === '34') return 1;
+  if (s === 'L' || s === '36') return 1.12;
+  if (s === 'XL' || Number(s) >= 38) return 1.24;
+  return 1;
 }
 
 export function categoryToSlot(category: GarmentCategory): OutfitSlot {

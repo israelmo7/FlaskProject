@@ -75,8 +75,8 @@ export function SiteHeader({
         {/* חיפוש + אייקונים — צד שמאל ויזואלי */}
         <View className="flex-row items-center gap-2">
           <View
-            className="min-w-[200px] max-w-[280px] flex-row items-center rounded-full border border-[#D9D3C9] bg-[#FAF8F5] px-2 py-1.5"
-            style={{ direction: 'ltr' }}
+            className="flex-row items-center rounded-full border border-[#D9D3C9] bg-[#FAF8F5] px-3.5 py-3"
+            style={{ direction: 'ltr', minWidth: 300, maxWidth: 440, flexGrow: 1 }}
           >
             {/* מצלמה בצד שמאל של החיפוש */}
             <Pressable
@@ -85,7 +85,7 @@ export function SiteHeader({
               accessibilityLabel={he.openCamera}
               className="px-1"
             >
-              <Ionicons name="camera-outline" size={20} color="#1A1A1A" />
+              <Ionicons name="camera-outline" size={22} color="#1A1A1A" />
             </Pressable>
 
             <Pressable
@@ -117,7 +117,7 @@ export function SiteHeader({
               onSubmitEditing={onSearchSubmit}
               placeholder={listening ? he.listening : he.searchPlaceholder}
               placeholderTextColor="#8A847C"
-              className="ml-1 flex-1 font-body text-sm text-ink"
+              className="ml-1.5 flex-1 font-body text-base text-ink"
               returnKeyType="search"
               textAlign="right"
               style={{ direction: 'rtl' }}

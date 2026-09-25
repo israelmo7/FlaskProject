@@ -4,30 +4,19 @@ import { he } from '@/i18n/he';
 import type { GarmentCategory } from '@/types';
 import { formatPriceILS } from '@/utils/stock';
 
-export function StyleBanner() {
-  return (
-    <View className="mx-4 mt-5 items-center rounded-md bg-[#E07A4F] px-4 py-3">
-      <Text className="font-bodyBold text-base text-white">{he.discoverStyle}</Text>
-    </View>
-  );
-}
-
 type BrandRowProps = {
   selectedId?: string | null;
   onSelect?: (brandId: string) => void;
 };
 
-/** שורת מותגים עגולה — במקום שורת הקטגוריות */
+/** שורת מותגים עגולה — בלי טקסט מתחת */
 export function BrandCircles({ selectedId, onSelect }: BrandRowProps) {
   return (
     <View className="mt-5">
-      <Text className="mb-3 px-4 text-right font-bodyBold text-sm text-ink">
-        {he.brandsTitle}
-      </Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerClassName="gap-4 px-4 pb-2"
+        contentContainerClassName="gap-3.5 px-4 pb-1"
       >
         {BRANDS.map((brand) => {
           const active = selectedId === brand.id;
@@ -35,29 +24,23 @@ export function BrandCircles({ selectedId, onSelect }: BrandRowProps) {
             <Pressable
               key={brand.id}
               onPress={() => onSelect?.(brand.id)}
+              accessibilityLabel={brand.name}
               className="items-center"
-              style={{ width: 76 }}
             >
               <View
                 className={`items-center justify-center rounded-full ${
                   active ? 'border-2 border-[#E07A4F]' : 'border border-[#E8E4DE]'
                 }`}
                 style={{
-                  width: 68,
-                  height: 68,
+                  width: 64,
+                  height: 64,
                   backgroundColor: brand.color,
                 }}
               >
-                <Text className="font-bodyBold text-base text-white">
+                <Text className="font-bodyBold text-sm text-white">
                   {brand.initials}
                 </Text>
               </View>
-              <Text
-                className="mt-1.5 text-center font-bodyMedium text-[11px] text-ink"
-                numberOfLines={1}
-              >
-                {brand.name}
-              </Text>
             </Pressable>
           );
         })}
@@ -84,16 +67,11 @@ export function ProductGrid({
   });
 
   return (
-    <View className="mt-2">
-      {(category || subcategory) && (
-        <Text className="mb-2 px-4 text-right font-body text-xs text-ink-muted">
-          {subcategory || category}
-        </Text>
-      )}
+    <View className="mt-4">
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerClassName="gap-3 px-4 pb-8"
+        contentContainerClassName="gap-3.5 px-4 pb-12"
       >
         {items.length === 0 ? (
           <Text className="px-2 font-body text-sm text-ink-muted">
@@ -104,31 +82,32 @@ export function ProductGrid({
             <Pressable
               key={product.id}
               onPress={() => onSelect(product)}
-              className="overflow-hidden rounded-xl bg-[#F3F0EB]"
-              style={{ width: 148 }}
+              className="overflow-hidden rounded-2xl border border-[#EDE8E0] bg-white"
+              style={{ width: 158 }}
             >
-              <View className="relative" style={{ height: 180 }}>
+              <View
+                className="relative items-center justify-center bg-[#FAF8F5]"
+                style={{ height: 200 }}
+              >
                 <Image
                   source={product.image}
-                  className="h-full w-full"
-                  resizeMode="cover"
+                  style={{ width: '90%', height: '90%' }}
+                  resizeMode="contain"
                 />
-                <View className="absolute bottom-2 right-2 left-2 rounded bg-black/55 px-1.5 py-1">
-                  <Text
-                    className="text-center font-body text-[10px] text-white"
-                    numberOfLines={2}
-                  >
-                    {product.title}
-                  </Text>
-                </View>
                 {typeof product.price === 'number' ? (
-                  <View className="absolute top-2 left-2 rounded bg-white/95 px-1.5 py-0.5">
-                    <Text className="font-bodyBold text-xs text-ink">
+                  <View className="absolute bottom-2 left-2 rounded-full bg-ink/90 px-2.5 py-1">
+                    <Text className="font-bodyBold text-xs text-white">
                       {formatPriceILS(product.price)}
                     </Text>
                   </View>
                 ) : null}
               </View>
+              <Text
+                className="px-2.5 py-2.5 text-center font-bodyMedium text-xs text-ink"
+                numberOfLines={2}
+              >
+                {product.title}
+              </Text>
             </Pressable>
           ))
         )}
