@@ -59,8 +59,6 @@ export function DressableFigure({
           style={{
             width: dollW,
             height: dollH,
-            borderRadius: 8,
-            backgroundColor: '#FAF8F5',
           }}
         >
           <Image
@@ -233,6 +231,8 @@ function FittedGarment({
         height: layout.height,
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
+        backgroundColor: 'transparent',
       }}
     >
       {src ? (
@@ -242,6 +242,7 @@ function FittedGarment({
             width: '100%',
             height: '100%',
             resizeMode: 'contain',
+            backgroundColor: 'transparent',
           }}
         />
       ) : (
@@ -255,14 +256,6 @@ function FittedGarment({
           }}
         />
       )}
-      {region !== 'shoes' && region !== 'hat' ? (
-        <View
-          className="absolute rounded-full bg-black/65 px-2 py-0.5"
-          style={{ bottom: 2 }}
-        >
-          <Text className="font-bodyMedium text-[9px] text-white">{piece.size}</Text>
-        </View>
-      ) : null}
     </View>
   );
 }
