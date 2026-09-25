@@ -1,4 +1,4 @@
-import { Image, Platform, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import {
   PERSONA_OPTIONS,
   buildWidthScale,
@@ -239,16 +239,11 @@ function FittedGarment({
         <Image
           source={src}
           resizeMode="contain"
-          style={[
-            {
-              width: '100%',
-              height: '100%',
-              backgroundColor: 'transparent',
-            },
-            Platform.OS === 'web'
-              ? ({ mixBlendMode: 'multiply' } as object)
-              : null,
-          ]}
+          style={{
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'transparent',
+          }}
         />
       ) : (
         <View

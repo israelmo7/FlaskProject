@@ -39,7 +39,7 @@ export const PRODUCTS: ProductCard[] = [
     id: 'p-oxford',
     title: 'אוקספורד לבן',
     price: 149,
-    image: require('../../assets/images/layers/white-shirt.png'),
+    image: require('../../assets/images/layers/white-shirt-v2.png'),
     category: 'Shirts',
     color: 'White',
     subcategory: 'אוקספורד',
