@@ -47,14 +47,15 @@ export function HeroAvatarSection({
           profile={profile}
           layers={layers}
           onRemovePiece={onRemovePiece}
+          hideMeta
         />
 
         <View
           style={{
             flex: 1,
             marginLeft: 12,
-            marginBottom: 72,
-            gap: 12,
+            marginBottom: 48,
+            gap: 10,
             alignItems: 'flex-start',
           }}
         >

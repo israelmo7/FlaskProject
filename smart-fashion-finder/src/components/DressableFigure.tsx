@@ -16,18 +16,21 @@ type Props = {
   layers: OutfitLayers;
   onRemovePiece?: (piece: OutfitPiece) => void;
   compact?: boolean;
+  /** הסתרת תווית גובה בדף הבית */
+  hideMeta?: boolean;
 };
 
 type Region = 'top' | 'bottom' | 'dress' | 'outer' | 'hat' | 'shoes';
 
 /**
- * בובה גדולה עם רגליים גלויות + בגדים לפי מידה וגובה (contain, לא ריבוע).
+ * בובה מאוירת זקופה — בגדים נלבשים על אזורי גוף (חזה / רגליים) לפי מידה וגובה.
  */
 export function DressableFigure({
   profile,
   layers,
   onRemovePiece,
   compact = false,
+  hideMeta = false,
 }: Props) {
   const female = isFemalePersona(profile.persona);
   const wScale = buildWidthScale(profile.build);
@@ -35,9 +38,9 @@ export function DressableFigure({
   const personaLabel =
     PERSONA_OPTIONS.find((p) => p.id === profile.persona)?.label ?? '';
 
-  const baseW = compact ? 260 : 320;
-  const baseH = compact ? 460 : 560;
-  const dollW = baseW * Math.min(1.22, Math.max(0.78, wScale));
+  const baseW = compact ? 168 : 200;
+  const baseH = compact ? 320 : 380;
+  const dollW = baseW * Math.min(1.18, Math.max(0.82, wScale));
   const dollH = baseH * hScale;
 
   const worn = [layers.dress, layers.top, layers.bottom, layers.outer, layers.shoes].filter(
@@ -49,29 +52,25 @@ export function DressableFigure({
 
   return (
     <View className="items-start">
-      <View style={{ width: dollW + 20, paddingVertical: 6 }}>
-        <Text className="mb-1.5 text-left font-display text-sm text-ink">
-          {personaLabel} · {profile.heightCm} ס״מ
-        </Text>
+      <View style={{ width: dollW + 12, paddingVertical: 4 }}>
+        {!hideMeta ? (
+          <Text className="mb-1 text-left font-display text-sm text-ink">
+            {personaLabel} · {profile.heightCm} ס״מ
+          </Text>
+        ) : null}
 
         <View
           className="self-start overflow-visible"
-          style={{
-            width: dollW,
-            height: dollH,
-          }}
+          style={{ width: dollW, height: dollH }}
         >
           <Image
             source={baseImage}
             resizeMode="contain"
-            style={{
-              width: dollW,
-              height: dollH,
-            }}
+            style={{ width: dollW, height: dollH }}
           />
 
           {layers.bottom && !layers.dress ? (
-            <FittedGarment
+            <BodyGarment
               piece={layers.bottom}
               bodyW={dollW}
               bodyH={dollH}
@@ -82,7 +81,7 @@ export function DressableFigure({
           ) : null}
 
           {layers.top && !layers.dress ? (
-            <FittedGarment
+            <BodyGarment
               piece={layers.top}
               bodyW={dollW}
               bodyH={dollH}
@@ -93,7 +92,7 @@ export function DressableFigure({
           ) : null}
 
           {layers.dress ? (
-            <FittedGarment
+            <BodyGarment
               piece={layers.dress}
               bodyW={dollW}
               bodyH={dollH}
@@ -104,7 +103,7 @@ export function DressableFigure({
           ) : null}
 
           {layers.outer && !outerIsHat ? (
-            <FittedGarment
+            <BodyGarment
               piece={layers.outer}
               bodyW={dollW}
               bodyH={dollH}
@@ -115,7 +114,7 @@ export function DressableFigure({
           ) : null}
 
           {layers.outer && outerIsHat ? (
-            <FittedGarment
+            <BodyGarment
               piece={layers.outer}
               bodyW={dollW}
               bodyH={dollH}
@@ -126,7 +125,7 @@ export function DressableFigure({
           ) : null}
 
           {layers.shoes ? (
-            <FittedGarment
+            <BodyGarment
               piece={layers.shoes}
               bodyW={dollW}
               bodyH={dollH}
@@ -162,7 +161,8 @@ export function DressableFigure({
   );
 }
 
-function FittedGarment({
+/** בגד מעוצב לאזור גוף — לא תמונת מוצר מרובעת */
+function BodyGarment({
   piece,
   bodyW,
   bodyH,
@@ -177,85 +177,206 @@ function FittedGarment({
   buildScale: number;
   heightCm: number;
 }) {
-  const src = layerImageForPieceId(piece.id);
+  const color = garmentColorHex(piece.color);
   const fit =
     sizeFitScale(piece.size) *
     sizeRelativeToHeight(piece.size, heightCm) *
-    Math.min(1.15, Math.max(0.85, buildScale));
+    Math.min(1.12, Math.max(0.88, buildScale));
+  const texture = layerImageForPieceId(piece.id);
 
-  const layout =
-    region === 'top'
-      ? {
-          top: bodyH * 0.14,
-          width: bodyW * 0.78 * fit,
-          height: bodyH * 0.34 * Math.min(1.12, Math.max(0.9, fit)),
-        }
-      : region === 'bottom'
-        ? {
-            top: bodyH * 0.38,
-            width: bodyW * 0.58 * fit,
-            height: bodyH * 0.55,
-          }
-        : region === 'dress'
-          ? {
-              top: bodyH * 0.14,
-              width: bodyW * 0.72 * fit,
-              height: bodyH * 0.66,
-            }
-          : region === 'hat'
-            ? {
-                top: bodyH * 0.04,
-                width: bodyW * 0.48 * Math.min(1.12, Math.max(0.92, fit)),
-                height: bodyH * 0.13,
-              }
-            : region === 'shoes'
-              ? {
-                  top: bodyH * 0.88,
-                  width: bodyW * 0.52 * Math.min(1.1, Math.max(0.9, fit)),
-                  height: bodyH * 0.1,
-                }
-              : {
-                  top: bodyH * 0.12,
-                  width: bodyW * 0.82 * fit,
-                  height: bodyH * 0.38 * Math.min(1.12, Math.max(0.9, fit)),
-                };
+  if (region === 'hat') {
+    const w = bodyW * 0.42 * Math.min(1.15, Math.max(0.9, fit));
+    return (
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: bodyH * 0.02,
+          left: (bodyW - w) / 2,
+          width: w,
+          height: bodyH * 0.1,
+          alignItems: 'center',
+        }}
+      >
+        <View
+          style={{
+            width: '100%',
+            height: '38%',
+            borderRadius: 999,
+            backgroundColor: color,
+            marginTop: '28%',
+          }}
+        />
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            width: '58%',
+            height: '72%',
+            borderTopLeftRadius: 40,
+            borderTopRightRadius: 40,
+            borderBottomLeftRadius: 8,
+            borderBottomRightRadius: 8,
+            backgroundColor: color,
+          }}
+        />
+      </View>
+    );
+  }
+
+  if (region === 'shoes') {
+    const w = bodyW * 0.5;
+    return (
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: bodyH * 0.9,
+          left: (bodyW - w) / 2,
+          width: w,
+          height: bodyH * 0.07,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+        }}
+      >
+        <View
+          style={{
+            width: '42%',
+            height: '100%',
+            borderRadius: 10,
+            backgroundColor: color,
+          }}
+        />
+        <View
+          style={{
+            width: '42%',
+            height: '100%',
+            borderRadius: 10,
+            backgroundColor: color,
+          }}
+        />
+      </View>
+    );
+  }
+
+  if (region === 'bottom') {
+    const w = bodyW * 0.4 * fit;
+    const h = bodyH * 0.48;
+    const top = bodyH * 0.42;
+    const gap = bodyW * 0.04;
+    return (
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top,
+          left: (bodyW - w * 2 - gap) / 2,
+          width: w * 2 + gap,
+          height: h,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+        }}
+      >
+        <LegPiece color={color} width={w} height={h} texture={texture} />
+        <LegPiece color={color} width={w} height={h} texture={texture} />
+      </View>
+    );
+  }
+
+  // top / outer / dress — חזה / גוף
+  const isDress = region === 'dress';
+  const isOuter = region === 'outer';
+  const w =
+    bodyW *
+    (isOuter ? 0.72 : isDress ? 0.58 : 0.62) *
+    fit;
+  const h = bodyH * (isDress ? 0.52 : isOuter ? 0.3 : 0.28);
+  const top = bodyH * (isOuter ? 0.15 : 0.16);
 
   return (
     <View
       pointerEvents="none"
       style={{
         position: 'absolute',
-        top: layout.top,
-        left: (bodyW - layout.width) / 2,
-        width: layout.width,
-        height: layout.height,
-        alignItems: 'center',
-        justifyContent: 'center',
+        top,
+        left: (bodyW - w) / 2,
+        width: w,
+        height: h,
+        borderTopLeftRadius: isOuter ? 18 : 22,
+        borderTopRightRadius: isOuter ? 18 : 22,
+        borderBottomLeftRadius: isDress ? 28 : 14,
+        borderBottomRightRadius: isDress ? 28 : 14,
+        backgroundColor: color,
         overflow: 'hidden',
-        backgroundColor: 'transparent',
+        opacity: 0.96,
       }}
     >
-      {src ? (
+      {texture ? (
         <Image
-          source={src}
-          resizeMode="contain"
-          style={{
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'transparent',
-          }}
+          source={texture}
+          resizeMode="cover"
+          style={{ width: '100%', height: '100%', opacity: 0.55 }}
         />
-      ) : (
-        <View
-          style={{
-            width: region === 'hat' ? '70%' : '78%',
-            height: region === 'shoes' ? '55%' : '88%',
-            borderRadius: region === 'bottom' || region === 'shoes' ? 14 : 18,
-            backgroundColor: garmentColorHex(piece.color),
-            opacity: 0.9,
-          }}
+      ) : null}
+      {/* שרוולים קצרים לחולצה */}
+      {!isDress ? (
+        <>
+          <View
+            style={{
+              position: 'absolute',
+              top: h * 0.08,
+              left: -w * 0.18,
+              width: w * 0.28,
+              height: h * 0.42,
+              borderRadius: 12,
+              backgroundColor: color,
+            }}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              top: h * 0.08,
+              right: -w * 0.18,
+              width: w * 0.28,
+              height: h * 0.42,
+              borderRadius: 12,
+              backgroundColor: color,
+            }}
+          />
+        </>
+      ) : null}
+    </View>
+  );
+}
+
+function LegPiece({
+  color,
+  width,
+  height,
+  texture,
+}: {
+  color: string;
+  width: number;
+  height: number;
+  texture: ReturnType<typeof layerImageForPieceId>;
+}) {
+  return (
+    <View
+      style={{
+        width,
+        height,
+        borderRadius: 14,
+        backgroundColor: color,
+        overflow: 'hidden',
+      }}
+    >
+      {texture ? (
+        <Image
+          source={texture}
+          resizeMode="cover"
+          style={{ width: '100%', height: '100%', opacity: 0.5 }}
         />
-      )}
+      ) : null}
     </View>
   );
 }

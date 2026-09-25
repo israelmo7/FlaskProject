@@ -26,6 +26,14 @@ export const he = {
   saveLookDone: 'הלוק נשמר',
   saveLookDoneHint: '{n} פריטים נוספו לסל הקניות',
 
+  dressOnAvatar: 'על האווטאר',
+  addToCart: 'הוספה לסל',
+  favorite: 'מועדפים',
+  brandLabel: 'מותג',
+  storeLabel: 'חנות',
+  addedToCart: 'נוסף לסל',
+  productDetails: 'פרטי הפריט',
+
   areaTitle: 'בחירת אזור',
   areaHint: 'בחרו איפה לחפש מלאי בפיילוט חיפה.',
 

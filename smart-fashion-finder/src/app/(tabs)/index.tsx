@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BrandCircles, ProductGrid } from '@/components/DiscoverySection';
 import { CategoryDrawer } from '@/components/CategoryDrawer';
 import { HeroAvatarSection } from '@/components/HeroAvatarSection';
+import { ProductDetailSheet } from '@/components/ProductDetailSheet';
 import { SiteHeader } from '@/components/SiteHeader';
 import {
   categoryToSlot,
@@ -47,6 +48,7 @@ export default function HomeScreen() {
     updateLayers,
     updatePreferredSize,
     saveLookToCart,
+    addPieceToCart,
     reload,
   } = useSavedProfile();
   const { pickFromLibrary, snapWithCamera, isAnalyzing } = useGarmentRecognition();
@@ -71,6 +73,7 @@ export default function HomeScreen() {
   const [locationMode, setLocationMode] = useState<LocationSearchMode>('nearby');
   const [listening, setListening] = useState(false);
   const [filters] = useState<SearchFilters>(DEFAULT_FILTERS);
+  const [detailProduct, setDetailProduct] = useState<ProductCard | null>(null);
 
   const focusPiece = useMemo(
     () => layers.top || layers.bottom || layers.dress || layers.outer || layers.shoes,
@@ -91,9 +94,9 @@ export default function HomeScreen() {
     setLayers((prev) => wearPiece(prev, full));
   };
 
-  const onProductSelect = (product: ProductCard) => {
+  const productToPiece = (product: ProductCard): OutfitPiece => {
     const size = preferredSize || 'M';
-    dressPiece({
+    return {
       id: product.layerId
         ? `${product.layerId}-${size}`
         : `home-${product.id}-${size}`,
@@ -104,20 +107,28 @@ export default function HomeScreen() {
       size,
       slot: categoryToSlot(product.category),
       price: product.price,
-    });
+    };
+  };
+
+  /** לחיצה על מוצר → פתיחת פרטים (לא הלבשה מיידית) */
+  const onProductSelect = (product: ProductCard) => {
+    setDetailProduct(product);
+  };
+
+  const onDressFromDetail = (product: ProductCard) => {
+    dressPiece(productToPiece(product));
+  };
+
+  const onAddToCartFromDetail = (product: ProductCard) => {
+    addPieceToCart(productToPiece(product));
+    Alert.alert(he.addedToCart, product.title);
   };
 
   const onSearchSubmit = () => {
     if (!query.trim()) return;
-    dressPiece({
-      id: `search-${query}-${preferredSize || 'M'}`,
-      label: query.trim(),
-      category: filterCategory || 'Pants',
-      subcategory: filterSub || 'Search',
-      color: 'Blue',
-      size: preferredSize || 'M',
-      slot: categoryToSlot(filterCategory || 'Pants'),
-    });
+    // חיפוש פותח את רשת המוצרים לפי טקסט — לא מלביש אוטומטית
+    setFilterSub(null);
+    setFilterCategory(null);
   };
 
   const goToTag = async (source: 'upload' | 'camera') => {
@@ -241,6 +252,15 @@ export default function HomeScreen() {
           setFilterSub(subcategory);
         }}
         onClose={() => setMenuOpen(false)}
+      />
+
+      <ProductDetailSheet
+        product={detailProduct}
+        visible={Boolean(detailProduct)}
+        onClose={() => setDetailProduct(null)}
+        onDressAvatar={onDressFromDetail}
+        onAddToCart={onAddToCartFromDetail}
+        preferredSize={preferredSize || 'M'}
       />
 
       <ScrollView

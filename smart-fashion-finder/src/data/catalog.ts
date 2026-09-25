@@ -12,6 +12,8 @@ export type ProductCard = {
   badge?: string;
   /** מזהה שכבה להלבשת הבובה (אופציונלי) */
   layerId?: string;
+  brand?: string;
+  storeName?: string;
 };
 
 /** ~10 פריטים להלבשה דרך קטגוריות */
@@ -24,6 +26,8 @@ export const PRODUCTS: ProductCard[] = [
     category: 'Shirts',
     color: 'Black',
     subcategory: 'טי שירט',
+    brand: 'Zara',
+    storeName: 'Zara גרנד קניון',
     layerId: 'w-black-shirt',
   },
   {
@@ -34,6 +38,8 @@ export const PRODUCTS: ProductCard[] = [
     category: 'Shirts',
     color: 'Beige',
     subcategory: 'אוברסייז',
+    brand: 'Castro',
+    storeName: 'Castro גרנד קניון',
   },
   {
     id: 'p-oxford',
@@ -43,6 +49,8 @@ export const PRODUCTS: ProductCard[] = [
     category: 'Shirts',
     color: 'White',
     subcategory: 'אוקספורד',
+    brand: 'H&M',
+    storeName: 'H&M לב המפרץ',
     layerId: 'w-white-oxford',
   },
   {
@@ -53,6 +61,8 @@ export const PRODUCTS: ProductCard[] = [
     category: 'Shirts',
     color: 'Navy',
     subcategory: 'גולף',
+    brand: 'Golf',
+    storeName: 'Golf & Co',
   },
   {
     id: 'p-jeans',
@@ -62,6 +72,8 @@ export const PRODUCTS: ProductCard[] = [
     category: 'Pants',
     color: 'Blue',
     subcategory: 'ג׳ינס',
+    brand: 'Zara',
+    storeName: 'Zara גרנד קניון',
     layerId: 'w-blue-jeans',
   },
   {
@@ -72,6 +84,8 @@ export const PRODUCTS: ProductCard[] = [
     category: 'Pants',
     color: 'Light Wash',
     subcategory: 'ג׳ינס קצר',
+    brand: 'Pull&Bear',
+    storeName: 'Pull&Bear',
   },
   {
     id: 'p-cargo',
@@ -81,6 +95,8 @@ export const PRODUCTS: ProductCard[] = [
     category: 'Pants',
     color: 'Olive Green',
     subcategory: 'קרגו',
+    brand: 'Terminal X',
+    storeName: 'Terminal X',
     layerId: 'w-olive-cargo',
   },
   {
@@ -91,6 +107,8 @@ export const PRODUCTS: ProductCard[] = [
     category: 'Pants',
     color: 'Navy',
     subcategory: 'מכנס ספורט',
+    brand: 'Adidas',
+    storeName: 'Adidas',
   },
   {
     id: 'p-denim-jkt',
@@ -100,6 +118,8 @@ export const PRODUCTS: ProductCard[] = [
     category: 'Outerwear',
     color: 'Light Wash',
     subcategory: 'ג׳קט ג׳ינס',
+    brand: 'Castro',
+    storeName: 'Castro גרנד קניון',
     layerId: 'w-denim-jacket',
   },
   {
@@ -110,6 +130,8 @@ export const PRODUCTS: ProductCard[] = [
     category: 'Outerwear',
     color: 'Brown',
     subcategory: 'ז׳קט עור',
+    brand: 'Atelier Carmel',
+    storeName: 'Atelier Carmel',
   },
   {
     id: 'p-dress',
@@ -119,6 +141,8 @@ export const PRODUCTS: ProductCard[] = [
     category: 'Dresses',
     color: 'Brown',
     subcategory: 'שמלה',
+    brand: 'Victoria',
+    storeName: 'Victoria',
   },
   {
     id: 'p-sneakers',
@@ -128,6 +152,8 @@ export const PRODUCTS: ProductCard[] = [
     category: 'Shoes',
     color: 'White',
     subcategory: 'סניקרס',
+    brand: 'Nike',
+    storeName: 'Foot Locker',
     layerId: 'w-sneakers',
   },
   {
@@ -138,6 +164,8 @@ export const PRODUCTS: ProductCard[] = [
     category: 'Hats',
     color: 'Black',
     subcategory: 'כובע',
+    brand: 'Zara',
+    storeName: 'Zara גרנד קניון',
     layerId: 'w-hat',
   },
 ];

@@ -28,6 +28,7 @@ const LOC_OPTIONS: { id: LocationSearchMode; label: string }[] = [
   { id: 'onTheWay', label: he.locOnTheWay },
 ];
 
+/** כותרת קומפקטית — שורה אחת: תפריט · חיפוש קטן · אייקונים */
 export function SiteHeader({
   query,
   onQueryChange,
@@ -47,6 +48,7 @@ export function SiteHeader({
 }: Props) {
   const [locMenuOpen, setLocMenuOpen] = useState(false);
   const [cameraMenuOpen, setCameraMenuOpen] = useState(false);
+  const [locAnchor, setLocAnchor] = useState({ x: 0, y: 0 });
 
   const locLabel =
     LOC_OPTIONS.find((o) => o.id === locationMode)?.label ?? he.locNearby;
@@ -58,26 +60,79 @@ export function SiteHeader({
   };
 
   return (
-    <View className="border-b border-[#E8E4DE] bg-white px-4 pb-3 pt-2">
-      {/* שורה עליונה: המבורגר · מותג · אייקונים */}
-      <View className="mb-2.5 flex-row items-center justify-between">
+    <View className="border-b border-[#E8E4DE] bg-white px-3 pb-2 pt-1.5">
+      <View className="flex-row items-center gap-2">
         <Pressable
           onPress={onMenu}
-          hitSlop={10}
+          hitSlop={8}
           accessibilityLabel={he.menuCategories}
-          className="rounded-xl bg-[#F3F0EB] p-2.5"
+          className="rounded-lg bg-[#F3F0EB] p-2"
         >
-          <Ionicons name="menu" size={24} color="#12161C" />
+          <Ionicons name="menu" size={20} color="#12161C" />
         </Pressable>
 
-        <Text className="font-displayBold text-[26px] text-ink">{he.brand}</Text>
+        <Text className="font-displayBold text-lg text-ink">{he.brand}</Text>
 
-        <View className="flex-row items-center gap-1">
+        {/* חיפוש קומפקטי (~חצי מהקודם) */}
+        <View
+          className="min-w-0 flex-1 flex-row items-center rounded-full border border-[#D9D3C9] bg-[#FAF8F5] px-2 py-1"
+          style={{ direction: 'ltr', maxWidth: 220 }}
+        >
+          <Pressable
+            onPress={() => setCameraMenuOpen(true)}
+            hitSlop={6}
+            accessibilityLabel={he.openCamera}
+            className="px-0.5"
+          >
+            <Ionicons name="camera-outline" size={16} color="#1A1A1A" />
+          </Pressable>
+          <Pressable
+            onPress={onVoiceSearch}
+            hitSlop={6}
+            accessibilityLabel={he.voiceSearch}
+            className="px-0.5"
+          >
+            <Ionicons
+              name={listening ? 'mic' : 'mic-outline'}
+              size={14}
+              color={listening ? '#E07A4F' : '#6B6560'}
+            />
+          </Pressable>
+          <Pressable
+            onPress={(e) => {
+              const ne = e.nativeEvent as { pageX?: number; pageY?: number };
+              setLocAnchor({
+                x: typeof ne.pageX === 'number' ? ne.pageX : 24,
+                y: typeof ne.pageY === 'number' ? ne.pageY + 12 : 56,
+              });
+              setLocMenuOpen(true);
+            }}
+            className="mx-0.5 flex-row items-center rounded-full bg-white px-1.5 py-0.5"
+            hitSlop={4}
+          >
+            <Text className="font-bodyMedium text-[9px] text-ink">{locLabel}</Text>
+            <Ionicons name="chevron-down" size={10} color="#6B6560" />
+          </Pressable>
+          <Ionicons name="search" size={13} color="#6B6560" />
+          <TextInput
+            value={query}
+            onChangeText={onQueryChange}
+            onSubmitEditing={onSearchSubmit}
+            placeholder={listening ? he.listening : he.searchPlaceholder}
+            placeholderTextColor="#8A847C"
+            className="ml-1 flex-1 font-body text-xs text-ink"
+            returnKeyType="search"
+            textAlign="right"
+            style={{ direction: 'rtl', paddingVertical: 2, maxHeight: 22 }}
+          />
+        </View>
+
+        <View className="flex-row items-center">
           <View className="relative">
             <HeaderIcon icon="cart-outline" label={he.cart} onPress={onCart} />
             {cartCount > 0 ? (
-              <View className="absolute -left-0.5 -top-0.5 min-w-[16px] items-center rounded-full bg-[#E07A4F] px-1">
-                <Text className="font-bodyBold text-[9px] text-white">
+              <View className="absolute -left-0.5 -top-0.5 min-w-[14px] items-center rounded-full bg-[#E07A4F] px-0.5">
+                <Text className="font-bodyBold text-[8px] text-white">
                   {cartCount}
                 </Text>
               </View>
@@ -94,56 +149,6 @@ export function SiteHeader({
             onPress={onArea}
           />
         </View>
-      </View>
-
-      {/* שורת חיפוש מלאה ורחבה */}
-      <View
-        className="flex-row items-center rounded-2xl border border-[#D9D3C9] bg-[#FAF8F5] px-3 py-3"
-        style={{ direction: 'ltr' }}
-      >
-        <Pressable
-          onPress={() => setCameraMenuOpen(true)}
-          hitSlop={8}
-          accessibilityLabel={he.openCamera}
-          className="rounded-full bg-white p-2"
-        >
-          <Ionicons name="camera-outline" size={22} color="#1A1A1A" />
-        </Pressable>
-
-        <Pressable
-          onPress={onVoiceSearch}
-          hitSlop={8}
-          accessibilityLabel={he.voiceSearch}
-          className="mx-1 rounded-full p-2"
-        >
-          <Ionicons
-            name={listening ? 'mic' : 'mic-outline'}
-            size={20}
-            color={listening ? '#E07A4F' : '#6B6560'}
-          />
-        </Pressable>
-
-        <Pressable
-          onPress={() => setLocMenuOpen(true)}
-          className="mr-2 flex-row items-center rounded-full bg-white px-2.5 py-1.5"
-          hitSlop={6}
-        >
-          <Text className="font-bodyMedium text-xs text-ink">{locLabel}</Text>
-          <Ionicons name="chevron-down" size={14} color="#6B6560" />
-        </Pressable>
-
-        <Ionicons name="search" size={18} color="#6B6560" />
-        <TextInput
-          value={query}
-          onChangeText={onQueryChange}
-          onSubmitEditing={onSearchSubmit}
-          placeholder={listening ? he.listening : he.searchPlaceholder}
-          placeholderTextColor="#8A847C"
-          className="ml-2 flex-1 font-body text-base text-ink"
-          returnKeyType="search"
-          textAlign="right"
-          style={{ direction: 'rtl', minHeight: 28 }}
-        />
       </View>
 
       <Modal
@@ -184,33 +189,33 @@ export function SiteHeader({
         </Pressable>
       </Modal>
 
+      {/* תפריט סביבי קומפקטי — בגודל המילים, לא על כל המסך */}
       <Modal
         visible={locMenuOpen}
         transparent
         animationType="fade"
         onRequestClose={() => setLocMenuOpen(false)}
       >
-        <Pressable
-          className="flex-1 bg-ink/40"
-          onPress={() => setLocMenuOpen(false)}
-        >
-          <View className="absolute left-4 right-4 top-28 rounded-2xl bg-white p-3">
-            <Text className="mb-2 text-right font-bodyBold text-sm text-ink">
-              {he.area}
-            </Text>
+        <Pressable className="flex-1" onPress={() => setLocMenuOpen(false)}>
+          <View
+            className="absolute rounded-xl border border-[#E8E4DE] bg-white py-1 shadow-sm"
+            style={{
+              top: Math.max(48, locAnchor.y),
+              left: Math.max(8, locAnchor.x - 20),
+              minWidth: 96,
+            }}
+          >
             {LOC_OPTIONS.map((opt) => {
               const active = locationMode === opt.id;
               return (
                 <Pressable
                   key={opt.id}
                   onPress={() => selectLoc(opt.id)}
-                  className={`mb-1 rounded-xl px-4 py-3 ${
-                    active ? 'bg-[#E07A4F]' : 'bg-[#F3F0EB]'
-                  }`}
+                  className={`px-3 py-2 ${active ? 'bg-[#FFF1EA]' : ''}`}
                 >
                   <Text
-                    className={`text-right font-bodyBold text-sm ${
-                      active ? 'text-white' : 'text-ink'
+                    className={`text-right font-bodyMedium text-xs ${
+                      active ? 'text-[#E07A4F]' : 'text-ink'
                     }`}
                   >
                     {opt.label}
@@ -235,9 +240,9 @@ function HeaderIcon({
   onPress?: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} className="items-center px-1.5" hitSlop={8}>
-      <Ionicons name={icon} size={22} color="#1A1A1A" />
-      <Text className="mt-0.5 font-body text-[10px] text-ink-muted" numberOfLines={1}>
+    <Pressable onPress={onPress} className="items-center px-1" hitSlop={6}>
+      <Ionicons name={icon} size={18} color="#1A1A1A" />
+      <Text className="mt-0.5 font-body text-[8px] text-ink-muted" numberOfLines={1}>
         {label}
       </Text>
     </Pressable>

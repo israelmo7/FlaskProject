@@ -145,6 +145,21 @@ export function useSavedProfile() {
     return additions.length;
   }, [persist, prefs]);
 
+  /** הוספת פריט בודד לסל (ממסך פרטי מוצר) */
+  const addPieceToCart = useCallback(
+    (piece: OutfitPiece) => {
+      const now = new Date().toISOString();
+      const item: CartItem = {
+        ...piece,
+        id: `cart-${piece.id}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        price: priceForPiece(piece),
+        addedAt: now,
+      };
+      void persist({ ...prefs, cart: [...prefs.cart, item] });
+    },
+    [persist, prefs],
+  );
+
   const removeCartItem = useCallback(
     (id: string) => {
       void persist({ ...prefs, cart: prefs.cart.filter((c) => c.id !== id) });
@@ -207,6 +222,7 @@ export function useSavedProfile() {
     updateAreaId,
     updateCart,
     saveLookToCart,
+    addPieceToCart,
     removeCartItem,
     clearCart,
     completeOnboarding,
