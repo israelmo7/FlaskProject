@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BrandCircles, ProductGrid } from '@/components/DiscoverySection';
@@ -51,15 +51,8 @@ export default function HomeScreen() {
     updatePreferredSize,
     saveLookToCart,
     addPieceToCart,
-    reload,
   } = useSavedProfile();
   const { pickFromLibrary, snapWithCamera, isAnalyzing } = useGarmentRecognition();
-
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
 
   useEffect(() => {
     if (ready && !onboardingComplete) {
@@ -68,6 +61,7 @@ export default function HomeScreen() {
   }, [ready, onboardingComplete]);
 
   const [query, setQuery] = useState('');
+  const [committedQuery, setCommittedQuery] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [filterCategory, setFilterCategory] = useState<GarmentCategory | null>(null);
   const [filterSub, setFilterSub] = useState<string | null>(null);
@@ -78,10 +72,13 @@ export default function HomeScreen() {
   const [detailProduct, setDetailProduct] = useState<ProductCard | null>(null);
 
   useEffect(() => {
-    const id = params.openProductId;
+    const id = typeof params.openProductId === 'string' ? params.openProductId : undefined;
     if (!id) return;
     const found = PRODUCTS.find((p) => p.id === id);
-    if (found) setDetailProduct(found);
+    if (found) {
+      setDetailProduct(found);
+      router.setParams({ openProductId: undefined });
+    }
   }, [params.openProductId]);
 
   const focusPiece = useMemo(
@@ -90,7 +87,7 @@ export default function HomeScreen() {
   );
 
   const setLayers = (updater: (prev: OutfitLayers) => OutfitLayers) => {
-    updateLayers(updater(layers));
+    updateLayers(updater);
   };
 
   const dressPiece = (piece: Omit<OutfitPiece, 'id'> & { id?: string }) => {
@@ -134,10 +131,9 @@ export default function HomeScreen() {
   };
 
   const onSearchSubmit = () => {
-    if (!query.trim()) return;
-    // חיפוש פותח את רשת המוצרים לפי טקסט — לא מלביש אוטומטית
+    setCommittedQuery(query.trim());
     setFilterSub(null);
-    setFilterCategory(null);
+    // לא מאפסים קטגוריה אם כבר נבחרה מהתפריט — רק מעדכנים טקסט חיפוש
   };
 
   const goToTag = async (source: 'upload' | 'camera') => {
@@ -178,7 +174,10 @@ export default function HomeScreen() {
       results: { [i: number]: { [j: number]: { transcript: string } } };
     }) => {
       const text = event.results[0]?.[0]?.transcript ?? '';
-      if (text) setQuery(text);
+      if (text) {
+        setQuery(text);
+        setCommittedQuery(text.trim());
+      }
       setListening(false);
     };
     rec.onerror = () => setListening(false);
@@ -315,6 +314,8 @@ export default function HomeScreen() {
           onSelect={onProductSelect}
           category={filterCategory}
           subcategory={filterSub}
+          query={committedQuery}
+          brandId={selectedBrand}
         />
       </ScrollView>
 

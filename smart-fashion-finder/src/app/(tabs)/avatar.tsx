@@ -88,7 +88,7 @@ export default function AvatarScreen() {
   };
 
   const setLayers = (updater: (prev: OutfitLayers) => OutfitLayers) => {
-    updateLayers(updater(layers));
+    updateLayers(updater);
   };
 
   const addToOutfit = () => {
