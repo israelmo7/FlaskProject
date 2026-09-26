@@ -14,6 +14,7 @@ type Props = {
   onMenu?: () => void;
   onCamera?: () => void;
   onGallery?: () => void;
+  onChat?: () => void;
   areaLabel?: string;
   cartCount?: number;
   locationMode?: LocationSearchMode;
@@ -39,6 +40,7 @@ export function SiteHeader({
   onMenu,
   onCamera,
   onGallery,
+  onChat,
   areaLabel,
   cartCount = 0,
   locationMode = 'nearby',
@@ -128,6 +130,11 @@ export function SiteHeader({
         </View>
 
         <View className="flex-row items-center">
+          <HeaderIcon
+            icon="chatbubble-ellipses-outline"
+            label={he.chat}
+            onPress={onChat}
+          />
           <View className="relative">
             <HeaderIcon icon="cart-outline" label={he.cart} onPress={onCart} />
             {cartCount > 0 ? (

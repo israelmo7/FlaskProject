@@ -88,6 +88,7 @@ import {
   sizeFitScale,
   sizeRelativeToHeight,
 } from '../src/constants/avatar';
+import { extractIntent } from '../src/services/fashionChatIntent';
 
 assert(heightScale(140) < heightScale(165), '140cm doll shorter than 165cm');
 assert(heightScale(190) > heightScale(165), '190cm doll taller than 165cm');
@@ -97,6 +98,15 @@ assert(
   sizeRelativeToHeight('S', 178) < sizeRelativeToHeight('M', 178),
   'S on 178cm looks smaller than M',
 );
+
+const blackShirtIntent = extractIntent('חולצה שחורה עד 150');
+assert(blackShirtIntent.category === 'Shirts', 'chat intent category Shirts');
+assert(blackShirtIntent.color === 'Black', 'chat intent color Black');
+assert(blackShirtIntent.maxPrice === 150, 'chat intent maxPrice 150');
+
+const jeansIntent = extractIntent('ג׳ינס כחול');
+assert(jeansIntent.category === 'Pants', 'chat intent jeans → Pants');
+assert(jeansIntent.color === 'Blue', 'chat intent jeans color Blue');
 
 if (failed > 0) {
   console.error(`\n${failed} assertion(s) failed`);
