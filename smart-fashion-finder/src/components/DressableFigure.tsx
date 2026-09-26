@@ -7,6 +7,7 @@ import {
   heightScale,
 } from '@/constants/avatar';
 import { GameFashionAvatar } from '@/components/GameFashionAvatar';
+import { he } from '@/i18n/he';
 import type { AvatarProfile, OutfitLayers, OutfitPiece } from '@/types';
 
 type Props = {
@@ -89,7 +90,7 @@ export function DressableFigure({
         </View>
       ) : (
         <Text className="mt-1 font-body text-[11px] text-ink-muted">
-          מוכן להלבשה
+          {he.readyToDress}
         </Text>
       )}
     </View>

@@ -201,6 +201,8 @@ export const he = {
   chooseGarmentAlert: 'הלבישו לפחות פריט אחד לפני חיפוש בחנויות.',
   chooseSizeFirst: 'בחרו מידה לפריט',
   layersStay: 'כל הפריטים שנבחרו נשארים על הבובה',
+  rotateAvatarHint: 'החליקו לסיבוב 180°',
+  readyToDress: 'מוכן להלבשה',
 
   historyTitle: 'היסטוריית חיפושים',
   historyHint: 'חזרו ללוק שאהבתם ובדקו מלאי מעודכן לידכם.',

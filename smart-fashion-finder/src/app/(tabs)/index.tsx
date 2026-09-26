@@ -103,9 +103,8 @@ export default function HomeScreen() {
   const productToPiece = (product: ProductCard): OutfitPiece => {
     const size = preferredSize || 'M';
     return {
-      id: product.layerId
-        ? `${product.layerId}-${size}`
-        : `home-${product.id}-${size}`,
+      // שומרים את מזהה הקטלוג ב־id כדי להתאים לוק מצויר
+      id: `${product.id}-${size}`,
       label: product.title,
       category: product.category,
       subcategory: product.subcategory,
