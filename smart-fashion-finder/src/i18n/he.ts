@@ -34,6 +34,12 @@ export const he = {
   addedToCart: 'נוסף לסל',
   productDetails: 'פרטי הפריט',
 
+  chat: 'צ׳אט AI',
+  chatTitle: 'סטייליסט AI',
+  chatSubtitle: 'תארו מה אתם מחפשים — נמצא אופציות לידכם',
+  chatPlaceholder: 'למשל: חולצה שחורה עד 150…',
+  chatSend: 'שליחה',
+
   areaTitle: 'בחירת אזור',
   areaHint: 'בחרו איפה לחפש מלאי בפיילוט חיפה.',
 

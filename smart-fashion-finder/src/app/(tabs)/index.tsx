@@ -8,7 +8,8 @@ import {
   Text,
   View,
 } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BrandCircles, ProductGrid } from '@/components/DiscoverySection';
 import { CategoryDrawer } from '@/components/CategoryDrawer';
@@ -22,7 +23,7 @@ import {
   wearPiece,
 } from '@/constants/avatar';
 import { DEFAULT_FILTERS } from '@/constants/filters';
-import { areaLabelForId, type ProductCard } from '@/data/catalog';
+import { PRODUCTS, areaLabelForId, type ProductCard } from '@/data/catalog';
 import { useGarmentRecognition } from '@/hooks/useGarmentRecognition';
 import { useSavedProfile } from '@/hooks/useSavedProfile';
 import { he } from '@/i18n/he';
@@ -37,6 +38,7 @@ import type {
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ openProductId?: string }>();
   const {
     ready,
     profile,
@@ -74,6 +76,13 @@ export default function HomeScreen() {
   const [listening, setListening] = useState(false);
   const [filters] = useState<SearchFilters>(DEFAULT_FILTERS);
   const [detailProduct, setDetailProduct] = useState<ProductCard | null>(null);
+
+  useEffect(() => {
+    const id = params.openProductId;
+    if (!id) return;
+    const found = PRODUCTS.find((p) => p.id === id);
+    if (found) setDetailProduct(found);
+  }, [params.openProductId]);
 
   const focusPiece = useMemo(
     () => layers.top || layers.bottom || layers.dress || layers.outer || layers.shoes,
@@ -235,6 +244,7 @@ export default function HomeScreen() {
         onMenu={() => setMenuOpen(true)}
         onCamera={() => void goToTag('camera')}
         onGallery={() => void goToTag('upload')}
+        onChat={() => router.push('/chat')}
         areaLabel={areaLabelForId(areaId)}
         cartCount={cart.length}
         locationMode={locationMode}
@@ -307,6 +317,16 @@ export default function HomeScreen() {
           subcategory={filterSub}
         />
       </ScrollView>
+
+      <Pressable
+        onPress={() => router.push('/chat')}
+        accessibilityLabel={he.chat}
+        className="absolute bottom-6 left-4 flex-row items-center rounded-full bg-ink px-4 py-3 shadow-lg"
+        style={{ elevation: 4 }}
+      >
+        <Text className="ml-2 font-bodyBold text-sm text-white">{he.chat}</Text>
+        <Ionicons name="chatbubble-ellipses" size={18} color="#fff" />
+      </Pressable>
     </View>
   );
 }
