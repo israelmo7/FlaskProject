@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { BRANDS, PRODUCTS, type ProductCard } from '@/data/catalog';
 import { he } from '@/i18n/he';
@@ -53,18 +54,39 @@ type ProductGridProps = {
   onSelect: (product: ProductCard) => void;
   category?: GarmentCategory | 'All' | null;
   subcategory?: string | null;
+  query?: string;
+  brandId?: string | null;
 };
 
 export function ProductGrid({
   onSelect,
   category = null,
   subcategory = null,
+  query = '',
+  brandId = null,
 }: ProductGridProps) {
-  const items = PRODUCTS.filter((p) => {
-    if (category && category !== 'All' && p.category !== category) return false;
-    if (subcategory && p.subcategory !== subcategory) return false;
-    return true;
-  });
+  const brandName = brandId
+    ? BRANDS.find((b) => b.id === brandId)?.name.toLowerCase()
+    : null;
+  const q = query.trim().toLowerCase();
+
+  const items = useMemo(
+    () =>
+      PRODUCTS.filter((p) => {
+        if (category && category !== 'All' && p.category !== category) return false;
+        if (subcategory && p.subcategory !== subcategory) return false;
+        if (brandName) {
+          const pb = (p.brand ?? '').toLowerCase();
+          if (!pb.includes(brandName) && brandName !== pb) return false;
+        }
+        if (q) {
+          const blob = `${p.title} ${p.subcategory} ${p.color} ${p.brand ?? ''} ${p.storeName ?? ''}`.toLowerCase();
+          if (!blob.includes(q)) return false;
+        }
+        return true;
+      }),
+    [category, subcategory, brandName, q],
+  );
 
   return (
     <View className="mt-4">

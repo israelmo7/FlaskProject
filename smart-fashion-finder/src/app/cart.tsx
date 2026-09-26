@@ -1,7 +1,6 @@
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback } from 'react';
 import { personaToGenderFilter } from '@/constants/avatar';
 import { useSavedProfile } from '@/hooks/useSavedProfile';
 import { he } from '@/i18n/he';
@@ -17,14 +16,7 @@ export default function CartScreen() {
     updatePreferredSize,
     removeCartItem,
     clearCart,
-    reload,
   } = useSavedProfile();
-
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
 
   const findNearMe = (piece: CartItem) => {
     const size = piece.size || preferredSize || 'M';

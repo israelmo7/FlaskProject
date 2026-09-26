@@ -19,7 +19,6 @@ export const GARMENT_LAYER_IMAGES: Record<string, ImageSourcePropType> = {
   'w-denim-jacket': require('../../assets/images/layers/denim-jacket-v2.png'),
   'w-hat': require('../../assets/images/layers/hat.png'),
   'w-sneakers': require('../../assets/images/layers/sneakers.png'),
-  // product fallbacks — תמונות מוצר ב־contain במקום ריבוע צבע
   'p-tshirt': require('../../assets/images/layers/black-shirt-v2.png'),
   'p-hoodie': require('../../assets/images/product-hoodie.png'),
   'p-oxford': require('../../assets/images/layers/white-shirt-v2.png'),
@@ -35,9 +34,13 @@ export const GARMENT_LAYER_IMAGES: Record<string, ImageSourcePropType> = {
   'p-hat': require('../../assets/images/layers/hat.png'),
 };
 
+/** מפתחות ארוכים קודם — כדי ש־w-black-shirt יתפס לפני w-hat וכו׳ */
+const LAYER_KEYS_DESC = Object.keys(GARMENT_LAYER_IMAGES).sort(
+  (a, b) => b.length - a.length,
+);
+
 export function layerImageForPieceId(pieceId: string): ImageSourcePropType | null {
-  // ids: w-black-shirt-L / home-p-hoodie-M / cart-home-p-hat-S-...
-  for (const key of Object.keys(GARMENT_LAYER_IMAGES)) {
+  for (const key of LAYER_KEYS_DESC) {
     if (pieceId.includes(key)) return GARMENT_LAYER_IMAGES[key];
   }
   return null;

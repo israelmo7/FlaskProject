@@ -1,19 +1,12 @@
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback } from 'react';
 import { PILOT_AREAS } from '@/constants/areas';
 import { useSavedProfile } from '@/hooks/useSavedProfile';
 import { he } from '@/i18n/he';
 
 export default function AreaScreen() {
-  const { ready, areaId, updateAreaId, reload } = useSavedProfile();
-
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
+  const { ready, areaId, updateAreaId } = useSavedProfile();
 
   if (!ready) {
     return (
