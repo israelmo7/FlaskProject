@@ -363,28 +363,25 @@ export function resolveOutfitLook(
   }
 
   // כמה שכבות בלי קומבו מוכן:
-  // גוף = לוק המכנסיים (או עליונית/טופ), מעליו שכבות אזוריות מצוירות
+  // עדיפות: לוק עליונית מלא → לוק מכנסיים + שכבות → לוק טופ
   const overlays: ImageSourcePropType[] = [];
   let hero: ImageSourcePropType | null = null;
 
-  if (bottomId) {
+  if (outerId && bottomId) {
+    // עליונית + מכנסיים: לוק המכנסיים + שכבת עליונית (הטופ מתחת מוסתר)
+    hero = fittedLookForId(bottomId, female);
+    const o = fittedOverlayForId(outerId);
+    if (o) overlays.push(o);
+  } else if (outerId) {
+    hero = fittedLookForId(outerId, female);
+  } else if (bottomId) {
     hero = fittedLookForId(bottomId, female);
     if (topId) {
       const o = fittedOverlayForId(topId);
       if (o) overlays.push(o);
     }
-    if (outerId) {
-      const o = fittedOverlayForId(outerId);
-      if (o) overlays.push(o);
-    }
   } else if (topId) {
     hero = fittedLookForId(topId, female);
-    if (outerId) {
-      const o = fittedOverlayForId(outerId);
-      if (o) overlays.push(o);
-    }
-  } else if (outerId) {
-    hero = fittedLookForId(outerId, female);
   }
 
   if (shoesId) {
