@@ -25,18 +25,18 @@ type Props = {
   height: number;
 };
 
-/** אזורי גוף על בסיס דמות המשחק (יחס לגובה) */
+/** אזורי גוף על בסיס דמות המשחק (יחס לגובה) — מכויל ל־PNG */
 const Z = {
-  shoulder: 0.3,
-  chest: 0.36,
-  waist: 0.46,
-  hip: 0.52,
-  crotch: 0.56,
-  knee: 0.74,
-  ankle: 0.9,
-  foot: 0.96,
-  neck: 0.26,
-  headTop: 0.06,
+  shoulder: 0.285,
+  chest: 0.34,
+  waist: 0.44,
+  hip: 0.5,
+  crotch: 0.545,
+  knee: 0.72,
+  ankle: 0.885,
+  foot: 0.945,
+  neck: 0.245,
+  headTop: 0.05,
 } as const;
 
 function shade(hex: string, amount: number): string {
@@ -71,12 +71,14 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
 
   const base = PERSONA_BASE_IMAGES[profile.persona];
   const cx = width / 2;
-  const shoulderW = width * (female ? 0.38 : 0.42) * Math.min(1.2, wScale);
-  const waistW = width * (female ? 0.24 : 0.3) * Math.min(1.2, wScale);
-  const hipW = width * (female ? 0.34 : 0.32) * Math.min(1.2, wScale);
-  const legW = width * (female ? 0.12 : 0.135) * Math.min(1.15, wScale);
-  const gap = width * 0.03;
-  const armReach = width * 0.14;
+  // רוחב דמות בפועל ב־PNG ~45–58% מהקנבס
+  const bodySpan = width * (female ? 0.48 : 0.56);
+  const shoulderW = bodySpan * (female ? 0.72 : 0.78) * Math.min(1.15, wScale);
+  const waistW = bodySpan * (female ? 0.42 : 0.52) * Math.min(1.15, wScale);
+  const hipW = bodySpan * (female ? 0.62 : 0.58) * Math.min(1.15, wScale);
+  const legW = bodySpan * (female ? 0.22 : 0.24) * Math.min(1.12, wScale);
+  const gap = bodySpan * 0.06;
+  const armReach = bodySpan * 0.38;
 
   const y = (t: number) => height * t;
 
@@ -215,69 +217,66 @@ function TopLayer({
 }) {
   const c = colors(piece);
   const sh = (shoulderW / 2) * fit;
-  const wh = (waistW / 2) * fit * (outer ? 1.05 : 1);
-  const top = y(Z.shoulder) - 2;
-  const hem = outer ? y(Z.hip) + 4 : y(Z.waist) + (y(Z.hip) - y(Z.waist)) * 0.55;
-  const neckW = female ? sh * 0.28 : sh * 0.32;
-  const neckD = outer ? 10 : 16;
+  const wh = (waistW / 2) * fit * (outer ? 1.06 : 1);
+  const top = y(Z.neck) + 2;
+  const hem = outer ? y(Z.hip) + 6 : y(Z.hip) - 4;
+  const neckW = female ? sh * 0.34 : sh * 0.38;
+  const neckD = outer ? 12 : 18;
   const gid = `g-top-${piece.id}-${outer ? 'o' : 't'}`;
+  const sleeveLen = outer ? 0.72 : 0.42;
 
+  // גוף החולצה — כתפיים רכות + מותן + צווארון עגול
   const body = [
-    `M ${cx - sh} ${top + 4}`,
-    `C ${cx - sh - 2} ${top + 18}, ${cx - wh - 1} ${hem - 20}, ${cx - wh} ${hem}`,
-    `Q ${cx} ${hem + 3}, ${cx + wh} ${hem}`,
-    `C ${cx + wh + 1} ${hem - 20}, ${cx + sh + 2} ${top + 18}, ${cx + sh} ${top + 4}`,
-    `L ${cx + neckW} ${top + 6}`,
-    `C ${cx + neckW * 0.55} ${top + neckD}, ${cx - neckW * 0.55} ${top + neckD}, ${cx - neckW} ${top + 6}`,
+    `M ${cx - sh * 0.92} ${top + 8}`,
+    `C ${cx - sh * 1.05} ${top + 22}, ${cx - wh * 1.05} ${y(Z.waist)}, ${cx - wh} ${hem}`,
+    `C ${cx - wh * 0.55} ${hem + 4}, ${cx + wh * 0.55} ${hem + 4}, ${cx + wh} ${hem}`,
+    `C ${cx + wh * 1.05} ${y(Z.waist)}, ${cx + sh * 1.05} ${top + 22}, ${cx + sh * 0.92} ${top + 8}`,
+    `C ${cx + sh * 0.55} ${top + 2}, ${cx + neckW} ${top + 4}, ${cx + neckW * 0.85} ${top + 6}`,
+    `C ${cx + neckW * 0.45} ${top + neckD}, ${cx - neckW * 0.45} ${top + neckD}, ${cx - neckW * 0.85} ${top + 6}`,
+    `C ${cx - neckW} ${top + 4}, ${cx - sh * 0.55} ${top + 2}, ${cx - sh * 0.92} ${top + 8}`,
     'Z',
   ].join(' ');
 
+  // שרוולים בזווית A-pose
   const sleeveL = [
-    `M ${cx - sh + 2} ${top + 6}`,
-    `C ${cx - sh - armReach * 0.55} ${top + 10}, ${cx - sh - armReach * 0.85} ${top + 28}, ${cx - sh - armReach * 0.7} ${top + 48}`,
-    `C ${cx - sh - armReach * 0.35} ${top + 52}, ${cx - sh - 4} ${top + 34}, ${cx - sh + 4} ${top + 18}`,
+    `M ${cx - sh * 0.85} ${top + 10}`,
+    `C ${cx - sh - armReach * 0.25} ${top + 14}, ${cx - sh - armReach * 0.65} ${top + 20 + sleeveLen * 20}, ${cx - sh - armReach * 0.85} ${top + 28 + sleeveLen * 40}`,
+    `C ${cx - sh - armReach * 0.55} ${top + 34 + sleeveLen * 42}, ${cx - sh - armReach * 0.15} ${top + 30}, ${cx - sh * 0.55} ${top + 22}`,
     'Z',
   ].join(' ');
 
   const sleeveR = [
-    `M ${cx + sh - 2} ${top + 6}`,
-    `C ${cx + sh + armReach * 0.55} ${top + 10}, ${cx + sh + armReach * 0.85} ${top + 28}, ${cx + sh + armReach * 0.7} ${top + 48}`,
-    `C ${cx + sh + armReach * 0.35} ${top + 52}, ${cx + sh + 4} ${top + 34}, ${cx + sh - 4} ${top + 18}`,
+    `M ${cx + sh * 0.85} ${top + 10}`,
+    `C ${cx + sh + armReach * 0.25} ${top + 14}, ${cx + sh + armReach * 0.65} ${top + 20 + sleeveLen * 20}, ${cx + sh + armReach * 0.85} ${top + 28 + sleeveLen * 40}`,
+    `C ${cx + sh + armReach * 0.55} ${top + 34 + sleeveLen * 42}, ${cx + sh + armReach * 0.15} ${top + 30}, ${cx + sh * 0.55} ${top + 22}`,
     'Z',
   ].join(' ');
 
   return (
-    <G opacity={0.92}>
+    <G opacity={0.88}>
       <Defs>
-        <SvgLinearGradient id={gid} x1="0.15" y1="0" x2="0.9" y2="1">
+        <SvgLinearGradient id={gid} x1="0.2" y1="0" x2="0.85" y2="1">
           <Stop offset="0" stopColor={c.light} />
-          <Stop offset="0.4" stopColor={c.mid} />
+          <Stop offset="0.45" stopColor={c.mid} />
           <Stop offset="1" stopColor={c.dark} />
         </SvgLinearGradient>
       </Defs>
       <Path d={sleeveL} fill={`url(#${gid})`} />
       <Path d={sleeveR} fill={`url(#${gid})`} />
       <Path d={body} fill={`url(#${gid})`} />
-      {/* ברק בד */}
       <Path
-        d={`M ${cx - sh * 0.35} ${top + 14} Q ${cx - sh * 0.15} ${hem * 0.5 + top * 0.5}, ${cx - sh * 0.25} ${hem - 8}`}
-        stroke="rgba(255,255,255,0.16)"
-        strokeWidth={2.2}
+        d={`M ${cx - sh * 0.28} ${top + 20} Q ${cx - sh * 0.12} ${(top + hem) / 2}, ${cx - sh * 0.22} ${hem - 10}`}
+        stroke="rgba(255,255,255,0.2)"
+        strokeWidth={2.4}
         fill="none"
         strokeLinecap="round"
       />
       <Path
-        d={`M ${cx - sh + 4} ${top + 5} Q ${cx} ${top + 2}, ${cx + sh - 4} ${top + 5}`}
-        stroke="rgba(255,255,255,0.12)"
+        d={`M ${cx - wh * 0.7} ${hem - 1} Q ${cx} ${hem + 3}, ${cx + wh * 0.7} ${hem - 1}`}
+        stroke={c.deep}
         strokeWidth={1}
         fill="none"
-      />
-      <Path
-        d={`M ${cx - wh * 0.75} ${hem - 1} Q ${cx} ${hem + 2}, ${cx + wh * 0.75} ${hem - 1}`}
-        stroke={c.deep}
-        strokeWidth={0.8}
-        fill="none"
-        opacity={0.35}
+        opacity={0.3}
       />
     </G>
   );
@@ -301,43 +300,49 @@ function BottomLayer({
   gap: number;
 }) {
   const c = colors(piece);
-  const hh = (hipW / 2) * 0.95 * fit;
-  const pw = legW * (0.95 + (fit - 1) * 0.4);
+  const hh = (hipW / 2) * fit;
+  const thigh = legW * (1.15 + (fit - 1) * 0.35);
+  const ankleW = legW * 0.85;
   const short =
     piece.subcategory?.includes('קצר') ||
     piece.label.includes('קצר') ||
     (piece.subcategory ?? '').toLowerCase().includes('short');
-  const waistTop = y(Z.hip) - 10;
+  const waistTop = y(Z.waist) + (y(Z.hip) - y(Z.waist)) * 0.55;
   const crotch = y(Z.crotch);
-  const hem = short ? y(Z.knee) - 8 : y(Z.ankle) - 4;
+  const hem = short ? y(Z.knee) - 6 : y(Z.ankle) - 2;
   const gid = `g-bot-${piece.id}`;
+  const lx = cx - gap / 2 - thigh / 2;
+  const rx = cx + gap / 2 + thigh / 2;
 
   const waist = [
     `M ${cx - hh} ${waistTop}`,
-    `Q ${cx} ${waistTop - 6}, ${cx + hh} ${waistTop}`,
-    `L ${cx + hh * 0.88} ${crotch + 6}`,
-    `Q ${cx} ${crotch + 14}, ${cx - hh * 0.88} ${crotch + 6}`,
+    `Q ${cx} ${waistTop - 5}, ${cx + hh} ${waistTop}`,
+    `C ${cx + hh * 0.95} ${crotch - 4}, ${cx + hh * 0.7} ${crotch + 4}, ${cx + gap / 2 + 2} ${crotch + 6}`,
+    `Q ${cx} ${crotch + 12}, ${cx - gap / 2 - 2} ${crotch + 6}`,
+    `C ${cx - hh * 0.7} ${crotch + 4}, ${cx - hh * 0.95} ${crotch - 4}, ${cx - hh} ${waistTop}`,
     'Z',
   ].join(' ');
 
   const left = [
-    `M ${cx - gap / 2 - pw} ${crotch}`,
-    `C ${cx - gap / 2 - pw - 1} ${crotch + 30}, ${cx - gap / 2 - pw * 0.88} ${hem - 24}, ${cx - gap / 2 - pw * 0.85} ${hem}`,
-    `L ${cx - gap / 2 - 1} ${hem}`,
-    `C ${cx - gap / 2 - pw * 0.2} ${hem - 24}, ${cx - gap / 2 - 2} ${crotch + 28}, ${cx - gap / 2 - 2} ${crotch}`,
+    `M ${lx - thigh / 2} ${crotch + 2}`,
+    `C ${lx - thigh / 2 - 1} ${crotch + 36}, ${lx - ankleW / 2 - 1} ${hem - 28}, ${lx - ankleW / 2} ${hem}`,
+    `C ${lx - 2} ${hem + 2}, ${lx + 2} ${hem + 2}, ${lx + ankleW / 2} ${hem}`,
+    `C ${lx + ankleW / 2 + 1} ${hem - 28}, ${lx + thigh / 2} ${crotch + 36}, ${lx + thigh / 2} ${crotch + 2}`,
+    `Q ${lx} ${crotch - 2}, ${lx - thigh / 2} ${crotch + 2}`,
     'Z',
   ].join(' ');
 
   const right = [
-    `M ${cx + gap / 2 + 2} ${crotch}`,
-    `C ${cx + gap / 2 + 2} ${crotch + 28}, ${cx + gap / 2 + pw * 0.2} ${hem - 24}, ${cx + gap / 2 + 1} ${hem}`,
-    `L ${cx + gap / 2 + pw * 0.85} ${hem}`,
-    `C ${cx + gap / 2 + pw * 0.88} ${hem - 24}, ${cx + gap / 2 + pw + 1} ${crotch + 30}, ${cx + gap / 2 + pw} ${crotch}`,
+    `M ${rx - thigh / 2} ${crotch + 2}`,
+    `C ${rx - thigh / 2} ${crotch + 36}, ${rx - ankleW / 2} ${hem - 28}, ${rx - ankleW / 2} ${hem}`,
+    `C ${rx - 2} ${hem + 2}, ${rx + 2} ${hem + 2}, ${rx + ankleW / 2} ${hem}`,
+    `C ${rx + ankleW / 2 + 1} ${hem - 28}, ${rx + thigh / 2 + 1} ${crotch + 36}, ${rx + thigh / 2} ${crotch + 2}`,
+    `Q ${rx} ${crotch - 2}, ${rx - thigh / 2} ${crotch + 2}`,
     'Z',
   ].join(' ');
 
   return (
-    <G opacity={0.93}>
+    <G opacity={0.9}>
       <Defs>
         <SvgLinearGradient id={gid} x1="0.2" y1="0" x2="0.85" y2="1">
           <Stop offset="0" stopColor={c.light} />
@@ -349,28 +354,28 @@ function BottomLayer({
       <Path d={right} fill={`url(#${gid})`} />
       <Path d={waist} fill={`url(#${gid})`} />
       <Path
-        d={`M ${cx - hh * 0.9} ${waistTop + 2} Q ${cx} ${waistTop - 2}, ${cx + hh * 0.9} ${waistTop + 2}`}
+        d={`M ${cx - hh * 0.88} ${waistTop + 3} Q ${cx} ${waistTop - 1}, ${cx + hh * 0.88} ${waistTop + 3}`}
         stroke={c.deep}
-        strokeWidth={2}
+        strokeWidth={2.2}
         fill="none"
-        opacity={0.45}
+        opacity={0.4}
       />
       <Path
-        d={`M ${cx} ${waistTop + 4} L ${cx} ${crotch + 8}`}
+        d={`M ${cx} ${waistTop + 5} L ${cx} ${crotch + 8}`}
         stroke={c.deep}
-        strokeWidth={0.7}
-        opacity={0.35}
+        strokeWidth={0.8}
+        opacity={0.3}
       />
       <Path
-        d={`M ${cx - gap / 2 - pw * 0.55} ${crotch + 12} L ${cx - gap / 2 - pw * 0.48} ${hem - 8}`}
-        stroke="rgba(255,255,255,0.18)"
-        strokeWidth={1.6}
+        d={`M ${lx - thigh * 0.15} ${crotch + 14} L ${lx - thigh * 0.08} ${hem - 10}`}
+        stroke="rgba(255,255,255,0.2)"
+        strokeWidth={2}
         strokeLinecap="round"
       />
       <Path
-        d={`M ${cx + gap / 2 + pw * 0.35} ${crotch + 12} L ${cx + gap / 2 + pw * 0.4} ${hem - 8}`}
-        stroke="rgba(255,255,255,0.12)"
-        strokeWidth={1.4}
+        d={`M ${rx + thigh * 0.05} ${crotch + 14} L ${rx + thigh * 0.1} ${hem - 10}`}
+        stroke="rgba(255,255,255,0.14)"
+        strokeWidth={1.8}
         strokeLinecap="round"
       />
     </G>

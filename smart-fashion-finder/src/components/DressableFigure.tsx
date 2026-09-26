@@ -33,8 +33,8 @@ export function DressableFigure({
   const personaLabel =
     PERSONA_OPTIONS.find((p) => p.id === profile.persona)?.label ?? '';
 
-  const baseW = compact ? 156 : 188;
-  const baseH = compact ? 300 : 360;
+  const baseW = compact ? 168 : 200;
+  const baseH = compact ? 320 : 380;
   const dollW = baseW * Math.min(1.2, Math.max(0.82, wScale));
   const dollH = baseH * hScale;
 
