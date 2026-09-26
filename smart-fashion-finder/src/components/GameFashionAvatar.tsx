@@ -1,5 +1,14 @@
-import { Image, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View } from 'react-native';
+import Svg, {
+  Circle,
+  Defs,
+  Ellipse,
+  G,
+  LinearGradient as SvgLinearGradient,
+  Path,
+  RadialGradient,
+  Stop,
+} from 'react-native-svg';
 import {
   buildWidthScale,
   garmentColorHex,
@@ -8,7 +17,6 @@ import {
   sizeFitScale,
   sizeRelativeToHeight,
 } from '@/constants/avatar';
-import { layerImageForPieceId } from '@/constants/avatarAssets';
 import type { AvatarPersona, AvatarProfile, OutfitLayers, OutfitPiece } from '@/types';
 
 type Props = {
@@ -22,51 +30,80 @@ type SkinPalette = {
   light: string;
   mid: string;
   shadow: string;
+  deep: string;
+  blush: string;
   lip: string;
+  lipDark: string;
   hair: string;
+  hairMid: string;
   hairShine: string;
+  brow: string;
+  iris: string;
 };
 
 function skinFor(persona: AvatarPersona): SkinPalette {
   const female = isFemalePersona(persona);
   if (persona === 'boy' || persona === 'girl') {
     return {
-      light: '#F3D4BC',
-      mid: '#E8C4A8',
-      shadow: '#D4A88C',
-      lip: female ? '#E8A0A0' : '#C9958A',
-      hair: persona === 'girl' ? '#5C3A22' : '#3A2A1C',
-      hairShine: '#8B5A2B',
+      light: '#F6DCC6',
+      mid: '#EBC4A6',
+      shadow: '#D4A486',
+      deep: '#C08E6E',
+      blush: 'rgba(232,140,140,0.35)',
+      lip: female ? '#E89898' : '#C9958A',
+      lipDark: female ? '#D47878' : '#B88478',
+      hair: persona === 'girl' ? '#6B4228' : '#3E2C1E',
+      hairMid: persona === 'girl' ? '#8A5A35' : '#5A4030',
+      hairShine: persona === 'girl' ? '#A87048' : '#7A5A40',
+      brow: '#3A2818',
+      iris: '#4A3728',
     };
   }
   if (persona === 'teenBoy' || persona === 'teenGirl') {
     return {
-      light: '#EED0B4',
-      mid: '#E0B896',
-      shadow: '#C99A78',
+      light: '#F0D2B6',
+      mid: '#E2B894',
+      shadow: '#C99A74',
+      deep: '#B07E58',
+      blush: 'rgba(220,120,120,0.32)',
       lip: female ? '#D4848A' : '#C08A7A',
-      hair: '#1F1814',
-      hairShine: '#4A3A30',
+      lipDark: female ? '#C06870' : '#A87868',
+      hair: '#1A1410',
+      hairMid: '#2E2420',
+      hairShine: '#4A3A32',
+      brow: '#1A1410',
+      iris: '#3A2E24',
     };
   }
   if (persona === 'man') {
     return {
-      light: '#E2B994',
+      light: '#E6BE98',
       mid: '#D4A57C',
-      shadow: '#B88762',
+      shadow: '#B88760',
+      deep: '#9E6E48',
+      blush: 'rgba(180,100,80,0.22)',
       lip: '#B88478',
-      hair: '#2A221C',
+      lipDark: '#9E6C60',
+      hair: '#1C1612',
+      hairMid: '#2E241C',
       hairShine: '#4A3C32',
+      brow: '#1C1612',
+      iris: '#2E2418',
     };
   }
-  // woman
   return {
-    light: '#F0D2BA',
-    mid: '#E6C0A0',
+    light: '#F4D4BC',
+    mid: '#E8C0A0',
     shadow: '#D0A080',
+    deep: '#B88868',
+    blush: 'rgba(230,130,130,0.38)',
     lip: '#D4787E',
-    hair: '#2C1E18',
-    hairShine: '#5A3C2C',
+    lipDark: '#C06068',
+    hair: '#241812',
+    hairMid: '#3A2820',
+    hairShine: '#6A4A38',
+    brow: '#241812',
+    iris: '#3A2A20',
   };
 }
 
@@ -80,763 +117,901 @@ function shade(hex: string, amount: number): string {
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
 }
 
+/** viewBox units — דמות משחק אופנה אלגנטית */
+const VB_W = 120;
+const VB_H = 220;
+const CX = 60;
+
 /**
- * דמות משחק אופנה — פרופורציות, הצללות וביגוד לפי אזורי גוף.
+ * דמות משחק אופנה ברמה גבוהה — סילואט SVG, פנים מפורטות, בגדים לפי גזרה.
  */
 export function GameFashionAvatar({ profile, layers, width, height }: Props) {
   const female = isFemalePersona(profile.persona);
   const skin = skinFor(profile.persona);
   const wScale = buildWidthScale(profile.build);
   const hScale = heightScale(profile.heightCm, profile.persona);
-
-  // פרופורציות דמות משחק (ראש → רגל)
-  const unit = height / 100;
-  const headR = 11.2 * unit;
-  const headCy = 14 * unit;
-  const shoulderY = 28 * unit;
-  const waistY = 48 * unit;
-  const hipY = 54 * unit;
-  const kneeY = 74 * unit;
-  const ankleY = 92 * unit;
-  const shoulderW = (female ? 34 : 40) * unit * wScale;
-  const waistW = (female ? 22 : 28) * unit * wScale;
-  const hipW = (female ? 30 : 28) * unit * wScale;
-  const armW = (female ? 7.2 : 8.2) * unit * Math.min(1.15, wScale);
-  const legW = (female ? 9.5 : 11) * unit * Math.min(1.2, wScale);
-  const gap = 3.2 * unit;
-  const cx = width / 2;
-
-  // גובה הדמות משפיע מעט על מרווח הרגליים (כבר ב־height החיצוני)
   void hScale;
 
+  const shoulderHalf = (female ? 22 : 26) * wScale;
+  const waistHalf = (female ? 13 : 17) * wScale;
+  const hipHalf = (female ? 20 : 18) * wScale;
+  const armW = (female ? 5.2 : 6.2) * Math.min(1.15, wScale);
+  const legW = (female ? 7.2 : 8.4) * Math.min(1.2, wScale);
+  const gap = 2.4;
+
+  const headR = female ? 14.5 : 15.2;
+  const headCy = 28;
+  const neckTop = headCy + headR * 0.72;
+  const shoulderY = 48;
+  const chestY = 62;
+  const waistY = 88;
+  const hipY = 102;
+  const crotchY = 108;
+  const kneeY = 148;
+  const ankleY = 188;
+  const footY = 198;
+
+  const fitFor = (piece: OutfitPiece) =>
+    sizeFitScale(piece.size) *
+    sizeRelativeToHeight(piece.size, profile.heightCm) *
+    Math.min(1.12, Math.max(0.88, wScale));
+
   const outerIsHat = layers.outer?.category === 'Hats';
-  const showUnderwear = !layers.dress && !layers.top && !layers.bottom;
+  const showUnderwearTop = !layers.dress && !layers.top;
+  const showUnderwearBottom = !layers.dress && !layers.bottom;
+
+  // גוף — סילואט רך (כתפיים → מותן → ירכיים)
+  const torsoPath = [
+    `M ${CX - shoulderHalf} ${shoulderY}`,
+    `C ${CX - shoulderHalf - 2} ${shoulderY + 8}, ${CX - waistHalf - 1} ${waistY - 10}, ${CX - waistHalf} ${waistY}`,
+    `C ${CX - waistHalf} ${waistY + 6}, ${CX - hipHalf} ${hipY - 4}, ${CX - hipHalf} ${hipY}`,
+    `L ${CX - hipHalf * 0.55} ${crotchY}`,
+    `L ${CX + hipHalf * 0.55} ${crotchY}`,
+    `L ${CX + hipHalf} ${hipY}`,
+    `C ${CX + hipHalf} ${hipY - 4}, ${CX + waistHalf} ${waistY + 6}, ${CX + waistHalf} ${waistY}`,
+    `C ${CX + waistHalf + 1} ${waistY - 10}, ${CX + shoulderHalf + 2} ${shoulderY + 8}, ${CX + shoulderHalf} ${shoulderY}`,
+    `C ${CX + shoulderHalf * 0.55} ${shoulderY - 3}, ${CX - shoulderHalf * 0.55} ${shoulderY - 3}, ${CX - shoulderHalf} ${shoulderY}`,
+    'Z',
+  ].join(' ');
+
+  const leftArmPath = armPath(CX - shoulderHalf + 1, shoulderY + 2, -1, armW, hipY - 4);
+  const rightArmPath = armPath(CX + shoulderHalf - 1, shoulderY + 2, 1, armW, hipY - 4);
+
+  const leftLegPath = legPath(CX - gap / 2 - legW / 2, crotchY - 2, legW, ankleY, -1);
+  const rightLegPath = legPath(CX + gap / 2 + legW / 2, crotchY - 2, legW, ankleY, 1);
 
   return (
     <View style={{ width, height }}>
-      {/* במה / צל */}
-      <View
-        style={{
-          position: 'absolute',
-          bottom: 2,
-          left: cx - width * 0.28,
-          width: width * 0.56,
-          height: 10,
-          borderRadius: 999,
-          backgroundColor: 'rgba(0,0,0,0.12)',
-        }}
-      />
+      <Svg width={width} height={height} viewBox={`0 0 ${VB_W} ${VB_H}`}>
+        <Defs>
+          <SvgLinearGradient id="skinGrad" x1="0.2" y1="0" x2="0.9" y2="1">
+            <Stop offset="0" stopColor={skin.light} />
+            <Stop offset="0.45" stopColor={skin.mid} />
+            <Stop offset="1" stopColor={skin.shadow} />
+          </SvgLinearGradient>
+          <SvgLinearGradient id="skinSoft" x1="0.3" y1="0" x2="0.7" y2="1">
+            <Stop offset="0" stopColor={skin.light} />
+            <Stop offset="1" stopColor={skin.mid} />
+          </SvgLinearGradient>
+          <RadialGradient id="cheekL" cx="0.35" cy="0.5" rx="0.5" ry="0.5">
+            <Stop offset="0" stopColor={skin.blush} />
+            <Stop offset="1" stopColor="rgba(0,0,0,0)" />
+          </RadialGradient>
+          <RadialGradient id="cheekR" cx="0.65" cy="0.5" rx="0.5" ry="0.5">
+            <Stop offset="0" stopColor={skin.blush} />
+            <Stop offset="1" stopColor="rgba(0,0,0,0)" />
+          </RadialGradient>
+          <RadialGradient id="stageGlow" cx="0.5" cy="0.35" rx="0.55" ry="0.45">
+            <Stop offset="0" stopColor="rgba(255,255,255,0.35)" />
+            <Stop offset="1" stopColor="rgba(255,255,255,0)" />
+          </RadialGradient>
+          <SvgLinearGradient id="hairGrad" x1="0.3" y1="0" x2="0.7" y2="1">
+            <Stop offset="0" stopColor={skin.hairShine} />
+            <Stop offset="0.4" stopColor={skin.hairMid} />
+            <Stop offset="1" stopColor={skin.hair} />
+          </SvgLinearGradient>
+          <SvgLinearGradient id="floorShadow" x1="0.5" y1="0" x2="0.5" y2="1">
+            <Stop offset="0" stopColor="rgba(40,30,20,0.18)" />
+            <Stop offset="1" stopColor="rgba(40,30,20,0)" />
+          </SvgLinearGradient>
+        </Defs>
 
-      {/* שיער מאחור */}
-      {female ? (
-        <View
-          style={{
-            position: 'absolute',
-            top: headCy - headR * 0.2,
-            left: cx - headR * 1.15,
-            width: headR * 2.3,
-            height: headR * 3.2,
-            borderRadius: headR * 1.2,
-            backgroundColor: skin.hair,
-            opacity: 0.95,
-          }}
+        {/* במה רכה */}
+        <Ellipse cx={CX} cy={footY + 6} rx={34 * wScale} ry={5.5} fill="url(#floorShadow)" />
+        <Ellipse cx={CX} cy={110} rx={48} ry={70} fill="url(#stageGlow)" />
+
+        {/* שיער מאחור (נשים) */}
+        {female ? (
+          <Path
+            d={[
+              `M ${CX - headR * 1.05} ${headCy - 2}`,
+              `C ${CX - headR * 1.35} ${headCy + 8}, ${CX - headR * 1.25} ${headCy + 28}, ${CX - headR * 0.95} ${headCy + 42}`,
+              `C ${CX - headR * 0.7} ${headCy + 48}, ${CX - headR * 0.4} ${headCy + 46}, ${CX - headR * 0.35} ${headCy + 38}`,
+              `L ${CX - headR * 0.55} ${headCy + 8}`,
+              `L ${CX + headR * 0.55} ${headCy + 8}`,
+              `L ${CX + headR * 0.35} ${headCy + 38}`,
+              `C ${CX + headR * 0.4} ${headCy + 46}, ${CX + headR * 0.7} ${headCy + 48}, ${CX + headR * 0.95} ${headCy + 42}`,
+              `C ${CX + headR * 1.25} ${headCy + 28}, ${CX + headR * 1.35} ${headCy + 8}, ${CX + headR * 1.05} ${headCy - 2}`,
+              `C ${CX + headR * 0.4} ${headCy + 18}, ${CX - headR * 0.4} ${headCy + 18}, ${CX - headR * 1.05} ${headCy - 2}`,
+              'Z',
+            ].join(' ')}
+            fill="url(#hairGrad)"
+          />
+        ) : null}
+
+        {/* ידיים מאחורי הטורסו חלקית */}
+        <Path d={leftArmPath} fill="url(#skinGrad)" />
+        <Path d={rightArmPath} fill="url(#skinGrad)" />
+
+        {/* רגליים */}
+        <Path d={leftLegPath} fill="url(#skinGrad)" />
+        <Path d={rightLegPath} fill="url(#skinGrad)" />
+
+        {/* כפות רגליים */}
+        <Ellipse
+          cx={CX - gap / 2 - legW / 2 - 1}
+          cy={footY}
+          rx={legW * 0.85}
+          ry={3.8}
+          fill={skin.deep}
         />
-      ) : null}
-
-      {/* ראש */}
-      <LinearGradient
-        colors={[skin.light, skin.mid, skin.shadow]}
-        start={{ x: 0.3, y: 0 }}
-        end={{ x: 0.8, y: 1 }}
-        style={{
-          position: 'absolute',
-          top: headCy - headR,
-          left: cx - headR,
-          width: headR * 2,
-          height: headR * 2,
-          borderRadius: headR,
-        }}
-      />
-      {/* שיער קדמי */}
-      <LinearGradient
-        colors={[skin.hairShine, skin.hair]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={{
-          position: 'absolute',
-          top: headCy - headR * 1.05,
-          left: cx - headR * 1.05,
-          width: headR * 2.1,
-          height: headR * (female ? 1.35 : 0.95),
-          borderTopLeftRadius: headR * 1.2,
-          borderTopRightRadius: headR * 1.2,
-          borderBottomLeftRadius: female ? headR * 0.4 : headR * 0.8,
-          borderBottomRightRadius: female ? headR * 0.4 : headR * 0.8,
-        }}
-      />
-      {/* עיניים */}
-      <View
-        style={{
-          position: 'absolute',
-          top: headCy - unit * 1.2,
-          left: cx - unit * 4.2,
-          width: unit * 2.4,
-          height: unit * 1.6,
-          borderRadius: 999,
-          backgroundColor: '#FFF',
-        }}
-      />
-      <View
-        style={{
-          position: 'absolute',
-          top: headCy - unit * 1.2,
-          left: cx + unit * 1.8,
-          width: unit * 2.4,
-          height: unit * 1.6,
-          borderRadius: 999,
-          backgroundColor: '#FFF',
-        }}
-      />
-      <View
-        style={{
-          position: 'absolute',
-          top: headCy - unit * 0.7,
-          left: cx - unit * 3.4,
-          width: unit * 1.2,
-          height: unit * 1.2,
-          borderRadius: 999,
-          backgroundColor: '#2A2018',
-        }}
-      />
-      <View
-        style={{
-          position: 'absolute',
-          top: headCy - unit * 0.7,
-          left: cx + unit * 2.2,
-          width: unit * 1.2,
-          height: unit * 1.2,
-          borderRadius: 999,
-          backgroundColor: '#2A2018',
-        }}
-      />
-      {/* שפתיים */}
-      <View
-        style={{
-          position: 'absolute',
-          top: headCy + unit * 3.2,
-          left: cx - unit * 2,
-          width: unit * 4,
-          height: unit * 1.3,
-          borderRadius: 999,
-          backgroundColor: skin.lip,
-        }}
-      />
-
-      {/* צוואר */}
-      <LinearGradient
-        colors={[skin.mid, skin.shadow]}
-        style={{
-          position: 'absolute',
-          top: headCy + headR * 0.75,
-          left: cx - unit * 3,
-          width: unit * 6,
-          height: unit * 5,
-          borderRadius: unit * 2,
-        }}
-      />
-
-      {/* ידיים (מאחורי הגוף חלקית) */}
-      <Limb
-        left={cx - shoulderW / 2 - armW * 0.35}
-        top={shoulderY + unit}
-        width={armW}
-        height={hipY - shoulderY + unit * 4}
-        colors={[skin.light, skin.mid, skin.shadow]}
-        radius={armW / 2}
-      />
-      <Limb
-        left={cx + shoulderW / 2 - armW * 0.65}
-        top={shoulderY + unit}
-        width={armW}
-        height={hipY - shoulderY + unit * 4}
-        colors={[skin.light, skin.mid, skin.shadow]}
-        radius={armW / 2}
-      />
-
-      {/* גוף / טורסו */}
-      <View
-        style={{
-          position: 'absolute',
-          top: shoulderY,
-          left: cx - shoulderW / 2,
-          width: shoulderW,
-          height: hipY - shoulderY + unit * 2,
-          overflow: 'hidden',
-          borderTopLeftRadius: unit * 6,
-          borderTopRightRadius: unit * 6,
-          borderBottomLeftRadius: unit * 8,
-          borderBottomRightRadius: unit * 8,
-        }}
-      >
-        <LinearGradient
-          colors={[skin.light, skin.mid, skin.shadow]}
-          start={{ x: 0.2, y: 0 }}
-          end={{ x: 0.9, y: 1 }}
-          style={{ flex: 1 }}
+        <Ellipse
+          cx={CX + gap / 2 + legW / 2 + 1}
+          cy={footY}
+          rx={legW * 0.85}
+          ry={3.8}
+          fill={skin.deep}
         />
-        {/* מותן צרה יותר ויזואלית */}
-        <View
-          style={{
-            position: 'absolute',
-            top: waistY - shoulderY,
-            left: (shoulderW - waistW) / 2,
-            width: waistW,
-            height: 2,
-            backgroundColor: 'transparent',
-          }}
+
+        {/* צוואר */}
+        <Path
+          d={[
+            `M ${CX - 4.2} ${neckTop}`,
+            `C ${CX - 4.8} ${neckTop + 6}, ${CX - 5.2} ${shoulderY - 2}, ${CX - 6} ${shoulderY}`,
+            `L ${CX + 6} ${shoulderY}`,
+            `C ${CX + 5.2} ${shoulderY - 2}, ${CX + 4.8} ${neckTop + 6}, ${CX + 4.2} ${neckTop}`,
+            `C ${CX + 2} ${neckTop - 1}, ${CX - 2} ${neckTop - 1}, ${CX - 4.2} ${neckTop}`,
+            'Z',
+          ].join(' ')}
+          fill="url(#skinSoft)"
         />
-      </View>
 
-      {/* רגליים */}
-      <Limb
-        left={cx - gap / 2 - legW}
-        top={hipY}
-        width={legW}
-        height={ankleY - hipY}
-        colors={[skin.light, skin.mid, skin.shadow]}
-        radius={legW / 2}
-      />
-      <Limb
-        left={cx + gap / 2}
-        top={hipY}
-        width={legW}
-        height={ankleY - hipY}
-        colors={[skin.light, skin.mid, skin.shadow]}
-        radius={legW / 2}
-      />
+        {/* טורסו */}
+        <Path d={torsoPath} fill="url(#skinGrad)" />
+        {/* הצללת מותן עדינה */}
+        <Ellipse
+          cx={CX}
+          cy={waistY}
+          rx={waistHalf * 0.9}
+          ry={3}
+          fill="rgba(0,0,0,0.04)"
+        />
 
-      {/* כפות רגליים בסיס */}
-      <View
-        style={{
-          position: 'absolute',
-          top: ankleY - unit,
-          left: cx - gap / 2 - legW - unit,
-          width: legW + unit * 2,
-          height: unit * 4,
-          borderRadius: unit * 2,
-          backgroundColor: skin.shadow,
-        }}
-      />
-      <View
-        style={{
-          position: 'absolute',
-          top: ankleY - unit,
-          left: cx + gap / 2 - unit,
-          width: legW + unit * 2,
-          height: unit * 4,
-          borderRadius: unit * 2,
-          backgroundColor: skin.shadow,
-        }}
-      />
+        {/* הלבשה תחתונה */}
+        {showUnderwearTop && female ? (
+          <Path
+            d={[
+              `M ${CX - shoulderHalf * 0.55} ${shoulderY + 10}`,
+              `C ${CX - shoulderHalf * 0.5} ${chestY + 4}, ${CX - 8} ${chestY + 10}, ${CX} ${chestY + 8}`,
+              `C ${CX + 8} ${chestY + 10}, ${CX + shoulderHalf * 0.5} ${chestY + 4}, ${CX + shoulderHalf * 0.55} ${shoulderY + 10}`,
+              `C ${CX + 10} ${shoulderY + 14}, ${CX - 10} ${shoulderY + 14}, ${CX - shoulderHalf * 0.55} ${shoulderY + 10}`,
+              'Z',
+            ].join(' ')}
+            fill="#F7F3EE"
+            stroke="#E8E0D6"
+            strokeWidth={0.4}
+          />
+        ) : null}
+        {showUnderwearBottom ? (
+          <Path
+            d={[
+              `M ${CX - hipHalf * 0.72} ${hipY - 6}`,
+              `Q ${CX} ${hipY - 10}, ${CX + hipHalf * 0.72} ${hipY - 6}`,
+              `L ${CX + hipHalf * 0.55} ${crotchY + 2}`,
+              `Q ${CX} ${crotchY + 8}, ${CX - hipHalf * 0.55} ${crotchY + 2}`,
+              'Z',
+            ].join(' ')}
+            fill={female ? '#F7F3EE' : '#2A2A30'}
+          />
+        ) : null}
 
-      {/* הלבשה תחתונה בסיס */}
-      {showUnderwear || (!layers.top && !layers.dress) ? (
-        <Underwear
+        {/* בגדים */}
+        {layers.bottom && !layers.dress ? (
+          <GarmentBottom
+            piece={layers.bottom}
+            fit={fitFor(layers.bottom)}
+            cx={CX}
+            hipY={hipY}
+            crotchY={crotchY}
+            ankleY={ankleY}
+            hipHalf={hipHalf}
+            legW={legW}
+            gap={gap}
+          />
+        ) : null}
+
+        {layers.top && !layers.dress ? (
+          <GarmentTop
+            piece={layers.top}
+            fit={fitFor(layers.top)}
+            female={female}
+            cx={CX}
+            shoulderY={shoulderY}
+            chestY={chestY}
+            waistY={waistY}
+            hipY={hipY}
+            shoulderHalf={shoulderHalf}
+            waistHalf={waistHalf}
+            armW={armW}
+            outer={false}
+          />
+        ) : null}
+
+        {layers.dress ? (
+          <GarmentDress
+            piece={layers.dress}
+            fit={fitFor(layers.dress)}
+            cx={CX}
+            shoulderY={shoulderY}
+            chestY={chestY}
+            waistY={waistY}
+            hipY={hipY}
+            kneeY={kneeY}
+            shoulderHalf={shoulderHalf}
+            waistHalf={waistHalf}
+            hipHalf={hipHalf}
+          />
+        ) : null}
+
+        {layers.outer && !outerIsHat ? (
+          <GarmentTop
+            piece={layers.outer}
+            fit={fitFor(layers.outer)}
+            female={female}
+            cx={CX}
+            shoulderY={shoulderY - 1}
+            chestY={chestY}
+            waistY={waistY}
+            hipY={hipY + 4}
+            shoulderHalf={shoulderHalf * 1.08}
+            waistHalf={waistHalf * 1.12}
+            armW={armW * 1.15}
+            outer
+          />
+        ) : null}
+
+        {layers.shoes ? (
+          <GarmentShoes
+            piece={layers.shoes}
+            cx={CX}
+            ankleY={ankleY}
+            footY={footY}
+            legW={legW}
+            gap={gap}
+          />
+        ) : null}
+
+        {/* ראש */}
+        <Ellipse cx={CX} cy={headCy + 1} rx={headR} ry={headR * 1.08} fill="url(#skinGrad)" />
+        {/* לחיים */}
+        <Ellipse cx={CX - 7} cy={headCy + 4} rx={5} ry={3.5} fill="url(#cheekL)" />
+        <Ellipse cx={CX + 7} cy={headCy + 4} rx={5} ry={3.5} fill="url(#cheekR)" />
+
+        {/* שיער קדמי */}
+        <HairFront female={female} cx={CX} headCy={headCy} headR={headR} />
+
+        {/* פנים */}
+        <Face
+          cx={CX}
+          cy={headCy}
           female={female}
-          cx={cx}
-          shoulderY={shoulderY}
-          hipY={hipY}
-          shoulderW={shoulderW}
-          hipW={hipW}
-          unit={unit}
-          visibleTop={!layers.top && !layers.dress}
-          visibleBottom={!layers.bottom && !layers.dress}
+          skin={skin}
+          persona={profile.persona}
         />
-      ) : null}
 
-      {/* בגדים — סדר שכבות נכון */}
-      {layers.bottom && !layers.dress ? (
-        <FittedClothes
-          piece={layers.bottom}
-          region="bottom"
-          cx={cx}
-          unit={unit}
-          shoulderY={shoulderY}
-          hipY={hipY}
-          ankleY={ankleY}
-          shoulderW={shoulderW}
-          hipW={hipW}
-          waistW={waistW}
-          legW={legW}
-          gap={gap}
-          buildScale={wScale}
-          heightCm={profile.heightCm}
+        {layers.outer && outerIsHat ? (
+          <GarmentHat piece={layers.outer} cx={CX} headCy={headCy} headR={headR} />
+        ) : null}
+
+        {/* ברך — עומק עדין */}
+        <Ellipse
+          cx={CX - gap / 2 - legW / 2}
+          cy={kneeY}
+          rx={legW * 0.35}
+          ry={1.2}
+          fill="rgba(0,0,0,0.05)"
         />
-      ) : null}
-
-      {layers.top && !layers.dress ? (
-        <FittedClothes
-          piece={layers.top}
-          region="top"
-          cx={cx}
-          unit={unit}
-          shoulderY={shoulderY}
-          hipY={hipY}
-          ankleY={ankleY}
-          shoulderW={shoulderW}
-          hipW={hipW}
-          waistW={waistW}
-          legW={legW}
-          gap={gap}
-          buildScale={wScale}
-          heightCm={profile.heightCm}
+        <Ellipse
+          cx={CX + gap / 2 + legW / 2}
+          cy={kneeY}
+          rx={legW * 0.35}
+          ry={1.2}
+          fill="rgba(0,0,0,0.05)"
         />
-      ) : null}
-
-      {layers.dress ? (
-        <FittedClothes
-          piece={layers.dress}
-          region="dress"
-          cx={cx}
-          unit={unit}
-          shoulderY={shoulderY}
-          hipY={hipY}
-          ankleY={ankleY}
-          shoulderW={shoulderW}
-          hipW={hipW}
-          waistW={waistW}
-          legW={legW}
-          gap={gap}
-          buildScale={wScale}
-          heightCm={profile.heightCm}
-        />
-      ) : null}
-
-      {layers.outer && !outerIsHat ? (
-        <FittedClothes
-          piece={layers.outer}
-          region="outer"
-          cx={cx}
-          unit={unit}
-          shoulderY={shoulderY}
-          hipY={hipY}
-          ankleY={ankleY}
-          shoulderW={shoulderW}
-          hipW={hipW}
-          waistW={waistW}
-          legW={legW}
-          gap={gap}
-          buildScale={wScale}
-          heightCm={profile.heightCm}
-        />
-      ) : null}
-
-      {layers.outer && outerIsHat ? (
-        <FittedClothes
-          piece={layers.outer}
-          region="hat"
-          cx={cx}
-          unit={unit}
-          shoulderY={headCy - headR}
-          hipY={hipY}
-          ankleY={ankleY}
-          shoulderW={headR * 2}
-          hipW={hipW}
-          waistW={waistW}
-          legW={legW}
-          gap={gap}
-          buildScale={wScale}
-          heightCm={profile.heightCm}
-        />
-      ) : null}
-
-      {layers.shoes ? (
-        <FittedClothes
-          piece={layers.shoes}
-          region="shoes"
-          cx={cx}
-          unit={unit}
-          shoulderY={shoulderY}
-          hipY={hipY}
-          ankleY={ankleY}
-          shoulderW={shoulderW}
-          hipW={hipW}
-          waistW={waistW}
-          legW={legW}
-          gap={gap}
-          buildScale={wScale}
-          heightCm={profile.heightCm}
-        />
-      ) : null}
-
-      {/* ברך עדינה — עומק */}
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          top: kneeY,
-          left: cx - gap / 2 - legW + 2,
-          width: legW - 4,
-          height: 1,
-          backgroundColor: 'rgba(0,0,0,0.06)',
-        }}
-      />
+      </Svg>
     </View>
   );
 }
 
-function Limb({
-  left,
-  top,
-  width,
-  height,
-  colors,
-  radius,
-}: {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-  colors: [string, string, ...string[]];
-  radius: number;
-}) {
-  return (
-    <LinearGradient
-      colors={colors}
-      start={{ x: 0.2, y: 0 }}
-      end={{ x: 0.9, y: 1 }}
-      style={{
-        position: 'absolute',
-        left,
-        top,
-        width,
-        height,
-        borderRadius: radius,
-      }}
-    />
-  );
+function armPath(sx: number, sy: number, side: -1 | 1, w: number, ey: number): string {
+  const ex = sx + side * (w * 0.35);
+  return [
+    `M ${sx - side * 1} ${sy}`,
+    `C ${sx + side * (w * 0.9)} ${sy + 8}, ${ex + side * w * 0.55} ${sy + 28}, ${ex + side * w * 0.4} ${ey}`,
+    `C ${ex + side * w * 0.15} ${ey + 3}, ${ex - side * w * 0.35} ${ey + 2}, ${ex - side * w * 0.45} ${ey - 2}`,
+    `C ${sx - side * w * 0.15} ${sy + 30}, ${sx - side * w * 0.55} ${sy + 10}, ${sx - side * w * 0.35} ${sy + 1}`,
+    'Z',
+  ].join(' ');
 }
 
-function Underwear({
+function legPath(cx: number, top: number, w: number, ankle: number, side: -1 | 1): string {
+  const taper = w * 0.82;
+  return [
+    `M ${cx - w / 2} ${top}`,
+    `C ${cx - w / 2 - 0.5} ${top + 20}, ${cx - taper / 2 - 0.3} ${ankle - 30}, ${cx - taper / 2} ${ankle}`,
+    `L ${cx + taper / 2} ${ankle}`,
+    `C ${cx + taper / 2 + 0.3} ${ankle - 30}, ${cx + w / 2 + 0.5} ${top + 20}, ${cx + w / 2} ${top}`,
+    `Q ${cx + side} ${top - 2}, ${cx - w / 2} ${top}`,
+    'Z',
+  ].join(' ');
+}
+
+function HairFront({
   female,
   cx,
-  shoulderY,
-  hipY,
-  shoulderW,
-  hipW,
-  unit,
-  visibleTop,
-  visibleBottom,
+  headCy,
+  headR,
 }: {
   female: boolean;
   cx: number;
-  shoulderY: number;
-  hipY: number;
-  shoulderW: number;
-  hipW: number;
-  unit: number;
-  visibleTop: boolean;
-  visibleBottom: boolean;
+  headCy: number;
+  headR: number;
 }) {
+  if (female) {
+    return (
+      <G>
+        <Path
+          d={[
+            `M ${cx - headR * 1.02} ${headCy - 2}`,
+            `C ${cx - headR * 1.1} ${headCy - headR * 0.95}, ${cx - headR * 0.55} ${headCy - headR * 1.25}, ${cx} ${headCy - headR * 1.18}`,
+            `C ${cx + headR * 0.55} ${headCy - headR * 1.25}, ${cx + headR * 1.1} ${headCy - headR * 0.95}, ${cx + headR * 1.02} ${headCy - 2}`,
+            `C ${cx + headR * 0.95} ${headCy + 6}, ${cx + headR * 0.7} ${headCy + 10}, ${cx + headR * 0.55} ${headCy + 14}`,
+            `C ${cx + headR * 0.35} ${headCy + 4}, ${cx + 4} ${headCy - 2}, ${cx} ${headCy + 1}`,
+            `C ${cx - 4} ${headCy - 2}, ${cx - headR * 0.35} ${headCy + 4}, ${cx - headR * 0.55} ${headCy + 14}`,
+            `C ${cx - headR * 0.7} ${headCy + 10}, ${cx - headR * 0.95} ${headCy + 6}, ${cx - headR * 1.02} ${headCy - 2}`,
+            'Z',
+          ].join(' ')}
+          fill="url(#hairGrad)"
+        />
+        {/* פס ברק */}
+        <Path
+          d={`M ${cx - 6} ${headCy - headR * 0.85} Q ${cx - 2} ${headCy - headR * 1.05}, ${cx + 3} ${headCy - headR * 0.75}`}
+          stroke="rgba(255,255,255,0.18)"
+          strokeWidth={1.6}
+          fill="none"
+          strokeLinecap="round"
+        />
+        {/* פוני עדין */}
+        <Path
+          d={`M ${cx - 9} ${headCy - 4} Q ${cx - 3} ${headCy + 2}, ${cx + 1} ${headCy - 1}`}
+          stroke="url(#hairGrad)"
+          strokeWidth={2.2}
+          fill="none"
+          strokeLinecap="round"
+          opacity={0.85}
+        />
+        <Path
+          d={`M ${cx + 8} ${headCy - 3} Q ${cx + 3} ${headCy + 3}, ${cx - 1} ${headCy}`}
+          stroke="url(#hairGrad)"
+          strokeWidth={2}
+          fill="none"
+          strokeLinecap="round"
+          opacity={0.75}
+        />
+      </G>
+    );
+  }
   return (
-    <>
-      {visibleTop && female ? (
-        <View
-          style={{
-            position: 'absolute',
-            top: shoulderY + unit * 6,
-            left: cx - shoulderW * 0.28,
-            width: shoulderW * 0.56,
-            height: unit * 7,
-            borderRadius: unit * 2,
-            backgroundColor: '#F5F2EE',
-            borderWidth: 1,
-            borderColor: '#E5DFD6',
-          }}
-        />
-      ) : null}
-      {visibleBottom ? (
-        <View
-          style={{
-            position: 'absolute',
-            top: hipY - unit * 3,
-            left: cx - hipW * 0.38,
-            width: hipW * 0.76,
-            height: unit * 8,
-            borderRadius: unit * 3,
-            backgroundColor: female ? '#F5F2EE' : '#2A2A2E',
-          }}
-        />
-      ) : null}
-    </>
+    <G>
+      <Path
+        d={[
+          `M ${cx - headR * 0.98} ${headCy + 1}`,
+          `C ${cx - headR * 1.05} ${headCy - headR * 0.7}, ${cx - headR * 0.4} ${headCy - headR * 1.15}, ${cx} ${headCy - headR * 1.12}`,
+          `C ${cx + headR * 0.4} ${headCy - headR * 1.15}, ${cx + headR * 1.05} ${headCy - headR * 0.7}, ${cx + headR * 0.98} ${headCy + 1}`,
+          `C ${cx + headR * 0.7} ${headCy - 4}, ${cx + 4} ${headCy - 8}, ${cx} ${headCy - 6}`,
+          `C ${cx - 4} ${headCy - 8}, ${cx - headR * 0.7} ${headCy - 4}, ${cx - headR * 0.98} ${headCy + 1}`,
+          'Z',
+        ].join(' ')}
+        fill="url(#hairGrad)"
+      />
+      <Path
+        d={`M ${cx - 5} ${headCy - headR * 0.75} Q ${cx} ${headCy - headR * 0.95}, ${cx + 5} ${headCy - headR * 0.7}`}
+        stroke="rgba(255,255,255,0.14)"
+        strokeWidth={1.4}
+        fill="none"
+        strokeLinecap="round"
+      />
+    </G>
   );
 }
 
-function FittedClothes({
-  piece,
-  region,
+function Face({
   cx,
-  unit,
-  shoulderY,
-  hipY,
-  ankleY,
-  shoulderW,
-  hipW,
-  waistW,
-  legW,
-  gap,
-  buildScale,
-  heightCm,
+  cy,
+  female,
+  skin,
+  persona,
 }: {
-  piece: OutfitPiece;
-  region: 'top' | 'bottom' | 'dress' | 'outer' | 'hat' | 'shoes';
   cx: number;
-  unit: number;
-  shoulderY: number;
-  hipY: number;
-  ankleY: number;
-  shoulderW: number;
-  hipW: number;
-  waistW: number;
-  legW: number;
-  gap: number;
-  buildScale: number;
-  heightCm: number;
+  cy: number;
+  female: boolean;
+  skin: SkinPalette;
+  persona: AvatarPersona;
 }) {
-  const base = garmentColorHex(piece.color);
-  const light = shade(base, 28);
-  const dark = shade(base, -32);
-  const fit =
-    sizeFitScale(piece.size) *
-    sizeRelativeToHeight(piece.size, heightCm) *
-    Math.min(1.12, Math.max(0.88, buildScale));
-  const texture = layerImageForPieceId(piece.id);
+  const eyeY = cy - 1.5;
+  const eyeSpread = female ? 6.2 : 6.6;
+  const eyeW = female ? 3.4 : 3.2;
+  const eyeH = female ? 2.6 : 2.3;
+  const child = persona === 'boy' || persona === 'girl';
 
-  if (region === 'hat') {
-    const w = shoulderW * 1.15 * Math.min(1.12, fit);
-    return (
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          top: shoulderY - unit * 2,
-          left: cx - w / 2,
-          width: w,
-          height: unit * 10,
-          alignItems: 'center',
-        }}
-      >
-        <LinearGradient
-          colors={[light, base, dark]}
-          style={{
-            width: '100%',
-            height: unit * 3.5,
-            borderRadius: 999,
-            marginTop: unit * 4,
-          }}
-        />
-        <LinearGradient
-          colors={[light, base, dark]}
-          style={{
-            position: 'absolute',
-            top: 0,
-            width: w * 0.62,
-            height: unit * 7,
-            borderTopLeftRadius: unit * 8,
-            borderTopRightRadius: unit * 8,
-            borderBottomLeftRadius: unit * 2,
-            borderBottomRightRadius: unit * 2,
-          }}
-        />
-      </View>
-    );
-  }
+  return (
+    <G>
+      {/* גבות */}
+      <Path
+        d={`M ${cx - eyeSpread - 2.2} ${eyeY - 3.8} Q ${cx - eyeSpread} ${eyeY - 5.2}, ${cx - eyeSpread + 2.8} ${eyeY - 3.6}`}
+        stroke={skin.brow}
+        strokeWidth={female ? 1.1 : 1.35}
+        fill="none"
+        strokeLinecap="round"
+      />
+      <Path
+        d={`M ${cx + eyeSpread + 2.2} ${eyeY - 3.8} Q ${cx + eyeSpread} ${eyeY - 5.2}, ${cx + eyeSpread - 2.8} ${eyeY - 3.6}`}
+        stroke={skin.brow}
+        strokeWidth={female ? 1.1 : 1.35}
+        fill="none"
+        strokeLinecap="round"
+      />
 
-  if (region === 'shoes') {
-    const shoeW = legW + unit * 3;
-    return (
-      <View pointerEvents="none">
-        {[
-          cx - gap / 2 - legW - unit,
-          cx + gap / 2 - unit,
-        ].map((left, i) => (
-          <LinearGradient
-            key={i}
-            colors={[light, base, dark]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{
-              position: 'absolute',
-              top: ankleY - unit * 1.5,
-              left,
-              width: shoeW,
-              height: unit * 5,
-              borderRadius: unit * 2.5,
-            }}
-          />
-        ))}
-      </View>
-    );
-  }
-
-  if (region === 'bottom') {
-    const pantW = legW * (0.95 + (fit - 1) * 0.5);
-    const top = hipY - unit * 4;
-    const h = ankleY - top - unit;
-    return (
-      <View pointerEvents="none">
-        {/* מותן */}
-        <LinearGradient
-          colors={[light, base, dark]}
-          style={{
-            position: 'absolute',
-            top,
-            left: cx - hipW * 0.42 * fit,
-            width: hipW * 0.84 * fit,
-            height: unit * 6,
-            borderRadius: unit * 2,
-          }}
-        />
-        {[cx - gap / 2 - pantW, cx + gap / 2].map((left, i) => (
-          <View
-            key={i}
-            style={{
-              position: 'absolute',
-              top: top + unit * 4,
-              left,
-              width: pantW,
-              height: h - unit * 4,
-              borderRadius: pantW / 2,
-              overflow: 'hidden',
-            }}
-          >
-            <LinearGradient
-              colors={[light, base, dark]}
-              start={{ x: 0.2, y: 0 }}
-              end={{ x: 0.9, y: 1 }}
-              style={{ flex: 1 }}
+      {/* עיניים */}
+      {([-1, 1] as const).map((side) => {
+        const ex = cx + side * eyeSpread;
+        return (
+          <G key={side}>
+            <Ellipse cx={ex} cy={eyeY} rx={eyeW} ry={eyeH} fill="#FFF" />
+            <Ellipse
+              cx={ex + side * 0.15}
+              cy={eyeY + 0.15}
+              rx={eyeW * 0.55}
+              ry={eyeH * 0.7}
+              fill={skin.iris}
             />
-            {texture ? (
-              <Image
-                source={texture}
-                resizeMode="cover"
-                style={{
-                  position: 'absolute',
-                  width: '100%',
-                  height: '100%',
-                  opacity: 0.35,
-                }}
+            <Circle cx={ex + side * 0.15} cy={eyeY + 0.2} r={1.05} fill="#1A120E" />
+            <Circle cx={ex - 0.7} cy={eyeY - 0.6} r={0.55} fill="#FFF" opacity={0.9} />
+            {female ? (
+              <Path
+                d={`M ${ex - eyeW} ${eyeY + 0.2} Q ${ex} ${eyeY + eyeH + 0.8}, ${ex + eyeW} ${eyeY + 0.2}`}
+                stroke="rgba(40,20,20,0.12)"
+                strokeWidth={0.6}
+                fill="none"
               />
             ) : null}
-          </View>
-        ))}
-      </View>
-    );
-  }
+          </G>
+        );
+      })}
 
-  // top / outer / dress
-  const isDress = region === 'dress';
-  const isOuter = region === 'outer';
-  const topW = shoulderW * (isOuter ? 1.12 : 1.02) * fit;
-  const botW = (isDress ? hipW * 1.05 : waistW * 1.15) * fit;
-  const top = shoulderY - unit * (isOuter ? 1 : 0.5);
-  const h = isDress
-    ? kneeYish(hipY, ankleY, unit) - top
-    : (isOuter ? hipY - unit * 2 : waistYish(hipY, unit)) - top + unit * 2;
+      {/* אף עדין */}
+      <Path
+        d={`M ${cx} ${cy + 1} Q ${cx + 1.6} ${cy + 4.5}, ${cx} ${cy + 5.2}`}
+        stroke={skin.shadow}
+        strokeWidth={0.9}
+        fill="none"
+        strokeLinecap="round"
+        opacity={0.55}
+      />
 
-  return (
-    <View
-      pointerEvents="none"
-      style={{
-        position: 'absolute',
-        top,
-        left: cx - topW / 2,
-        width: topW,
-        height: Math.max(h, unit * 12),
-        alignItems: 'center',
-      }}
-    >
-      <View
-        style={{
-          width: topW,
-          height: '100%',
-          borderTopLeftRadius: unit * 5,
-          borderTopRightRadius: unit * 5,
-          borderBottomLeftRadius: isDress ? unit * 10 : unit * 4,
-          borderBottomRightRadius: isDress ? unit * 10 : unit * 4,
-          overflow: 'hidden',
-          transform: [{ scaleX: Math.min(1, botW / topW + 0.15) }],
-        }}
-      >
-        <LinearGradient
-          colors={[light, base, dark]}
-          start={{ x: 0.15, y: 0 }}
-          end={{ x: 0.9, y: 1 }}
-          style={{ flex: 1 }}
-        />
-        {texture ? (
-          <Image
-            source={texture}
-            resizeMode="cover"
-            style={{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              opacity: 0.32,
-            }}
-          />
-        ) : null}
-        {/* צווארון */}
-        <View
-          style={{
-            position: 'absolute',
-            top: unit * 1.5,
-            alignSelf: 'center',
-            left: '35%',
-            width: '30%',
-            height: unit * 3,
-            borderRadius: unit,
-            backgroundColor: 'rgba(255,255,255,0.12)',
-          }}
-        />
-      </View>
-      {/* שרוולים */}
-      {!isDress ? (
-        <>
-          <LinearGradient
-            colors={[light, base, dark]}
-            style={{
-              position: 'absolute',
-              top: unit * 2,
-              left: -topW * 0.16,
-              width: topW * 0.28,
-              height: h * 0.45,
-              borderRadius: unit * 4,
-              transform: [{ rotate: '-18deg' }],
-            }}
-          />
-          <LinearGradient
-            colors={[light, base, dark]}
-            style={{
-              position: 'absolute',
-              top: unit * 2,
-              right: -topW * 0.16,
-              width: topW * 0.28,
-              height: h * 0.45,
-              borderRadius: unit * 4,
-              transform: [{ rotate: '18deg' }],
-            }}
-          />
-        </>
+      {/* שפתיים */}
+      <Path
+        d={[
+          `M ${cx - (female ? 3.4 : 2.8)} ${cy + 9.2}`,
+          `Q ${cx} ${cy + (female ? 10.8 : 10.2)}, ${cx + (female ? 3.4 : 2.8)} ${cy + 9.2}`,
+          `Q ${cx} ${cy + (female ? 12.2 : 11.4)}, ${cx - (female ? 3.4 : 2.8)} ${cy + 9.2}`,
+          'Z',
+        ].join(' ')}
+        fill={skin.lip}
+      />
+      <Path
+        d={`M ${cx - (female ? 3.2 : 2.6)} ${cy + 9.2} Q ${cx} ${cy + 10}, ${cx + (female ? 3.2 : 2.6)} ${cy + 9.2}`}
+        stroke={skin.lipDark}
+        strokeWidth={0.55}
+        fill="none"
+        opacity={0.7}
+      />
+
+      {child ? (
+        <Ellipse cx={cx} cy={cy + 6} rx={2} ry={1.2} fill="rgba(255,255,255,0.15)" />
       ) : null}
-    </View>
+    </G>
   );
 }
 
-function waistYish(hipY: number, unit: number) {
-  return hipY - unit * 8;
+function garmentColors(piece: OutfitPiece) {
+  const base = garmentColorHex(piece.color);
+  return {
+    base,
+    light: shade(base, 36),
+    mid: shade(base, 10),
+    dark: shade(base, -38),
+    deeper: shade(base, -55),
+  };
 }
 
-function kneeYish(hipY: number, ankleY: number, unit: number) {
-  return hipY + (ankleY - hipY) * 0.55 + unit * 2;
+function GarmentTop({
+  piece,
+  fit,
+  female,
+  cx,
+  shoulderY,
+  chestY,
+  waistY,
+  hipY,
+  shoulderHalf,
+  waistHalf,
+  armW,
+  outer,
+}: {
+  piece: OutfitPiece;
+  fit: number;
+  female: boolean;
+  cx: number;
+  shoulderY: number;
+  chestY: number;
+  waistY: number;
+  hipY: number;
+  shoulderHalf: number;
+  waistHalf: number;
+  armW: number;
+  outer: boolean;
+}) {
+  const c = garmentColors(piece);
+  const sh = shoulderHalf * fit;
+  const wh = waistHalf * fit * (outer ? 1.05 : 1);
+  const hemY = outer ? hipY + 2 : waistY + 14;
+  const neckW = female ? 5.5 : 6.2;
+  const neckD = outer ? 4 : 7;
+
+  const body = [
+    `M ${cx - sh} ${shoulderY + 1}`,
+    `C ${cx - sh - 1} ${shoulderY + 10}, ${cx - wh - 1} ${waistY - 4}, ${cx - wh} ${hemY}`,
+    `Q ${cx} ${hemY + 2}, ${cx + wh} ${hemY}`,
+    `C ${cx + wh + 1} ${waistY - 4}, ${cx + sh + 1} ${shoulderY + 10}, ${cx + sh} ${shoulderY + 1}`,
+    // צווארון — נגזרת עגולה
+    `L ${cx + neckW} ${shoulderY + 2}`,
+    `C ${cx + neckW * 0.6} ${shoulderY + neckD}, ${cx - neckW * 0.6} ${shoulderY + neckD}, ${cx - neckW} ${shoulderY + 2}`,
+    'Z',
+  ].join(' ');
+
+  const sleeveL = [
+    `M ${cx - sh + 1} ${shoulderY + 2}`,
+    `C ${cx - sh - armW * 1.1} ${shoulderY + 6}, ${cx - sh - armW * 1.35} ${shoulderY + 22}, ${cx - sh - armW * 0.9} ${shoulderY + 36}`,
+    `C ${cx - sh - armW * 0.45} ${shoulderY + 38}, ${cx - sh - 2} ${shoulderY + 28}, ${cx - sh + 2} ${shoulderY + 14}`,
+    'Z',
+  ].join(' ');
+
+  const sleeveR = [
+    `M ${cx + sh - 1} ${shoulderY + 2}`,
+    `C ${cx + sh + armW * 1.1} ${shoulderY + 6}, ${cx + sh + armW * 1.35} ${shoulderY + 22}, ${cx + sh + armW * 0.9} ${shoulderY + 36}`,
+    `C ${cx + sh + armW * 0.45} ${shoulderY + 38}, ${cx + sh + 2} ${shoulderY + 28}, ${cx + sh - 2} ${shoulderY + 14}`,
+    'Z',
+  ].join(' ');
+
+  const gid = `top-${piece.id}`;
+
+  return (
+    <G>
+      <Defs>
+        <SvgLinearGradient id={gid} x1="0.15" y1="0" x2="0.9" y2="1">
+          <Stop offset="0" stopColor={c.light} />
+          <Stop offset="0.4" stopColor={c.mid} />
+          <Stop offset="1" stopColor={c.dark} />
+        </SvgLinearGradient>
+      </Defs>
+      <Path d={sleeveL} fill={`url(#${gid})`} />
+      <Path d={sleeveR} fill={`url(#${gid})`} />
+      <Path d={body} fill={`url(#${gid})`} />
+      {/* תפר כתף */}
+      <Path
+        d={`M ${cx - sh + 2} ${shoulderY + 3} Q ${cx} ${shoulderY + 1}, ${cx + sh - 2} ${shoulderY + 3}`}
+        stroke="rgba(255,255,255,0.12)"
+        strokeWidth={0.6}
+        fill="none"
+      />
+      {/* קיפול מותן */}
+      <Path
+        d={`M ${cx - wh * 0.7} ${hemY - 1} Q ${cx} ${hemY + 1.5}, ${cx + wh * 0.7} ${hemY - 1}`}
+        stroke={c.deeper}
+        strokeWidth={0.5}
+        fill="none"
+        opacity={0.35}
+      />
+      {/* הדגשת חזה עדינה */}
+      <Ellipse
+        cx={cx}
+        cy={chestY + 2}
+        rx={sh * 0.35}
+        ry={4}
+        fill="rgba(255,255,255,0.06)"
+      />
+    </G>
+  );
+}
+
+function GarmentBottom({
+  piece,
+  fit,
+  cx,
+  hipY,
+  crotchY,
+  ankleY,
+  hipHalf,
+  legW,
+  gap,
+}: {
+  piece: OutfitPiece;
+  fit: number;
+  cx: number;
+  hipY: number;
+  crotchY: number;
+  ankleY: number;
+  hipHalf: number;
+  legW: number;
+  gap: number;
+}) {
+  const c = garmentColors(piece);
+  const hh = hipHalf * 0.95 * fit;
+  const pw = legW * (0.92 + (fit - 1) * 0.45);
+  const short =
+    piece.subcategory?.includes('קצר') ||
+    piece.label.includes('קצר') ||
+    piece.subcategory?.toLowerCase().includes('short');
+  const hemY = short ? crotchY + 28 : ankleY - 2;
+  const gid = `bot-${piece.id}`;
+
+  const waist = [
+    `M ${cx - hh} ${hipY - 8}`,
+    `Q ${cx} ${hipY - 12}, ${cx + hh} ${hipY - 8}`,
+    `L ${cx + hh * 0.85} ${crotchY + 4}`,
+    `Q ${cx} ${crotchY + 10}, ${cx - hh * 0.85} ${crotchY + 4}`,
+    'Z',
+  ].join(' ');
+
+  const leftLeg = [
+    `M ${cx - gap / 2 - pw} ${crotchY}`,
+    `C ${cx - gap / 2 - pw - 0.4} ${crotchY + 20}, ${cx - gap / 2 - pw * 0.85} ${hemY - 20}, ${cx - gap / 2 - pw * 0.82} ${hemY}`,
+    `L ${cx - gap / 2 - 0.4} ${hemY}`,
+    `C ${cx - gap / 2 - pw * 0.15} ${hemY - 20}, ${cx - gap / 2 - 0.6} ${crotchY + 18}, ${cx - gap / 2 - 1} ${crotchY}`,
+    'Z',
+  ].join(' ');
+
+  const rightLeg = [
+    `M ${cx + gap / 2 + 1} ${crotchY}`,
+    `C ${cx + gap / 2 + 0.6} ${crotchY + 18}, ${cx + gap / 2 + pw * 0.15} ${hemY - 20}, ${cx + gap / 2 + 0.4} ${hemY}`,
+    `L ${cx + gap / 2 + pw * 0.82} ${hemY}`,
+    `C ${cx + gap / 2 + pw * 0.85} ${hemY - 20}, ${cx + gap / 2 + pw + 0.4} ${crotchY + 20}, ${cx + gap / 2 + pw} ${crotchY}`,
+    'Z',
+  ].join(' ');
+
+  return (
+    <G>
+      <Defs>
+        <SvgLinearGradient id={gid} x1="0.2" y1="0" x2="0.85" y2="1">
+          <Stop offset="0" stopColor={c.light} />
+          <Stop offset="0.45" stopColor={c.base} />
+          <Stop offset="1" stopColor={c.dark} />
+        </SvgLinearGradient>
+      </Defs>
+      <Path d={leftLeg} fill={`url(#${gid})`} />
+      <Path d={rightLeg} fill={`url(#${gid})`} />
+      <Path d={waist} fill={`url(#${gid})`} />
+      {/* חגורה */}
+      <Path
+        d={`M ${cx - hh * 0.92} ${hipY - 7} Q ${cx} ${hipY - 10}, ${cx + hh * 0.92} ${hipY - 7}`}
+        stroke={c.deeper}
+        strokeWidth={1.4}
+        fill="none"
+        opacity={0.55}
+      />
+      {/* תפר מרכזי */}
+      <Path
+        d={`M ${cx} ${hipY - 6} L ${cx} ${crotchY + 6}`}
+        stroke={c.deeper}
+        strokeWidth={0.45}
+        opacity={0.4}
+      />
+      {/* ברק על הרגל */}
+      <Path
+        d={`M ${cx - gap / 2 - pw * 0.55} ${crotchY + 8} L ${cx - gap / 2 - pw * 0.45} ${hemY - 6}`}
+        stroke="rgba(255,255,255,0.14)"
+        strokeWidth={1.1}
+        strokeLinecap="round"
+      />
+      <Path
+        d={`M ${cx + gap / 2 + pw * 0.35} ${crotchY + 8} L ${cx + gap / 2 + pw * 0.4} ${hemY - 6}`}
+        stroke="rgba(255,255,255,0.1)"
+        strokeWidth={1}
+        strokeLinecap="round"
+      />
+    </G>
+  );
+}
+
+function GarmentDress({
+  piece,
+  fit,
+  cx,
+  shoulderY,
+  chestY,
+  waistY,
+  hipY,
+  kneeY,
+  shoulderHalf,
+  waistHalf,
+  hipHalf,
+}: {
+  piece: OutfitPiece;
+  fit: number;
+  cx: number;
+  shoulderY: number;
+  chestY: number;
+  waistY: number;
+  hipY: number;
+  kneeY: number;
+  shoulderHalf: number;
+  waistHalf: number;
+  hipHalf: number;
+}) {
+  const c = garmentColors(piece);
+  const sh = shoulderHalf * fit;
+  const wh = waistHalf * fit;
+  const skirt = hipHalf * 1.35 * fit;
+  const hemY = kneeY + 18;
+  const neckW = 5.8;
+  const gid = `dress-${piece.id}`;
+
+  const d = [
+    `M ${cx - sh} ${shoulderY + 1}`,
+    `C ${cx - sh} ${shoulderY + 12}, ${cx - wh} ${waistY - 6}, ${cx - wh} ${waistY}`,
+    `C ${cx - wh * 1.1} ${hipY}, ${cx - skirt} ${hipY + 16}, ${cx - skirt} ${hemY}`,
+    `Q ${cx} ${hemY + 4}, ${cx + skirt} ${hemY}`,
+    `C ${cx + skirt} ${hipY + 16}, ${cx + wh * 1.1} ${hipY}, ${cx + wh} ${waistY}`,
+    `C ${cx + wh} ${waistY - 6}, ${cx + sh} ${shoulderY + 12}, ${cx + sh} ${shoulderY + 1}`,
+    `L ${cx + neckW} ${shoulderY + 2}`,
+    `C ${cx + 3} ${shoulderY + 9}, ${cx - 3} ${shoulderY + 9}, ${cx - neckW} ${shoulderY + 2}`,
+    'Z',
+  ].join(' ');
+
+  return (
+    <G>
+      <Defs>
+        <SvgLinearGradient id={gid} x1="0.2" y1="0" x2="0.85" y2="1">
+          <Stop offset="0" stopColor={c.light} />
+          <Stop offset="0.4" stopColor={c.base} />
+          <Stop offset="1" stopColor={c.dark} />
+        </SvgLinearGradient>
+      </Defs>
+      <Path d={d} fill={`url(#${gid})`} />
+      <Path
+        d={`M ${cx - wh} ${waistY} Q ${cx} ${waistY + 2}, ${cx + wh} ${waistY}`}
+        stroke={c.deeper}
+        strokeWidth={0.7}
+        fill="none"
+        opacity={0.35}
+      />
+      <Ellipse
+        cx={cx}
+        cy={chestY + 2}
+        rx={sh * 0.3}
+        ry={3.5}
+        fill="rgba(255,255,255,0.07)"
+      />
+    </G>
+  );
+}
+
+function GarmentShoes({
+  piece,
+  cx,
+  ankleY,
+  footY,
+  legW,
+  gap,
+}: {
+  piece: OutfitPiece;
+  cx: number;
+  ankleY: number;
+  footY: number;
+  legW: number;
+  gap: number;
+}) {
+  const c = garmentColors(piece);
+  const gid = `shoe-${piece.id}`;
+  const positions = [
+    cx - gap / 2 - legW / 2 - 1,
+    cx + gap / 2 + legW / 2 + 1,
+  ];
+
+  return (
+    <G>
+      <Defs>
+        <SvgLinearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor={c.light} />
+          <Stop offset="1" stopColor={c.dark} />
+        </SvgLinearGradient>
+      </Defs>
+      {positions.map((px, i) => (
+        <G key={i}>
+          <Path
+            d={[
+              `M ${px - legW * 0.55} ${ankleY - 2}`,
+              `Q ${px - legW * 0.5} ${footY + 1}, ${px - legW * 0.7} ${footY + 2.5}`,
+              `Q ${px} ${footY + 4.5}, ${px + legW * 0.85} ${footY + 2}`,
+              `Q ${px + legW * 0.55} ${ankleY + 1}, ${px + legW * 0.4} ${ankleY - 2}`,
+              'Z',
+            ].join(' ')}
+            fill={`url(#${gid})`}
+          />
+          <Ellipse
+            cx={px + 1}
+            cy={footY + 1}
+            rx={legW * 0.55}
+            ry={1.4}
+            fill="rgba(255,255,255,0.12)"
+          />
+        </G>
+      ))}
+    </G>
+  );
+}
+
+function GarmentHat({
+  piece,
+  cx,
+  headCy,
+  headR,
+}: {
+  piece: OutfitPiece;
+  cx: number;
+  headCy: number;
+  headR: number;
+}) {
+  const c = garmentColors(piece);
+  const gid = `hat-${piece.id}`;
+  const top = headCy - headR - 2;
+
+  return (
+    <G>
+      <Defs>
+        <SvgLinearGradient id={gid} x1="0.3" y1="0" x2="0.7" y2="1">
+          <Stop offset="0" stopColor={c.light} />
+          <Stop offset="1" stopColor={c.dark} />
+        </SvgLinearGradient>
+      </Defs>
+      <Ellipse cx={cx} cy={top + 10} rx={headR * 1.25} ry={3.2} fill={`url(#${gid})`} />
+      <Path
+        d={[
+          `M ${cx - headR * 0.7} ${top + 9}`,
+          `C ${cx - headR * 0.75} ${top - 2}, ${cx - 4} ${top - 6}, ${cx} ${top - 6.5}`,
+          `C ${cx + 4} ${top - 6}, ${cx + headR * 0.75} ${top - 2}, ${cx + headR * 0.7} ${top + 9}`,
+          'Z',
+        ].join(' ')}
+        fill={`url(#${gid})`}
+      />
+      <Path
+        d={`M ${cx - 4} ${top - 2} Q ${cx} ${top - 5}, ${cx + 3} ${top - 1}`}
+        stroke="rgba(255,255,255,0.2)"
+        strokeWidth={1.2}
+        fill="none"
+        strokeLinecap="round"
+      />
+    </G>
+  );
 }

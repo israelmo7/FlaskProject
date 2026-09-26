@@ -1,4 +1,5 @@
 import { Pressable, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   PERSONA_OPTIONS,
   buildWidthScale,
@@ -50,12 +51,16 @@ export function DressableFigure({
           </Text>
         ) : null}
 
-        <View
-          className="self-start overflow-visible rounded-2xl"
+        <LinearGradient
+          colors={['#F7F1E8', '#EDE4D6', '#E6DCCE']}
+          start={{ x: 0.2, y: 0 }}
+          end={{ x: 0.8, y: 1 }}
           style={{
             width: dollW,
             height: dollH,
-            backgroundColor: '#F3EEE6',
+            borderRadius: 20,
+            overflow: 'hidden',
+            alignSelf: 'flex-start',
           }}
         >
           <GameFashionAvatar
@@ -64,7 +69,7 @@ export function DressableFigure({
             width={dollW}
             height={dollH}
           />
-        </View>
+        </LinearGradient>
       </View>
 
       {worn.length > 0 ? (
