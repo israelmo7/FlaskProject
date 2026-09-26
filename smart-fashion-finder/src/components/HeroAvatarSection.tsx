@@ -33,7 +33,7 @@ export function HeroAvatarSection({
   };
 
   return (
-    <View className="mx-3 mt-3 rounded-2xl bg-[#FAF8F5] px-3 pb-4 pt-3">
+    <View className="mx-3 mt-3 overflow-hidden rounded-2xl bg-[#EFE9E0] px-3 pb-4 pt-3">
       <View
         style={{
           flexDirection: 'row',
