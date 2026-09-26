@@ -1,5 +1,6 @@
 import { ImageSourcePropType } from 'react-native';
 import type { GarmentCategory } from '@/types';
+import inventoryData from '@/data/inventory.json';
 
 export type ProductCard = {
   id: string;
@@ -14,9 +15,52 @@ export type ProductCard = {
   layerId?: string;
   brand?: string;
   storeName?: string;
+  storeId?: string;
+  /** כתובת חנות לתצוגה */
+  storeAddress?: string;
+  storeArea?: string;
+  latitude?: number;
+  longitude?: number;
 };
 
-/** ~10 פריטים להלבשה דרך קטגוריות */
+type InvStore = {
+  id: string;
+  name: string;
+  mall: string;
+  address: string;
+  city: string;
+  latitude: number;
+  longitude: number;
+};
+
+const INV_STORES = inventoryData.stores as InvStore[];
+
+function storeFields(storeId: string): Pick<
+  ProductCard,
+  'storeId' | 'storeName' | 'storeAddress' | 'storeArea' | 'latitude' | 'longitude'
+> {
+  const s = INV_STORES.find((x) => x.id === storeId);
+  if (!s) {
+    return {
+      storeId,
+      storeName: 'חנות',
+      storeAddress: 'חיפה',
+      storeArea: 'חיפה',
+      latitude: 32.794,
+      longitude: 34.9896,
+    };
+  }
+  return {
+    storeId: s.id,
+    storeName: `${s.name} · ${s.mall}`,
+    storeAddress: `${s.address}, ${s.city}`,
+    storeArea: s.mall,
+    latitude: s.latitude,
+    longitude: s.longitude,
+  };
+}
+
+/** קטלוג הלבשה — לכל פריט חנות + קואורדינטות מפוזרות בחיפה */
 export const PRODUCTS: ProductCard[] = [
   {
     id: 'p-tshirt',
@@ -27,8 +71,8 @@ export const PRODUCTS: ProductCard[] = [
     color: 'Black',
     subcategory: 'טי שירט',
     brand: 'Zara',
-    storeName: 'Zara גרנד קניון',
     layerId: 'w-black-shirt',
+    ...storeFields('store-zara-german'),
   },
   {
     id: 'p-hoodie',
@@ -39,7 +83,7 @@ export const PRODUCTS: ProductCard[] = [
     color: 'Beige',
     subcategory: 'אוברסייז',
     brand: 'Castro',
-    storeName: 'Castro גרנד קניון',
+    ...storeFields('store-castro-kiryat'),
   },
   {
     id: 'p-oxford',
@@ -50,8 +94,8 @@ export const PRODUCTS: ProductCard[] = [
     color: 'White',
     subcategory: 'אוקספורד',
     brand: 'H&M',
-    storeName: 'H&M לב המפרץ',
     layerId: 'w-white-oxford',
+    ...storeFields('store-hm-technion'),
   },
   {
     id: 'p-turtleneck',
@@ -62,7 +106,29 @@ export const PRODUCTS: ProductCard[] = [
     color: 'Navy',
     subcategory: 'גולף',
     brand: 'Golf',
-    storeName: 'Golf & Co',
+    ...storeFields('store-golf-checkpost'),
+  },
+  {
+    id: 'p-polo',
+    title: 'פולו זית',
+    price: 119,
+    image: require('../../assets/images/product-polo.png'),
+    category: 'Shirts',
+    color: 'Olive Green',
+    subcategory: 'פולו',
+    brand: 'Castro',
+    ...storeFields('store-castro-gc'),
+  },
+  {
+    id: 'p-linen',
+    title: 'חולצת פשתן',
+    price: 169,
+    image: require('../../assets/images/product-linen.png'),
+    category: 'Shirts',
+    color: 'Beige',
+    subcategory: 'פשתן',
+    brand: 'H&M',
+    ...storeFields('store-hm-lev'),
   },
   {
     id: 'p-jeans',
@@ -73,8 +139,8 @@ export const PRODUCTS: ProductCard[] = [
     color: 'Blue',
     subcategory: 'ג׳ינס',
     brand: 'Zara',
-    storeName: 'Zara גרנד קניון',
     layerId: 'w-blue-jeans',
+    ...storeFields('store-zara-gc'),
   },
   {
     id: 'p-shorts',
@@ -85,7 +151,7 @@ export const PRODUCTS: ProductCard[] = [
     color: 'Light Wash',
     subcategory: 'ג׳ינס קצר',
     brand: 'Pull&Bear',
-    storeName: 'Pull&Bear',
+    ...storeFields('store-pullbear-ck'),
   },
   {
     id: 'p-cargo',
@@ -96,8 +162,8 @@ export const PRODUCTS: ProductCard[] = [
     color: 'Olive Green',
     subcategory: 'קרגו',
     brand: 'Terminal X',
-    storeName: 'Terminal X',
     layerId: 'w-olive-cargo',
+    ...storeFields('store-terminal-x'),
   },
   {
     id: 'p-sport',
@@ -108,7 +174,29 @@ export const PRODUCTS: ProductCard[] = [
     color: 'Navy',
     subcategory: 'מכנס ספורט',
     brand: 'Adidas',
-    storeName: 'Adidas',
+    ...storeFields('store-adidas-carmel'),
+  },
+  {
+    id: 'p-chinos',
+    title: 'צ׳ינו חאקי',
+    price: 189,
+    image: require('../../assets/images/product-chinos.png'),
+    category: 'Pants',
+    color: 'Khaki',
+    subcategory: 'צ׳ינו',
+    brand: 'Fox',
+    ...storeFields('store-fox-city'),
+  },
+  {
+    id: 'p-swim',
+    title: 'בגד ים',
+    price: 99,
+    image: require('../../assets/images/product-swim.png'),
+    category: 'Pants',
+    color: 'Navy',
+    subcategory: 'בגד ים',
+    brand: 'Nike',
+    ...storeFields('store-nike-batgalim'),
   },
   {
     id: 'p-denim-jkt',
@@ -119,8 +207,8 @@ export const PRODUCTS: ProductCard[] = [
     color: 'Light Wash',
     subcategory: 'ג׳קט ג׳ינס',
     brand: 'Castro',
-    storeName: 'Castro גרנד קניון',
     layerId: 'w-denim-jacket',
+    ...storeFields('store-castro-gc'),
   },
   {
     id: 'p-leather',
@@ -131,7 +219,18 @@ export const PRODUCTS: ProductCard[] = [
     color: 'Brown',
     subcategory: 'ז׳קט עור',
     brand: 'Atelier Carmel',
-    storeName: 'Atelier Carmel',
+    ...storeFields('store-local-atelier'),
+  },
+  {
+    id: 'p-bomber',
+    title: 'בומבר שחור',
+    price: 299,
+    image: require('../../assets/images/product-bomber.png'),
+    category: 'Outerwear',
+    color: 'Black',
+    subcategory: 'בומבר',
+    brand: 'Zara',
+    ...storeFields('store-zara-german'),
   },
   {
     id: 'p-dress',
@@ -142,7 +241,7 @@ export const PRODUCTS: ProductCard[] = [
     color: 'Brown',
     subcategory: 'שמלה',
     brand: 'Victoria',
-    storeName: 'Victoria',
+    ...storeFields('store-victoria-carmel'),
   },
   {
     id: 'p-sneakers',
@@ -153,8 +252,19 @@ export const PRODUCTS: ProductCard[] = [
     color: 'White',
     subcategory: 'סניקרס',
     brand: 'Nike',
-    storeName: 'Foot Locker',
     layerId: 'w-sneakers',
+    ...storeFields('store-footlocker-lev'),
+  },
+  {
+    id: 'p-boots',
+    title: 'מגפוני עור',
+    price: 379,
+    image: require('../../assets/images/product-boots.png'),
+    category: 'Shoes',
+    color: 'Brown',
+    subcategory: 'מגפיים',
+    brand: 'רמי',
+    ...storeFields('store-rami-hadar'),
   },
   {
     id: 'p-hat',
@@ -165,8 +275,30 @@ export const PRODUCTS: ProductCard[] = [
     color: 'Black',
     subcategory: 'כובע',
     brand: 'Zara',
-    storeName: 'Zara גרנד קניון',
     layerId: 'w-hat',
+    ...storeFields('store-eli-neve'),
+  },
+  {
+    id: 'p-underwear',
+    title: 'תחתון בוקסר',
+    price: 59,
+    image: require('../../assets/images/product-underwear.png'),
+    category: 'Underwear',
+    color: 'Charcoal',
+    subcategory: 'הלבשה תחתונה',
+    brand: 'Fox',
+    ...storeFields('store-fox-city'),
+  },
+  {
+    id: 'p-socks',
+    title: 'גרביים לבנות',
+    price: 39,
+    image: require('../../assets/images/product-socks.png'),
+    category: 'Socks',
+    color: 'White',
+    subcategory: 'גרביים',
+    brand: 'Adidas',
+    ...storeFields('store-adidas-carmel'),
   },
 ];
 
@@ -180,17 +312,17 @@ export const MENU_CATEGORIES: MenuCategory[] = [
   {
     id: 'Shirts',
     label: 'חולצות',
-    subs: ['טי שירט', 'אוברסייז', 'גולף', 'אוקספורד'],
+    subs: ['טי שירט', 'אוברסייז', 'גולף', 'אוקספורד', 'פולו', 'פשתן'],
   },
   {
     id: 'Pants',
     label: 'מכנסיים',
-    subs: ['ג׳ינס', 'ג׳ינס קצר', 'בגד ים', 'מכנס ספורט', 'קרגו'],
+    subs: ['ג׳ינס', 'ג׳ינס קצר', 'בגד ים', 'מכנס ספורט', 'קרגו', 'צ׳ינו'],
   },
   {
     id: 'Outerwear',
     label: 'עליוניות',
-    subs: ['ג׳קט ג׳ינס', 'ז׳קט עור'],
+    subs: ['ג׳קט ג׳ינס', 'ז׳קט עור', 'בומבר'],
   },
   {
     id: 'Underwear',
@@ -205,7 +337,7 @@ export const MENU_CATEGORIES: MenuCategory[] = [
   {
     id: 'Shoes',
     label: 'נעליים',
-    subs: ['סניקרס'],
+    subs: ['סניקרס', 'מגפיים'],
   },
   {
     id: 'Hats',
@@ -261,4 +393,8 @@ export function filterProducts(opts: {
     if (subcategory && p.subcategory !== subcategory) return false;
     return true;
   });
+}
+
+export function productById(id: string): ProductCard | undefined {
+  return PRODUCTS.find((p) => p.id === id);
 }

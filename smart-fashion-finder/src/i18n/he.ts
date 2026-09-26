@@ -31,6 +31,8 @@ export const he = {
   favorite: 'מועדפים',
   brandLabel: 'מותג',
   storeLabel: 'חנות',
+  storeLocationLabel: 'אזור',
+  addressLabel: 'כתובת',
   addedToCart: 'נוסף לסל',
   productDetails: 'פרטי הפריט',
 

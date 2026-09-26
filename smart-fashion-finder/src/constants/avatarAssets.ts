@@ -35,14 +35,24 @@ export const FITTED_LOOKS_MAN: Record<string, ImageSourcePropType> = {
   'p-hoodie': require('../../assets/images/fit/man/p-hoodie.png'),
   'p-oxford': require('../../assets/images/fit/man/p-oxford.png'),
   'p-turtleneck': require('../../assets/images/fit/man/p-turtleneck.png'),
+  'p-polo': require('../../assets/images/fit/man/p-polo.png'),
+  'p-linen': require('../../assets/images/fit/man/p-linen.png'),
   'p-jeans': require('../../assets/images/fit/man/p-jeans.png'),
   'p-shorts': require('../../assets/images/fit/man/p-shorts.png'),
   'p-cargo': require('../../assets/images/fit/man/p-cargo.png'),
   'p-sport': require('../../assets/images/fit/man/p-sport.png'),
+  'p-chinos': require('../../assets/images/fit/man/p-chinos.png'),
+  'p-swim': require('../../assets/images/fit/man/p-swim.png'),
   'p-denim-jkt': require('../../assets/images/fit/man/p-denim-jkt.png'),
   'p-leather': require('../../assets/images/fit/man/p-leather.png'),
+  'p-bomber': require('../../assets/images/fit/man/p-bomber.png'),
   'p-sneakers': require('../../assets/images/fit/man/p-sneakers.png'),
+  'p-boots': require('../../assets/images/fit/man/p-boots.png'),
   'p-hat': require('../../assets/images/fit/man/p-hat.png'),
+  // תחתון = בסיס הדמות (ללא בגדים עליונים)
+  'p-underwear': require('../../assets/images/bases/turn/man_0.png'),
+  // גרביים — על בסיס הדמות (נראים עם הנעליים הקיימות)
+  'p-socks': require('../../assets/images/bases/turn/man_0.png'),
 };
 
 export const FITTED_LOOKS_WOMAN: Record<string, ImageSourcePropType> = {
@@ -58,6 +68,7 @@ export const FITTED_COMBOS: Record<string, ImageSourcePropType> = {
   'p-tshirt|p-cargo': require('../../assets/images/fit/man/combo-tshirt-cargo.png'),
   'p-denim-jkt|p-jeans': require('../../assets/images/fit/man/combo-denim-jkt-jeans.png'),
   'p-leather|p-jeans': require('../../assets/images/fit/man/combo-leather-jeans.png'),
+  'p-bomber|p-jeans': require('../../assets/images/fit/man/combo-bomber-jeans.png'),
 };
 
 /** קומבו טי+ג׳ינס עם פריימי 180° */
@@ -73,13 +84,19 @@ export const FITTED_OVERLAYS_MAN: Record<string, ImageSourcePropType> = {
   'p-hoodie': require('../../assets/images/fit/man/overlay/p-hoodie.png'),
   'p-oxford': require('../../assets/images/fit/man/overlay/p-oxford.png'),
   'p-turtleneck': require('../../assets/images/fit/man/overlay/p-turtleneck.png'),
+  'p-polo': require('../../assets/images/fit/man/overlay/p-polo.png'),
+  'p-linen': require('../../assets/images/fit/man/overlay/p-linen.png'),
   'p-jeans': require('../../assets/images/fit/man/overlay/p-jeans.png'),
   'p-shorts': require('../../assets/images/fit/man/overlay/p-shorts.png'),
   'p-cargo': require('../../assets/images/fit/man/overlay/p-cargo.png'),
   'p-sport': require('../../assets/images/fit/man/overlay/p-sport.png'),
+  'p-chinos': require('../../assets/images/fit/man/overlay/p-chinos.png'),
+  'p-swim': require('../../assets/images/fit/man/overlay/p-swim.png'),
   'p-denim-jkt': require('../../assets/images/fit/man/overlay/p-denim-jkt.png'),
   'p-leather': require('../../assets/images/fit/man/overlay/p-leather.png'),
+  'p-bomber': require('../../assets/images/fit/man/overlay/p-bomber.png'),
   'p-sneakers': require('../../assets/images/fit/man/overlay/p-sneakers.png'),
+  'p-boots': require('../../assets/images/fit/man/overlay/p-boots.png'),
   'p-hat': require('../../assets/images/fit/man/overlay/p-hat.png'),
 };
 
@@ -123,15 +140,23 @@ export function catalogIdFromPieceId(pieceId: string): string | null {
     'p-hoodie',
     'p-oxford',
     'p-turtleneck',
+    'p-polo',
+    'p-linen',
     'p-jeans',
     'p-shorts',
     'p-cargo',
     'p-sport',
+    'p-chinos',
+    'p-swim',
     'p-denim-jkt',
     'p-leather',
+    'p-bomber',
     'p-dress',
     'p-sneakers',
+    'p-boots',
     'p-hat',
+    'p-underwear',
+    'p-socks',
     'w-black-shirt',
     'w-white-oxford',
     'w-blue-jeans',
@@ -233,6 +258,20 @@ export function resolveOutfitLook(
   const hatId = pieceCatalogId(layers.hat);
   const facing = frontFacingAmount(yaw);
 
+  // הלבשה תחתונה בלבד — בסיס הדמות
+  if (bottomId === 'p-underwear' && !topId && !outerId && !dressId) {
+    const extras: ImageSourcePropType[] = [];
+    if (hatId && facing > 0.35) {
+      const o = fittedOverlayForId(hatId);
+      if (o) extras.push(o);
+    }
+    return {
+      hero: fittedLookForId('p-underwear', female),
+      heroTracksYaw: false,
+      overlays: extras,
+    };
+  }
+
   // שמלה
   if (dressId) {
     const dress = fittedLookForId(dressId, female);
@@ -296,18 +335,29 @@ export function resolveOutfitLook(
     }
   }
 
-  // פריט יחיד עיקרי — לוק מלא
+  // פריט יחיד עיקרי — לוק מלא (כולל נעליים/כובע לבד)
   const mains = [outerId, topId, bottomId].filter(Boolean) as string[];
   if (mains.length === 1) {
     const hero = fittedLookForId(mains[0], female);
     const extras: ImageSourcePropType[] = [];
-    if (shoesId && facing > 0.35) {
+    if (shoesId && shoesId !== 'p-socks' && facing > 0.35) {
       const o = fittedOverlayForId(shoesId);
       if (o) extras.push(o);
     }
     if (hatId && facing > 0.35) {
       const o = fittedOverlayForId(hatId);
       if (o) extras.push(o);
+    }
+    return { hero, heroTracksYaw: false, overlays: extras };
+  }
+  if (mains.length === 0 && (shoesId || hatId)) {
+    const heroId = shoesId && shoesId !== 'p-socks' ? shoesId : hatId;
+    const hero = heroId ? fittedLookForId(heroId, female) : null;
+    const extras: ImageSourcePropType[] = [];
+    if (shoesId && hatId && shoesId !== 'p-socks') {
+      // כובע מעל לוק נעליים
+      const o = fittedOverlayForId(hatId);
+      if (o && facing > 0.35) extras.push(o);
     }
     return { hero, heroTracksYaw: false, overlays: extras };
   }

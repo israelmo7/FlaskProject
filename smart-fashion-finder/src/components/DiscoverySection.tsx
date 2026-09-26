@@ -124,12 +124,22 @@ export function ProductGrid({
                   </View>
                 ) : null}
               </View>
-              <Text
-                className="px-2.5 py-2.5 text-center font-bodyMedium text-xs text-ink"
-                numberOfLines={2}
-              >
-                {product.title}
-              </Text>
+              <View className="px-2.5 py-2.5">
+                <Text
+                  className="text-center font-bodyMedium text-xs text-ink"
+                  numberOfLines={2}
+                >
+                  {product.title}
+                </Text>
+                {product.storeArea ? (
+                  <Text
+                    className="mt-1 text-center font-body text-[10px] text-ink-muted"
+                    numberOfLines={1}
+                  >
+                    {product.storeArea}
+                  </Text>
+                ) : null}
+              </View>
             </Pressable>
           ))
         )}

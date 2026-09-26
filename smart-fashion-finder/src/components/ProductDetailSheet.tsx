@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import type { ProductCard } from '@/data/catalog';
 import { he } from '@/i18n/he';
+import { openNavigation } from '@/utils/contact';
 import { formatPriceILS } from '@/utils/stock';
 
 type Props = {
@@ -22,7 +23,7 @@ type Props = {
   preferredSize?: string;
 };
 
-/** כרטיס פריט מלא — תמונה גדולה, מחיר, חנות, מותג, לב, הלבשה, סל */
+/** כרטיס פריט מלא — תמונה, חנות+כתובת, ניווט, הלבשה, סל */
 export function ProductDetailSheet({
   product,
   visible,
@@ -39,6 +40,18 @@ export function ProductDetailSheet({
   }, [product?.id]);
 
   if (!product) return null;
+
+  const canNavigate =
+    typeof product.latitude === 'number' && typeof product.longitude === 'number';
+
+  const onNavigate = () => {
+    if (!canNavigate) return;
+    openNavigation(
+      product.latitude!,
+      product.longitude!,
+      product.storeName || product.title,
+    );
+  };
 
   return (
     <Modal
@@ -96,10 +109,32 @@ export function ProductDetailSheet({
             <View className="mt-4 gap-2 rounded-2xl bg-[#F7F4EF] px-4 py-3">
               <Row label={he.brandLabel} value={product.brand || '—'} />
               <Row label={he.storeLabel} value={product.storeName || '—'} />
+              <Row
+                label={he.storeLocationLabel}
+                value={product.storeArea || product.storeAddress || 'חיפה'}
+              />
+              <Row
+                label={he.addressLabel}
+                value={product.storeAddress || '—'}
+              />
               <Row label={he.category} value={product.subcategory} />
             </View>
 
-            <View className="mt-5 flex-row gap-3">
+            {canNavigate ? (
+              <Pressable
+                onPress={onNavigate}
+                className="mt-4 flex-row items-center justify-center rounded-2xl bg-[#E07A4F] py-3.5"
+                accessibilityRole="button"
+                accessibilityLabel={he.navigate}
+              >
+                <Ionicons name="navigate" size={18} color="#fff" />
+                <Text className="mr-2 font-bodyBold text-[15px] text-white">
+                  {he.navigate}
+                </Text>
+              </Pressable>
+            ) : null}
+
+            <View className="mt-3 flex-row gap-3">
               <Pressable
                 onPress={() => {
                   onAddToCart(product);
@@ -140,8 +175,10 @@ export function ProductDetailSheet({
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <View className="flex-row items-center justify-between">
-      <Text className="font-bodyMedium text-sm text-ink">{value}</Text>
+    <View className="flex-row items-center justify-between gap-3">
+      <Text className="flex-1 text-left font-bodyMedium text-sm text-ink">
+        {value}
+      </Text>
       <Text className="font-body text-xs text-ink-muted">{label}</Text>
     </View>
   );

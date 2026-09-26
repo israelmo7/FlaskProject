@@ -122,10 +122,9 @@ export function sizeFitScale(size: string): number {
 export function categoryToSlot(category: GarmentCategory): OutfitSlot {
   switch (category) {
     case 'Shirts':
-    case 'Underwear':
       return 'top';
     case 'Pants':
-    case 'Socks':
+    case 'Underwear':
       return 'bottom';
     case 'Outerwear':
       return 'outer';
@@ -134,6 +133,7 @@ export function categoryToSlot(category: GarmentCategory): OutfitSlot {
     case 'Dresses':
       return 'dress';
     case 'Shoes':
+    case 'Socks':
       return 'shoes';
   }
 }
@@ -141,6 +141,14 @@ export function categoryToSlot(category: GarmentCategory): OutfitSlot {
 /** הוספת פריט לשכבות — נשארים כל שאר הפריטים */
 export function wearPiece(layers: OutfitLayers, piece: OutfitPiece): OutfitLayers {
   const next = { ...layers };
+  // הלבשה תחתונה = חזרה לבסיס הדמות (מסירים בגדים עליונים)
+  if (piece.category === 'Underwear') {
+    return {
+      bottom: piece,
+      shoes: next.shoes,
+      hat: next.hat,
+    };
+  }
   if (piece.slot === 'dress') {
     // שמלה מחליפה עליון ותחתון ויזואלית, אבל לא מוחקת נעליים/עליונית
     delete next.top;
