@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
+  Alert,
   Pressable,
   ScrollView,
   Text,
@@ -18,15 +19,37 @@ import { he } from '@/i18n/he';
 import type { AvatarPersona, AvatarProfile } from '@/types';
 
 /**
- * יצירת משתמש לפני הכניסה לאפליקציה — דמות, גובה, משקל.
+ * יצירת / עריכת פרופיל — דמות האווטאר תמיד זמינה לשינוי.
  */
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
-  const { ready, profile, preferredSize, completeOnboarding } = useSavedProfile();
+  const {
+    ready,
+    profile,
+    preferredSize,
+    onboardingComplete,
+    completeOnboarding,
+    updateProfile,
+    saveAll,
+    layers,
+  } = useSavedProfile();
+
+  const editing = onboardingComplete;
 
   const [persona, setPersona] = useState<AvatarPersona>(profile.persona || 'woman');
-  const [heightCm, setHeightCm] = useState(String(profile.heightCm || HEIGHT_RANGE.woman.default));
-  const [weightKg, setWeightKg] = useState(String(profile.weightKg || WEIGHT_RANGE.woman.default));
+  const [heightCm, setHeightCm] = useState(
+    String(profile.heightCm || HEIGHT_RANGE.woman.default),
+  );
+  const [weightKg, setWeightKg] = useState(
+    String(profile.weightKg || WEIGHT_RANGE.woman.default),
+  );
+
+  useEffect(() => {
+    if (!ready) return;
+    setPersona(profile.persona || 'woman');
+    setHeightCm(String(profile.heightCm || HEIGHT_RANGE.woman.default));
+    setWeightKg(String(profile.weightKg || WEIGHT_RANGE.woman.default));
+  }, [ready, profile.persona, profile.heightCm, profile.weightKg]);
 
   const heightMeta = HEIGHT_RANGE[persona];
   const weightMeta = WEIGHT_RANGE[persona];
@@ -50,14 +73,23 @@ export default function OnboardingScreen() {
     );
   }, [heightCm, weightKg, heightMeta, weightMeta]);
 
+  const buildNextProfile = (): AvatarProfile => ({
+    persona,
+    heightCm: Number(heightCm),
+    weightKg: Number(weightKg),
+    build: profile.build || 'average',
+  });
+
   const onContinue = () => {
     if (!canContinue) return;
-    const next: AvatarProfile = {
-      persona,
-      heightCm: Number(heightCm),
-      weightKg: Number(weightKg),
-      build: profile.build || 'average',
-    };
+    const next = buildNextProfile();
+    if (editing) {
+      updateProfile(next);
+      saveAll({ profile: next, preferredSize: preferredSize || 'M', layers });
+      Alert.alert(he.profileUpdated);
+      router.back();
+      return;
+    }
     completeOnboarding(next, preferredSize || 'M');
     router.replace('/(tabs)');
   };
@@ -76,37 +108,51 @@ export default function OnboardingScreen() {
       }}
       keyboardShouldPersistTaps="handled"
     >
+      {editing ? (
+        <Pressable onPress={() => router.back()} className="mb-3 self-end">
+          <Text className="font-bodyMedium text-sm text-teal">← חזרה</Text>
+        </Pressable>
+      ) : null}
+
       <Text className="text-right font-display text-3xl text-ink">
-        {he.onboardingTitle}
+        {editing ? he.editProfile : he.onboardingTitle}
       </Text>
       <Text className="mt-2 text-right font-body text-sm text-ink-muted">
-        {he.onboardingHint}
+        {editing ? he.editProfileHint : he.onboardingHint}
       </Text>
 
-      <Text className="mt-8 mb-3 text-right font-bodyBold text-base text-ink">
-        {he.onboardingPersona}
-      </Text>
-      <View className="flex-row flex-wrap justify-end gap-2">
-        {PERSONA_OPTIONS.map((opt) => {
-          const active = persona === opt.id;
-          return (
-            <Pressable
-              key={opt.id}
-              onPress={() => selectPersona(opt.id)}
-              className={`rounded-full border px-4 py-2.5 ${
-                active ? 'border-[#E07A4F] bg-[#E07A4F]' : 'border-[#D5CFC6] bg-white'
-              }`}
-            >
-              <Text
-                className={`font-bodyBold text-sm ${
-                  active ? 'text-white' : 'text-ink'
+      {/* שינוי דמות — תמיד גלוי בראש הפרופיל */}
+      <View className="mt-8 rounded-2xl border border-[#E07A4F]/35 bg-[#FFF7F2] px-4 py-4">
+        <Text className="text-right font-display text-xl text-ink">
+          {he.changeAvatarPersona}
+        </Text>
+        <Text className="mt-1 text-right font-body text-xs text-ink-muted">
+          {he.changeAvatarPersonaHint}
+        </Text>
+        <View className="mt-4 flex-row flex-wrap justify-end gap-2">
+          {PERSONA_OPTIONS.map((opt) => {
+            const active = persona === opt.id;
+            return (
+              <Pressable
+                key={opt.id}
+                onPress={() => selectPersona(opt.id)}
+                className={`rounded-full border px-4 py-2.5 ${
+                  active
+                    ? 'border-[#E07A4F] bg-[#E07A4F]'
+                    : 'border-[#D5CFC6] bg-white'
                 }`}
               >
-                {opt.label}
-              </Text>
-            </Pressable>
-          );
-        })}
+                <Text
+                  className={`font-bodyBold text-sm ${
+                    active ? 'text-white' : 'text-ink'
+                  }`}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
 
       <Text className="mt-8 mb-2 text-right font-bodyBold text-base text-ink">
@@ -149,7 +195,7 @@ export default function OnboardingScreen() {
         }`}
       >
         <Text className="font-bodyBold text-base text-white">
-          {he.onboardingContinue}
+          {editing ? he.saveProfileChanges : he.onboardingContinue}
         </Text>
       </Pressable>
     </ScrollView>

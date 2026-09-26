@@ -1,6 +1,7 @@
 import { PRODUCTS, type ProductCard } from '@/data/catalog';
 import {
   categoryHe,
+  colorMatches,
   extractIntent,
   type ChatIntent,
 } from '@/services/fashionChatIntent';
@@ -27,77 +28,99 @@ export function createWelcomeMessage(): ChatMessage {
     id: uid(),
     role: 'assistant',
     text:
-      'היי, אני הסטייליסט של StyleNear.\nספרו לי איזה בגד אתם מחפשים — סוג, צבע, תקציב או מותג — ואמצא לכם אופציות מחנויות לידכם בחיפה.',
+      'היי, אני הסטייליסט של StyleNear.\nכתבו בדיוק מה אתם מחפשים — לדוגמה «חולצה שחורה» או «ג׳ינס כחול עד 250» — ואציג רק התאמות מדויקות מחנויות בחיפה.',
     suggestions: [
-      'חולצה שחורה עד 150',
+      'חולצה שחורה',
       'ג׳ינס כחול',
-      'משהו לחורף',
+      'בומבר שחור',
       'נעליים לבנות',
     ],
   };
 }
 
+function subHintMatches(product: ProductCard, hint?: string): boolean {
+  if (!hint) return true;
+  const h = hint.toLowerCase();
+  const blob = `${product.subcategory} ${product.title}`.toLowerCase();
+  if (blob.includes(h)) return true;
+  // קירוב לתת־סוגים נפוצים
+  if (h.includes('טי') && (blob.includes('טי') || blob.includes('t-shirt') || blob.includes('tshirt')))
+    return true;
+  if (h.includes('ג׳ינס') || h.includes("ג'ינס")) {
+    return blob.includes('ג׳ינס') || blob.includes("ג'ינס") || blob.includes('jeans');
+  }
+  if (h.includes('קצר') && blob.includes('קצר')) return true;
+  if (h.includes('ספורט') && blob.includes('ספורט')) return true;
+  return false;
+}
+
+/**
+ * התאמה קשיחה: צבע / קטגוריה / תת־סוג / מחיר — בלי תוצאות לא רלוונטיות.
+ */
 export function matchProducts(intent: ChatIntent, limit = 4): ProductCard[] {
   const scored = PRODUCTS.map((p) => {
     let score = 0;
+
     if (intent.category) {
-      if (p.category === intent.category) score += 6;
-      else return { p, score: -100 }; // לא מציגים קטגוריה אחרת כשיש כוונה ברורה
+      if (p.category !== intent.category) return { p, score: -100 };
+      score += 6;
     }
+
     if (intent.color) {
-      const pc = p.color.toLowerCase();
-      const ic = intent.color.toLowerCase();
-      if (pc === ic || pc.includes(ic) || ic.includes(pc.split(' ')[0])) score += 5;
-      else score -= 2;
+      if (!colorMatches(p.color, intent.color)) return { p, score: -100 };
+      score += 8;
     }
-    if (intent.brand && p.brand?.toLowerCase().includes(intent.brand.toLowerCase())) {
-      score += 3;
+
+    if (intent.subcategoryHint) {
+      if (!subHintMatches(p, intent.subcategoryHint)) return { p, score: -100 };
+      score += 5;
     }
+
+    if (intent.brand) {
+      const pb = (p.brand ?? '').toLowerCase();
+      const ib = intent.brand.toLowerCase();
+      if (!pb.includes(ib) && !ib.includes(pb)) return { p, score: -100 };
+      score += 4;
+    }
+
     if (typeof intent.maxPrice === 'number' && typeof p.price === 'number') {
-      if (p.price <= intent.maxPrice) score += 2;
-      else return { p, score: -100 };
+      if (p.price > intent.maxPrice) return { p, score: -100 };
+      score += 2;
     }
+
     const blob = `${p.title} ${p.subcategory} ${p.color} ${p.brand ?? ''}`.toLowerCase();
     for (const kw of intent.keywords) {
-      if (blob.includes(kw)) score += 1;
+      if (kw.length > 2 && blob.includes(kw)) score += 1;
     }
+
     if (intent.occasion === 'winter' && p.category === 'Outerwear') score += 2;
     if (
       intent.occasion === 'summer' &&
-      (p.subcategory.includes('קצר') || p.category === 'Shoes')
+      (p.subcategory.includes('קצר') ||
+        p.category === 'Shoes' ||
+        p.subcategory.includes('ים'))
     ) {
       score += 2;
     }
     if (intent.occasion === 'evening' && p.category === 'Dresses') score += 3;
-    if (
-      intent.keywords.some((k) => k.includes('sport') || k.includes('ספורט')) &&
-      p.subcategory.includes('ספורט')
-    ) {
-      score += 3;
-    }
+
     return { p, score };
   })
     .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score || (a.p.price ?? 999) - (b.p.price ?? 999));
 
-  if (scored.length === 0) {
-    const pool = intent.category
-      ? PRODUCTS.filter(
-          (p) =>
-            p.category === intent.category &&
-            (typeof intent.maxPrice !== 'number' ||
-              typeof p.price !== 'number' ||
-              p.price <= intent.maxPrice),
-        )
-      : PRODUCTS;
-    return pool.slice(0, limit);
-  }
+  // בלי fallback רך — אם אין התאמה מדויקת, מחזירים ריק
   return scored.slice(0, limit).map((x) => x.p);
 }
 
 function intentReady(intent: ChatIntent): boolean {
   return Boolean(
-    intent.category || intent.color || intent.brand || intent.maxPrice || intent.occasion,
+    intent.category ||
+      intent.color ||
+      intent.brand ||
+      intent.maxPrice ||
+      intent.occasion ||
+      intent.subcategoryHint,
   );
 }
 
@@ -105,13 +128,13 @@ function missingPrompt(intent: ChatIntent): { text: string; suggestions: string[
   if (!intent.category) {
     return {
       text: 'מעולה. איזה סוג בגד בא לכם? חולצה, מכנסיים, עליונית, שמלה, נעליים או כובע?',
-      suggestions: ['חולצה', 'ג׳ינס', 'ג׳קט', 'נעליים'],
+      suggestions: ['חולצה שחורה', 'ג׳ינס כחול', 'ג׳קט', 'נעליים לבנות'],
     };
   }
-  if (!intent.color && !intent.maxPrice) {
+  if (!intent.color && !intent.maxPrice && !intent.subcategoryHint) {
     return {
-      text: `מחפש/ת ${categoryHe(intent.category)}. יש צבע מועדף או תקציב מקסימלי?`,
-      suggestions: ['שחור', 'כחול', 'עד 200', 'בלי הגבלה — תראה לי'],
+      text: `מחפש/ת ${categoryHe(intent.category)}. איזה צבע או תקציב? או כתבו «תראה לי» לכל האופציות בקטגוריה.`,
+      suggestions: ['שחור', 'כחול', 'עד 200', 'תראה לי'],
     };
   }
   return {
@@ -122,11 +145,27 @@ function missingPrompt(intent: ChatIntent): { text: string; suggestions: string[
 
 function summaryLine(intent: ChatIntent): string {
   const parts: string[] = [];
-  if (intent.category) parts.push(categoryHe(intent.category));
-  if (intent.color) parts.push(intent.color);
+  if (intent.subcategoryHint) parts.push(intent.subcategoryHint);
+  else if (intent.category) parts.push(categoryHe(intent.category));
+  if (intent.color) parts.push(colorHe(intent.color));
   if (intent.brand) parts.push(intent.brand);
   if (intent.maxPrice) parts.push(`עד ₪${intent.maxPrice}`);
   return parts.length ? parts.join(' · ') : 'החיפוש שלכם';
+}
+
+function colorHe(color: string): string {
+  const map: Record<string, string> = {
+    Black: 'שחור',
+    White: 'לבן',
+    Blue: 'כחול',
+    Navy: 'נייבי',
+    Beige: 'בז׳',
+    Brown: 'חום',
+    'Olive Green': 'זית',
+    Khaki: 'חאקי',
+    Charcoal: 'אפור',
+  };
+  return map[color] ?? color;
 }
 
 const SHOW_TRIGGERS =
@@ -141,9 +180,35 @@ export function replyToUser(
   prevIntent: ChatIntent,
 ): { message: ChatMessage; intent: ChatIntent } {
   const intent = extractIntent(userText, prevIntent);
-  const wantsShow = SHOW_TRIGGERS.test(userText.toLowerCase()) || intentReady(intent);
+  const showTrigger = SHOW_TRIGGERS.test(userText.toLowerCase());
+  // חיפוש מדויק (קטגוריה+צבע / תת־סוג+צבע / מותג) — מציגים מיד
+  const preciseEnough = Boolean(
+    (intent.category && intent.color) ||
+      (intent.subcategoryHint && intent.color) ||
+      (intent.category && intent.subcategoryHint) ||
+      intent.brand ||
+      (intent.category && intent.maxPrice) ||
+      showTrigger,
+  );
 
-  if (!intent.category && !SHOW_TRIGGERS.test(userText.toLowerCase())) {
+  if (!intent.category && !showTrigger && !intent.brand && !intent.subcategoryHint) {
+    // צבע בלבד — מבקשים סוג בגד כדי לא לערבב חולצה/כובע/ג׳קט
+    if (intent.color) {
+      return {
+        intent,
+        message: {
+          id: uid(),
+          role: 'assistant',
+          text: `מעולה, ${colorHe(intent.color)}. איזה בגד בצבע הזה? חולצה, מכנסיים, עליונית, נעליים…`,
+          suggestions: [
+            `חולצה ${colorHe(intent.color)}`,
+            `ג׳ינס ${colorHe(intent.color)}`,
+            `ג׳קט ${colorHe(intent.color)}`,
+            'נעליים',
+          ],
+        },
+      };
+    }
     const ask = missingPrompt(intent);
     return {
       intent,
@@ -156,7 +221,7 @@ export function replyToUser(
     };
   }
 
-  if (!wantsShow && !intent.color && !intent.maxPrice && !intent.brand) {
+  if (!preciseEnough && intent.category && !intent.color && !intent.maxPrice && !intent.brand) {
     const ask = missingPrompt(intent);
     return {
       intent,
@@ -169,7 +234,20 @@ export function replyToUser(
     };
   }
 
-  const products = matchProducts(intent, 4);
+  if (!intentReady(intent) && !showTrigger) {
+    const ask = missingPrompt(intent);
+    return {
+      intent,
+      message: {
+        id: uid(),
+        role: 'assistant',
+        text: ask.text,
+        suggestions: ask.suggestions,
+      },
+    };
+  }
+
+  const products = matchProducts(intent, 6);
   const line = summaryLine(intent);
 
   if (products.length === 0) {
@@ -178,18 +256,23 @@ export function replyToUser(
       message: {
         id: uid(),
         role: 'assistant',
-        text: `לא מצאתי התאמה מדויקת ל־${line}. נסו צבע אחר או בלי הגבלת תקציב.`,
-        suggestions: ['חולצה שחורה', 'ג׳ינס', 'ג׳קט לחורף'],
+        text: `לא מצאתי התאמה מדויקת ל־${line}. נסו ניסוח אחר (למשל צבע אחר) או בלי הגבלת תקציב.`,
+        suggestions: ['חולצה שחורה', 'ג׳ינס כחול', 'בומבר שחור', 'חיפוש אחר'],
       },
     };
   }
+
+  const onlyExact =
+    intent.color || intent.subcategoryHint
+      ? `הצגתי רק פריטים שמתאימים בדיוק ל־${line}.`
+      : `הנה ${products.length} אופציות ל־${line}.`;
 
   return {
     intent,
     message: {
       id: uid(),
       role: 'assistant',
-      text: `מצאתי ${products.length} אופציות ל־${line}. אפשר ללחוץ על פריט כדי לראות פרטים, להוסיף לסל או להלביש על האווטאר.`,
+      text: `${onlyExact} אפשר ללחוץ על פריט לפרטים, להוספה לסל או להלבשה על האווטאר.`,
       products,
       suggestions: ['חיפוש אחר', 'משהו יותר זול', 'עליונית לחורף'],
     },

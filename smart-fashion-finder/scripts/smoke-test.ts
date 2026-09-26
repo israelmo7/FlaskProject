@@ -88,7 +88,7 @@ import {
   sizeFitScale,
   sizeRelativeToHeight,
 } from '../src/constants/avatar';
-import { extractIntent } from '../src/services/fashionChatIntent';
+import { extractIntent, colorMatches } from '../src/services/fashionChatIntent';
 
 assert(heightScale(140) < heightScale(165), '140cm doll shorter than 165cm');
 assert(heightScale(190) > heightScale(165), '190cm doll taller than 165cm');
@@ -107,6 +107,36 @@ assert(blackShirtIntent.maxPrice === 150, 'chat intent maxPrice 150');
 const jeansIntent = extractIntent('ג׳ינס כחול');
 assert(jeansIntent.category === 'Pants', 'chat intent jeans → Pants');
 assert(jeansIntent.color === 'Blue', 'chat intent jeans color Blue');
+
+assert(colorMatches('Black', 'Black'), 'exact black matches');
+assert(!colorMatches('Charcoal', 'Black'), 'charcoal is not black');
+assert(!colorMatches('Beige', 'Black'), 'beige is not black');
+assert(colorMatches('Blue', 'Blue'), 'exact blue matches');
+assert(!colorMatches('Light Wash', 'Blue'), 'light wash is not blue');
+
+// סימולציית match קשיח (בלי טעינת תמונות מהקטלוג)
+const demoCatalog = [
+  { id: 'p-tshirt', category: 'Shirts', color: 'Black', price: 89 },
+  { id: 'p-hoodie', category: 'Shirts', color: 'Beige', price: 179 },
+  { id: 'p-bomber', category: 'Outerwear', color: 'Black', price: 299 },
+  { id: 'p-jeans', category: 'Pants', color: 'Blue', price: 219 },
+  { id: 'p-shorts', category: 'Pants', color: 'Light Wash', price: 159 },
+];
+const hardMatch = demoCatalog.filter(
+  (p) =>
+    (!blackShirtIntent.category || p.category === blackShirtIntent.category) &&
+    (!blackShirtIntent.color || colorMatches(p.color, blackShirtIntent.color)) &&
+    (typeof blackShirtIntent.maxPrice !== 'number' ||
+      p.price <= blackShirtIntent.maxPrice),
+);
+assert(hardMatch.length === 1 && hardMatch[0].id === 'p-tshirt', 'hard match only black shirt');
+
+const jeansHard = demoCatalog.filter(
+  (p) =>
+    (!jeansIntent.category || p.category === jeansIntent.category) &&
+    (!jeansIntent.color || colorMatches(p.color, jeansIntent.color)),
+);
+assert(jeansHard.length === 1 && jeansHard[0].id === 'p-jeans', 'hard match only blue jeans');
 
 if (failed > 0) {
   console.error(`\n${failed} assertion(s) failed`);

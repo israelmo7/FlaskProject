@@ -55,6 +55,11 @@ export const he = {
   kgUnit: 'ק״ג',
   homeDressHint: 'הלבישו את הבובה ממוצר או מצילום, ואז מצאו מלאי לידכם.',
   editProfile: 'עריכת פרופיל',
+  editProfileHint: 'כאן אפשר תמיד לשנות את דמות האווטאר, הגובה והמשקל.',
+  changeAvatarPersona: 'שינוי דמות האווטאר',
+  changeAvatarPersonaHint: 'בחרו דמות חדשה — הבגדים על האווטאר נשמרים.',
+  saveProfileChanges: 'שמירת שינויים',
+  profileUpdated: 'הפרופיל עודכן',
 
   heroTitle: 'קולקציות חדשות לנשים',
   heroCaption: 'מכנסיים מחויטים',

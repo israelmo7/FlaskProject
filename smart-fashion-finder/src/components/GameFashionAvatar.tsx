@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { buildWidthScale, heightScale, isFemalePersona } from '@/constants/avatar';
 import {
-  frontFacingAmount,
+  nearestTurnYaw,
   resolveOutfitLook,
   turnBaseForPersona,
 } from '@/constants/avatarAssets';
@@ -34,8 +34,19 @@ function layersKey(layers: OutfitLayers): string {
   ].join('|');
 }
 
+function hasClothes(layers: OutfitLayers): boolean {
+  return Boolean(
+    layers.top ||
+      layers.bottom ||
+      layers.outer ||
+      layers.dress ||
+      layers.shoes ||
+      layers.hat,
+  );
+}
+
 /**
- * דמות משחק — לוקים מצוירים לכל בגד + סיבוב 180°.
+ * דמות משחק — לוקים מצוירים + סיבוב 180° בלי להוריד בגדים.
  */
 export function GameFashionAvatar({ profile, layers, width, height }: Props) {
   const female = isFemalePersona(profile.persona);
@@ -46,8 +57,8 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
   const yawRef = useRef(0);
   const startYaw = useRef(0);
   const outfitKey = layersKey(layers);
+  const clothed = hasClothes(layers);
 
-  // איפוס סיבוב כשמשנים לוק — כדי לראות את ההלבשה בחזית
   useEffect(() => {
     yawRef.current = 0;
     setYaw(0);
@@ -84,18 +95,19 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
     [layers, yaw, female],
   );
 
-  const facing = frontFacingAmount(yaw);
   const baseSrc = turnBaseForPersona(profile.persona, yaw);
-  const scaleX = Math.min(1.15, Math.max(0.88, wScale));
+  const bodyScale = Math.min(1.15, Math.max(0.88, wScale));
+
+  // סיבוב ויזואלי: כיווץ/היפוך אופקי — הבגדים נשארים על הדמות
+  const rad = (yaw * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const turnScaleX =
+    (cos >= 0 ? 1 : -1) * Math.max(0.22, Math.abs(cos)) * bodyScale;
 
   const hero = resolved.hero;
-  const showHero = Boolean(hero) && (resolved.heroTracksYaw || facing > 0.28);
-  const showBase =
-    !showHero || (!resolved.heroTracksYaw && facing < 0.92) || !hero;
-
-  const overlayOpacity = resolved.heroTracksYaw
-    ? 1
-    : Math.max(0, 0.15 + facing * 0.85);
+  // קומבו עם פריימי אמת (טי+ג׳ינס) — משתמשים בפריים לפי זווית
+  const useYawFrames = resolved.heroTracksYaw && Boolean(hero);
+  const frame = nearestTurnYaw(yaw);
 
   return (
     <View style={{ width, height }} {...pan.panHandlers}>
@@ -112,7 +124,8 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
         }}
       />
 
-      {showBase ? (
+      {/* בסיס ריק — רק כשאין בגדים */}
+      {!clothed ? (
         <Image
           source={baseSrc}
           resizeMode="contain"
@@ -120,13 +133,13 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
             position: 'absolute',
             width,
             height,
-            transform: [{ scaleX }],
-            opacity: showHero ? Math.max(0, 1 - facing * 0.95) : 1,
+            transform: [{ scaleX: bodyScale }],
           }}
         />
       ) : null}
 
-      {showHero && hero ? (
+      {/* לוק לבוש — תמיד נשאר בסיבוב */}
+      {clothed && hero ? (
         <Image
           source={hero}
           resizeMode="contain"
@@ -134,24 +147,46 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
             position: 'absolute',
             width,
             height,
-            transform: [{ scaleX }],
-            opacity: resolved.heroTracksYaw ? 1 : Math.max(0.25, facing),
+            transform: [
+              {
+                scaleX: useYawFrames ? bodyScale : turnScaleX,
+              },
+            ],
+            opacity: 1,
           }}
         />
       ) : null}
 
-      {facing > 0.2
+      {/* בלי hero (נדיר) — בסיס מסתובב + שכבות */}
+      {clothed && !hero ? (
+        <Image
+          source={baseSrc}
+          resizeMode="contain"
+          style={{
+            position: 'absolute',
+            width,
+            height,
+            transform: [{ scaleX: bodyScale }],
+          }}
+        />
+      ) : null}
+
+      {clothed
         ? resolved.overlays.map((src, i) => (
             <Image
-              key={`ov-${i}`}
+              key={`ov-${i}-${frame}`}
               source={src}
               resizeMode="contain"
               style={{
                 position: 'absolute',
                 width,
                 height,
-                transform: [{ scaleX }],
-                opacity: overlayOpacity,
+                transform: [
+                  {
+                    scaleX: useYawFrames ? bodyScale : turnScaleX,
+                  },
+                ],
+                opacity: 1,
               }}
             />
           ))

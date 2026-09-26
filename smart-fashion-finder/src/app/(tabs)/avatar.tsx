@@ -180,30 +180,35 @@ export default function AvatarScreen() {
         {he.layersStay}
       </Text>
 
-      <Text className="mb-2 mt-6 text-right font-bodyMedium text-xs text-ink-muted">
-        {he.personaLabel}
-      </Text>
-      <View className="flex-row flex-wrap justify-end">
-        {PERSONA_OPTIONS.map((opt) => {
-          const active = profile.persona === opt.id;
-          return (
-            <Pressable
-              key={opt.id}
-              onPress={() => setPersona(opt.id)}
-              className={`mb-2 ml-2 rounded-full px-3.5 py-2 ${
-                active ? 'bg-teal' : 'bg-stone-dark'
-              }`}
-            >
-              <Text
-                className={`font-bodyMedium text-sm ${
-                  active ? 'text-stone-light' : 'text-ink-soft'
+      <View className="mt-6 rounded-2xl border border-[#E07A4F]/35 bg-[#FFF7F2] px-4 py-4">
+        <Text className="text-right font-display text-lg text-ink">
+          {he.changeAvatarPersona}
+        </Text>
+        <Text className="mt-1 text-right font-body text-xs text-ink-muted">
+          {he.changeAvatarPersonaHint}
+        </Text>
+        <View className="mt-3 flex-row flex-wrap justify-end">
+          {PERSONA_OPTIONS.map((opt) => {
+            const active = profile.persona === opt.id;
+            return (
+              <Pressable
+                key={opt.id}
+                onPress={() => setPersona(opt.id)}
+                className={`mb-2 ml-2 rounded-full px-3.5 py-2 ${
+                  active ? 'bg-[#E07A4F]' : 'bg-white'
                 }`}
               >
-                {opt.label}
-              </Text>
-            </Pressable>
-          );
-        })}
+                <Text
+                  className={`font-bodyMedium text-sm ${
+                    active ? 'text-white' : 'text-ink-soft'
+                  }`}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
 
       <Text className="mb-2 mt-4 text-right font-bodyMedium text-xs text-ink-muted">

@@ -162,6 +162,7 @@ export function catalogIdFromPieceId(pieceId: string): string | null {
     'w-blue-jeans',
     'w-olive-cargo',
     'w-denim-jacket',
+    'w-beige-dress',
     'w-sneakers',
     'w-hat',
   ];
@@ -173,6 +174,7 @@ export function catalogIdFromPieceId(pieceId: string): string | null {
       if (k === 'w-blue-jeans') return 'p-jeans';
       if (k === 'w-olive-cargo') return 'p-cargo';
       if (k === 'w-denim-jacket') return 'p-denim-jkt';
+      if (k === 'w-beige-dress') return 'p-dress';
       if (k === 'w-sneakers') return 'p-sneakers';
       if (k === 'w-hat') return 'p-hat';
       return k;
@@ -245,6 +247,19 @@ function pieceCatalogId(
 /**
  * בחירת לוק מצויר / קומבו / שכבות — כדי שכל בגד יישב טוב על הדמות.
  */
+function pushOverlay(
+  extras: ImageSourcePropType[],
+  id: string | null,
+  skip?: string,
+) {
+  if (!id || id === skip) return;
+  const o = fittedOverlayForId(id);
+  if (o) extras.push(o);
+}
+
+/**
+ * בחירת לוק מצויר / קומבו / שכבות — הבגדים נשארים גם בסיבוב 180°.
+ */
 export function resolveOutfitLook(
   layers: OutfitLayers,
   yaw: number,
@@ -256,41 +271,43 @@ export function resolveOutfitLook(
   const dressId = pieceCatalogId(layers.dress);
   const shoesId = pieceCatalogId(layers.shoes);
   const hatId = pieceCatalogId(layers.hat);
-  const facing = frontFacingAmount(yaw);
+
+  const withAccessories = (
+    hero: ImageSourcePropType | null,
+    heroTracksYaw: boolean,
+    baseExtras: ImageSourcePropType[] = [],
+  ): ResolvedOutfit => {
+    const extras = [...baseExtras];
+    pushOverlay(extras, shoesId, 'p-socks');
+    pushOverlay(extras, hatId);
+    // fallback: תמיד יש hero אם יש בגד
+    const safeHero: ImageSourcePropType | null =
+      hero ??
+      (outerId ? fittedLookForId(outerId, female) : null) ??
+      (topId ? fittedLookForId(topId, female) : null) ??
+      (bottomId ? fittedLookForId(bottomId, female) : null) ??
+      (dressId ? fittedLookForId(dressId, female) : null) ??
+      (shoesId && shoesId !== 'p-socks'
+        ? fittedLookForId(shoesId, female)
+        : null) ??
+      (hatId ? fittedLookForId(hatId, female) : null) ??
+      null;
+    return { hero: safeHero, heroTracksYaw, overlays: extras };
+  };
 
   // הלבשה תחתונה בלבד — בסיס הדמות
   if (bottomId === 'p-underwear' && !topId && !outerId && !dressId) {
-    const extras: ImageSourcePropType[] = [];
-    if (hatId && facing > 0.35) {
-      const o = fittedOverlayForId(hatId);
-      if (o) extras.push(o);
-    }
-    return {
-      hero: fittedLookForId('p-underwear', female),
-      heroTracksYaw: false,
-      overlays: extras,
-    };
+    return withAccessories(fittedLookForId('p-underwear', female), false);
   }
 
-  // שמלה
   if (dressId) {
-    const dress = fittedLookForId(dressId, female);
-    const extras: ImageSourcePropType[] = [];
-    if (shoesId && facing > 0.35) {
-      const o = fittedOverlayForId(shoesId);
-      if (o) extras.push(o);
-    }
-    if (hatId && facing > 0.35) {
-      const o = fittedOverlayForId(hatId);
-      if (o) extras.push(o);
-    }
-    return { hero: dress, heroTracksYaw: false, overlays: extras };
+    return withAccessories(fittedLookForId(dressId, female), false);
   }
 
-  // קומבו טי+ג׳ינס עם סיבוב מלא
+  // קומבו טי+ג׳ינס עם פריימי סיבוב
   if (topId === 'p-tshirt' && bottomId === 'p-jeans' && !outerId) {
     const frame = nearestTurnYaw(yaw);
-    let hero =
+    const hero =
       COMBO_TSHIRT_JEANS[frame] ??
       (frame <= 45
         ? COMBO_TSHIRT_JEANS[0]
@@ -298,19 +315,9 @@ export function resolveOutfitLook(
           ? COMBO_TSHIRT_JEANS[90]
           : COMBO_TSHIRT_JEANS[180]) ??
       null;
-    const extras: ImageSourcePropType[] = [];
-    if (shoesId && facing > 0.4) {
-      const o = fittedOverlayForId(shoesId);
-      if (o) extras.push(o);
-    }
-    if (hatId && facing > 0.4) {
-      const o = fittedOverlayForId(hatId);
-      if (o) extras.push(o);
-    }
-    return { hero, heroTracksYaw: true, overlays: extras };
+    return withAccessories(hero, true);
   }
 
-  // קומבואים מצוירים אחרים (חזית)
   const comboKeys: string[] = [];
   if (outerId && bottomId) comboKeys.push(`${outerId}|${bottomId}`);
   if (topId && bottomId) comboKeys.push(`${topId}|${bottomId}`);
@@ -318,85 +325,43 @@ export function resolveOutfitLook(
     const combo = FITTED_COMBOS[key];
     if (combo) {
       const extras: ImageSourcePropType[] = [];
-      // אם יש גם עליונית מעל קומבו טופ+תחתון
       if (outerId && topId && key === `${topId}|${bottomId}`) {
-        const o = fittedOverlayForId(outerId);
-        if (o && facing > 0.35) extras.push(o);
+        pushOverlay(extras, outerId);
       }
-      if (shoesId && facing > 0.35) {
-        const o = fittedOverlayForId(shoesId);
-        if (o) extras.push(o);
-      }
-      if (hatId && facing > 0.35) {
-        const o = fittedOverlayForId(hatId);
-        if (o) extras.push(o);
-      }
-      return { hero: combo, heroTracksYaw: false, overlays: extras };
+      return withAccessories(combo, false, extras);
     }
   }
 
-  // פריט יחיד עיקרי — לוק מלא (כולל נעליים/כובע לבד)
   const mains = [outerId, topId, bottomId].filter(Boolean) as string[];
   if (mains.length === 1) {
-    const hero = fittedLookForId(mains[0], female);
-    const extras: ImageSourcePropType[] = [];
-    if (shoesId && shoesId !== 'p-socks' && facing > 0.35) {
-      const o = fittedOverlayForId(shoesId);
-      if (o) extras.push(o);
-    }
-    if (hatId && facing > 0.35) {
-      const o = fittedOverlayForId(hatId);
-      if (o) extras.push(o);
-    }
-    return { hero, heroTracksYaw: false, overlays: extras };
+    return withAccessories(fittedLookForId(mains[0], female), false);
   }
   if (mains.length === 0 && (shoesId || hatId)) {
     const heroId = shoesId && shoesId !== 'p-socks' ? shoesId : hatId;
-    const hero = heroId ? fittedLookForId(heroId, female) : null;
-    const extras: ImageSourcePropType[] = [];
-    if (shoesId && hatId && shoesId !== 'p-socks') {
-      // כובע מעל לוק נעליים
-      const o = fittedOverlayForId(hatId);
-      if (o && facing > 0.35) extras.push(o);
-    }
-    return { hero, heroTracksYaw: false, overlays: extras };
+    return withAccessories(
+      heroId ? fittedLookForId(heroId, female) : null,
+      false,
+    );
   }
 
-  // כמה שכבות בלי קומבו מוכן:
-  // עדיפות: לוק עליונית מלא → לוק מכנסיים + שכבות → לוק טופ
+  // כמה שכבות: מכנסיים כבסיס + עליונית/טופ כשכבה
   const overlays: ImageSourcePropType[] = [];
   let hero: ImageSourcePropType | null = null;
 
   if (outerId && bottomId) {
-    // עליונית + מכנסיים: לוק המכנסיים + שכבת עליונית (הטופ מתחת מוסתר)
     hero = fittedLookForId(bottomId, female);
-    const o = fittedOverlayForId(outerId);
-    if (o) overlays.push(o);
+    pushOverlay(overlays, outerId);
+  } else if (outerId && topId) {
+    hero = fittedLookForId(topId, female);
+    pushOverlay(overlays, outerId);
   } else if (outerId) {
     hero = fittedLookForId(outerId, female);
   } else if (bottomId) {
     hero = fittedLookForId(bottomId, female);
-    if (topId) {
-      const o = fittedOverlayForId(topId);
-      if (o) overlays.push(o);
-    }
+    pushOverlay(overlays, topId);
   } else if (topId) {
     hero = fittedLookForId(topId, female);
   }
 
-  if (shoesId) {
-    const o = fittedOverlayForId(shoesId);
-    if (o) overlays.push(o);
-  }
-  if (hatId) {
-    const o = fittedOverlayForId(hatId);
-    if (o) overlays.push(o);
-  }
-
-  // רק אקססוריז
-  if (!hero && overlays.length > 0) {
-    return { hero: null, heroTracksYaw: false, overlays };
-  }
-
-  return { hero, heroTracksYaw: false, overlays };
+  return withAccessories(hero, false, overlays);
 }
