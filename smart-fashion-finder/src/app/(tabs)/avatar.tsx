@@ -18,7 +18,9 @@ import {
   WARDROBE_ITEMS,
   WEIGHT_RANGE,
   categoryToSlot,
+  formatHeightMeters,
   outfitSummary,
+  parseHeightInput,
   personaToGenderFilter,
   removeSlot,
   wearPiece,
@@ -74,17 +76,16 @@ export default function AvatarScreen() {
       heightCm: range.default,
       weightKg: weight.default,
     };
-    updateProfile(next);
+    // שמירה אטומית — הדמות מתחלפת מיד ונשמרת
+    saveAll({ profile: next, preferredSize: selectedSize || preferredSize, layers });
     setHeightText(String(range.default));
   };
 
   const applyHeight = (raw: string) => {
-    setHeightText(raw.replace(/[^0-9]/g, ''));
-    const n = Number(raw);
-    if (!Number.isFinite(n)) return;
-    const range = HEIGHT_RANGE[profile.persona];
-    const clamped = Math.min(range.max, Math.max(range.min, n));
-    updateProfile({ ...profile, heightCm: clamped });
+    setHeightText(raw.replace(/[^\d.,]/g, ''));
+    const parsed = parseHeightInput(raw, profile.persona);
+    if (parsed === null) return;
+    updateProfile({ ...profile, heightCm: parsed });
   };
 
   const setLayers = (updater: (prev: OutfitLayers) => OutfitLayers) => {
@@ -212,17 +213,17 @@ export default function AvatarScreen() {
       </View>
 
       <Text className="mb-2 mt-4 text-right font-bodyMedium text-xs text-ink-muted">
-        {he.heightLabel}
+        {he.heightLabel} · {formatHeightMeters(profile.heightCm)}
       </Text>
       <View className="flex-row items-center justify-end">
-        <Text className="ml-2 font-body text-sm text-ink-muted">ס״מ</Text>
+        <Text className="ml-2 font-body text-sm text-ink-muted">ס״מ / מ׳</Text>
         <TextInput
           value={heightText}
           onChangeText={applyHeight}
           onBlur={() => setHeightText(String(profile.heightCm))}
-          keyboardType="number-pad"
-          className="w-24 rounded-xl bg-stone-light px-3 py-2.5 text-center font-bodyBold text-base text-ink"
-          maxLength={3}
+          keyboardType="decimal-pad"
+          className="w-28 rounded-xl bg-stone-light px-3 py-2.5 text-center font-bodyBold text-base text-ink"
+          maxLength={5}
         />
       </View>
 

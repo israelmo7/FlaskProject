@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import {
   PERSONA_OPTIONS,
   buildWidthScale,
+  formatHeightMeters,
   garmentColorHex,
   heightScale,
 } from '@/constants/avatar';
@@ -20,7 +21,7 @@ type Props = {
 };
 
 /**
- * אווטאר משחק אופנה — דמות מעוצבת + בגדים לפי אזורי גוף ומידה.
+ * אווטאר משחק אופנה — גובה אמיתי + בגדים לפי מידה.
  */
 export function DressableFigure({
   profile,
@@ -34,10 +35,11 @@ export function DressableFigure({
   const personaLabel =
     PERSONA_OPTIONS.find((p) => p.id === profile.persona)?.label ?? '';
 
+  // גובה בסיס × סולם גובה — 1.78מ׳ גבוה מ־1.65מ׳ באופן ברור
   const baseW = compact ? 168 : 200;
-  const baseH = compact ? 320 : 380;
-  const dollW = baseW * Math.min(1.2, Math.max(0.82, wScale));
-  const dollH = baseH * hScale;
+  const baseH = compact ? 300 : 360;
+  const dollW = baseW * Math.min(1.22, Math.max(0.78, wScale));
+  const dollH = Math.round(baseH * hScale);
 
   const worn = [
     layers.dress,
@@ -50,12 +52,17 @@ export function DressableFigure({
 
   return (
     <View className="items-start">
-      <View style={{ width: dollW + 16, paddingVertical: 4 }}>
+      <View style={{ width: Math.max(dollW + 16, 120), paddingVertical: 4 }}>
         {!hideMeta ? (
           <Text className="mb-1.5 text-left font-display text-sm text-ink">
-            {personaLabel} · {profile.heightCm} ס״מ
+            {personaLabel} · {formatHeightMeters(profile.heightCm)} (
+            {profile.heightCm} ס״מ)
           </Text>
-        ) : null}
+        ) : (
+          <Text className="mb-1 text-left font-bodyMedium text-[11px] text-ink-muted">
+            {personaLabel} · {formatHeightMeters(profile.heightCm)}
+          </Text>
+        )}
 
         <LinearGradient
           colors={['#F7F1E8', '#EDE4D6', '#E6DCCE']}
@@ -70,6 +77,7 @@ export function DressableFigure({
           }}
         >
           <GameFashionAvatar
+            key={`avatar-${profile.persona}-${profile.heightCm}-${profile.build}`}
             profile={profile}
             layers={layers}
             width={dollW}

@@ -7,9 +7,14 @@ import {
   type GestureResponderEvent,
   type PanResponderGestureState,
 } from 'react-native';
-import { buildWidthScale, heightScale, isFemalePersona } from '@/constants/avatar';
+import {
+  buildWidthScale,
+  isFemalePersona,
+  usesPaintedAdultLooks,
+} from '@/constants/avatar';
 import {
   nearestTurnYaw,
+  personaHasTurnFrames,
   resolveOutfitLook,
   turnBaseForPersona,
 } from '@/constants/avatarAssets';
@@ -26,11 +31,17 @@ type Props = {
 function layersKey(layers: OutfitLayers): string {
   return [
     layers.top?.id,
+    layers.top?.size,
     layers.bottom?.id,
+    layers.bottom?.size,
     layers.outer?.id,
+    layers.outer?.size,
     layers.dress?.id,
+    layers.dress?.size,
     layers.shoes?.id,
+    layers.shoes?.size,
     layers.hat?.id,
+    layers.hat?.size,
   ].join('|');
 }
 
@@ -46,12 +57,13 @@ function hasClothes(layers: OutfitLayers): boolean {
 }
 
 /**
- * דמות משחק — לוקים מצוירים + סיבוב 180° בלי להוריד בגדים.
+ * דמות משחק — בסיס לפי persona, גובה אמיתי, מידות בגד, סיבוב 180°.
  */
 export function GameFashionAvatar({ profile, layers, width, height }: Props) {
   const female = isFemalePersona(profile.persona);
   const wScale = buildWidthScale(profile.build);
-  void heightScale(profile.heightCm, profile.persona);
+  const adultLooks = usesPaintedAdultLooks(profile.persona);
+  const turnFrames = personaHasTurnFrames(profile.persona);
 
   const [yaw, setYaw] = useState(0);
   const yawRef = useRef(0);
@@ -62,7 +74,7 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
   useEffect(() => {
     yawRef.current = 0;
     setYaw(0);
-  }, [outfitKey]);
+  }, [outfitKey, profile.persona]);
 
   const pan = useMemo(
     () =>
@@ -91,23 +103,34 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
   );
 
   const resolved = useMemo(
-    () => resolveOutfitLook(layers, yaw, female),
-    [layers, yaw, female],
+    () =>
+      resolveOutfitLook(
+        layers,
+        yaw,
+        female,
+        profile.heightCm,
+        profile.persona,
+      ),
+    [layers, yaw, female, profile.heightCm, profile.persona],
   );
 
   const baseSrc = turnBaseForPersona(profile.persona, yaw);
-  const bodyScale = Math.min(1.15, Math.max(0.88, wScale));
+  const bodyScaleX = Math.min(1.2, Math.max(0.78, wScale));
 
-  // סיבוב ויזואלי: כיווץ/היפוך אופקי — הבגדים נשארים על הדמות
   const rad = (yaw * Math.PI) / 180;
   const cos = Math.cos(rad);
-  const turnScaleX =
-    (cos >= 0 ? 1 : -1) * Math.max(0.22, Math.abs(cos)) * bodyScale;
+  const flipScaleX =
+    (cos >= 0 ? 1 : -1) * Math.max(0.22, Math.abs(cos)) * bodyScaleX;
 
   const hero = resolved.hero;
-  // קומבו עם פריימי אמת (טי+ג׳ינס) — משתמשים בפריים לפי זווית
-  const useYawFrames = resolved.heroTracksYaw && Boolean(hero);
+  const useYawFrames = resolved.heroTracksYaw && Boolean(hero) && adultLooks;
+  const overlayOnly = resolved.overlayOnly || !adultLooks;
+  const showHero = clothed && Boolean(hero) && !overlayOnly;
+  const showBase = !clothed || overlayOnly || !showHero;
   const frame = nearestTurnYaw(yaw);
+
+  const baseTurnX = turnFrames && !clothed ? bodyScaleX : flipScaleX;
+  const heroTurnX = useYawFrames ? bodyScaleX : flipScaleX;
 
   return (
     <View style={{ width, height }} {...pan.panHandlers}>
@@ -124,8 +147,7 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
         }}
       />
 
-      {/* בסיס ריק — רק כשאין בגדים */}
-      {!clothed ? (
+      {showBase ? (
         <Image
           source={baseSrc}
           resizeMode="contain"
@@ -133,13 +155,12 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
             position: 'absolute',
             width,
             height,
-            transform: [{ scaleX: bodyScale }],
+            transform: [{ scaleX: baseTurnX }],
           }}
         />
       ) : null}
 
-      {/* לוק לבוש — תמיד נשאר בסיבוב */}
-      {clothed && hero ? (
+      {showHero && hero ? (
         <Image
           source={hero}
           resizeMode="contain"
@@ -148,43 +169,27 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
             width,
             height,
             transform: [
-              {
-                scaleX: useYawFrames ? bodyScale : turnScaleX,
-              },
+              { scaleX: heroTurnX },
+              { scale: resolved.heroScale },
             ],
             opacity: 1,
           }}
         />
       ) : null}
 
-      {/* בלי hero (נדיר) — בסיס מסתובב + שכבות */}
-      {clothed && !hero ? (
-        <Image
-          source={baseSrc}
-          resizeMode="contain"
-          style={{
-            position: 'absolute',
-            width,
-            height,
-            transform: [{ scaleX: bodyScale }],
-          }}
-        />
-      ) : null}
-
       {clothed
-        ? resolved.overlays.map((src, i) => (
+        ? resolved.overlays.map((ov, i) => (
             <Image
-              key={`ov-${i}-${frame}`}
-              source={src}
+              key={`ov-${ov.key}-${i}-${frame}`}
+              source={ov.src}
               resizeMode="contain"
               style={{
                 position: 'absolute',
                 width,
                 height,
                 transform: [
-                  {
-                    scaleX: useYawFrames ? bodyScale : turnScaleX,
-                  },
+                  { scaleX: useYawFrames ? bodyScaleX : flipScaleX },
+                  { scale: ov.scale },
                 ],
                 opacity: 1,
               }}

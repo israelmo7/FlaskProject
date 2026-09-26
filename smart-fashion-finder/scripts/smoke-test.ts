@@ -90,14 +90,23 @@ import {
 } from '../src/constants/avatar';
 import { extractIntent, colorMatches } from '../src/services/fashionChatIntent';
 
-assert(heightScale(140) < heightScale(165), '140cm doll shorter than 165cm');
-assert(heightScale(190) > heightScale(165), '190cm doll taller than 165cm');
+import {
+  garmentFitOnBody,
+  parseHeightInput,
+} from '../src/constants/avatar';
+
+assert(heightScale(140, 'woman') < heightScale(165, 'woman'), '140cm doll shorter than 165cm');
+assert(heightScale(178, 'man') > heightScale(165, 'woman'), '1.78m man taller than 1.65m woman');
+assert(heightScale(190, 'man') > heightScale(178, 'man'), '190cm taller than 178cm');
 assert(sizeFitScale('S') < sizeFitScale('M'), 'S garment smaller than M');
 assert(sizeFitScale('L') > sizeFitScale('M'), 'L garment larger than M');
 assert(
   sizeRelativeToHeight('S', 178) < sizeRelativeToHeight('M', 178),
   'S on 178cm looks smaller than M',
 );
+assert(garmentFitOnBody('L', 165) > garmentFitOnBody('S', 165), 'L fits larger than S on body');
+assert(parseHeightInput('1.78', 'man') === 178, '1.78 meters parses to 178cm');
+assert(parseHeightInput('178', 'man') === 178, '178 cm parses as 178');
 
 const blackShirtIntent = extractIntent('חולצה שחורה עד 150');
 assert(blackShirtIntent.category === 'Shirts', 'chat intent category Shirts');

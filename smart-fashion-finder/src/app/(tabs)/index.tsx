@@ -106,8 +106,11 @@ export default function HomeScreen() {
     setLayers((prev) => wearPiece(prev, full));
   };
 
-  const productToPiece = (product: ProductCard): OutfitPiece => {
-    const size = preferredSize || 'M';
+  const productToPiece = (
+    product: ProductCard,
+    sizeOverride?: string,
+  ): OutfitPiece => {
+    const size = sizeOverride || preferredSize || 'M';
     return {
       // שומרים את מזהה הקטלוג ב־id כדי להתאים לוק מצויר
       id: `${product.id}-${size}`,
@@ -126,13 +129,15 @@ export default function HomeScreen() {
     setDetailProduct(product);
   };
 
-  const onDressFromDetail = (product: ProductCard) => {
-    dressPiece(productToPiece(product));
+  const onDressFromDetail = (product: ProductCard, size: string) => {
+    updatePreferredSize(size);
+    dressPiece(productToPiece(product, size));
   };
 
-  const onAddToCartFromDetail = (product: ProductCard) => {
-    addPieceToCart(productToPiece(product));
-    Alert.alert(he.addedToCart, product.title);
+  const onAddToCartFromDetail = (product: ProductCard, size: string) => {
+    updatePreferredSize(size);
+    addPieceToCart(productToPiece(product, size));
+    Alert.alert(he.addedToCart, `${product.title} · ${size}`);
   };
 
   const onSearchSubmit = () => {

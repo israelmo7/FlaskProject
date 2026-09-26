@@ -60,6 +60,8 @@ export const he = {
   changeAvatarPersonaHint: 'בחרו דמות חדשה — הבגדים על האווטאר נשמרים.',
   saveProfileChanges: 'שמירת שינויים',
   profileUpdated: 'הפרופיל עודכן',
+  chooseSizeHint: 'בחרו מידה — L גדול יותר מ־S על הבובה',
+  heightOnDoll: 'גובה הבובה',
 
   heroTitle: 'קולקציות חדשות לנשים',
   heroCaption: 'מכנסיים מחויטים',

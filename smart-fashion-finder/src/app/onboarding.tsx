@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -13,13 +13,15 @@ import {
   HEIGHT_RANGE,
   PERSONA_OPTIONS,
   WEIGHT_RANGE,
+  formatHeightMeters,
+  parseHeightInput,
 } from '@/constants/avatar';
 import { useSavedProfile } from '@/hooks/useSavedProfile';
 import { he } from '@/i18n/he';
 import type { AvatarPersona, AvatarProfile } from '@/types';
 
 /**
- * יצירת / עריכת פרופיל — דמות האווטאר תמיד זמינה לשינוי.
+ * יצירת / עריכת פרופיל — שינוי דמות נשמר באמת לכל persona.
  */
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
@@ -29,12 +31,12 @@ export default function OnboardingScreen() {
     preferredSize,
     onboardingComplete,
     completeOnboarding,
-    updateProfile,
     saveAll,
     layers,
   } = useSavedProfile();
 
   const editing = onboardingComplete;
+  const dirtyRef = useRef(false);
 
   const [persona, setPersona] = useState<AvatarPersona>(profile.persona || 'woman');
   const [heightCm, setHeightCm] = useState(
@@ -45,7 +47,7 @@ export default function OnboardingScreen() {
   );
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || dirtyRef.current) return;
     setPersona(profile.persona || 'woman');
     setHeightCm(String(profile.heightCm || HEIGHT_RANGE.woman.default));
     setWeightKg(String(profile.weightKg || WEIGHT_RANGE.woman.default));
@@ -55,42 +57,66 @@ export default function OnboardingScreen() {
   const weightMeta = WEIGHT_RANGE[persona];
 
   const selectPersona = (next: AvatarPersona) => {
+    dirtyRef.current = true;
     setPersona(next);
     setHeightCm(String(HEIGHT_RANGE[next].default));
     setWeightKg(String(WEIGHT_RANGE[next].default));
   };
 
+  const onHeightChange = (raw: string) => {
+    dirtyRef.current = true;
+    setHeightCm(raw.replace(/[^\d.,]/g, ''));
+  };
+
+  const onWeightChange = (raw: string) => {
+    dirtyRef.current = true;
+    setWeightKg(raw.replace(/[^0-9]/g, ''));
+  };
+
+  const parsedHeight = useMemo(
+    () => parseHeightInput(heightCm, persona),
+    [heightCm, persona],
+  );
+
   const canContinue = useMemo(() => {
-    const h = Number(heightCm);
     const w = Number(weightKg);
     return (
-      !Number.isNaN(h) &&
+      parsedHeight !== null &&
       !Number.isNaN(w) &&
-      h >= heightMeta.min &&
-      h <= heightMeta.max &&
       w >= weightMeta.min &&
       w <= weightMeta.max
     );
-  }, [heightCm, weightKg, heightMeta, weightMeta]);
+  }, [parsedHeight, weightKg, weightMeta]);
 
-  const buildNextProfile = (): AvatarProfile => ({
-    persona,
-    heightCm: Number(heightCm),
-    weightKg: Number(weightKg),
-    build: profile.build || 'average',
-  });
+  const buildNextProfile = (): AvatarProfile | null => {
+    if (parsedHeight === null) return null;
+    return {
+      persona,
+      heightCm: parsedHeight,
+      weightKg: Number(weightKg),
+      build: profile.build || 'average',
+    };
+  };
 
   const onContinue = () => {
-    if (!canContinue) return;
     const next = buildNextProfile();
+    if (!next || !canContinue) return;
+
+    // שמירה אטומית אחת — מונעת דריסה / חזרה לדמות הקודמת
     if (editing) {
-      updateProfile(next);
-      saveAll({ profile: next, preferredSize: preferredSize || 'M', layers });
-      Alert.alert(he.profileUpdated);
-      router.back();
+      saveAll({
+        profile: next,
+        preferredSize: preferredSize || 'M',
+        layers,
+        onboardingComplete: true,
+      });
+      dirtyRef.current = false;
+      Alert.alert(he.profileUpdated, `${PERSONA_OPTIONS.find((p) => p.id === next.persona)?.label ?? ''} · ${formatHeightMeters(next.heightCm)}`);
+      router.replace('/(tabs)');
       return;
     }
     completeOnboarding(next, preferredSize || 'M');
+    dirtyRef.current = false;
     router.replace('/(tabs)');
   };
 
@@ -121,7 +147,6 @@ export default function OnboardingScreen() {
         {editing ? he.editProfileHint : he.onboardingHint}
       </Text>
 
-      {/* שינוי דמות — תמיד גלוי בראש הפרופיל */}
       <View className="mt-8 rounded-2xl border border-[#E07A4F]/35 bg-[#FFF7F2] px-4 py-4">
         <Text className="text-right font-display text-xl text-ink">
           {he.changeAvatarPersona}
@@ -160,14 +185,18 @@ export default function OnboardingScreen() {
       </Text>
       <Text className="mb-2 text-right font-body text-xs text-ink-muted">
         {heightMeta.min}–{heightMeta.max} {he.cmUnit}
+        {parsedHeight ? ` · ${formatHeightMeters(parsedHeight)}` : ''}
       </Text>
       <TextInput
         value={heightCm}
-        onChangeText={setHeightCm}
-        keyboardType="number-pad"
+        onChangeText={onHeightChange}
+        onBlur={() => {
+          if (parsedHeight !== null) setHeightCm(String(parsedHeight));
+        }}
+        keyboardType="decimal-pad"
         textAlign="right"
         className="rounded-xl border border-[#D5CFC6] bg-white px-4 py-3 font-body text-base text-ink"
-        placeholder={`${heightMeta.default}`}
+        placeholder={`${heightMeta.default} או 1.78`}
         placeholderTextColor="#8A847C"
       />
 
@@ -179,7 +208,7 @@ export default function OnboardingScreen() {
       </Text>
       <TextInput
         value={weightKg}
-        onChangeText={setWeightKg}
+        onChangeText={onWeightChange}
         keyboardType="number-pad"
         textAlign="right"
         className="rounded-xl border border-[#D5CFC6] bg-white px-4 py-3 font-body text-base text-ink"

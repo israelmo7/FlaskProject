@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Image,
   Modal,
@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SIZE_OPTIONS_BY_CATEGORY } from '@/constants/avatar';
 import type { ProductCard } from '@/data/catalog';
 import { he } from '@/i18n/he';
 import { openNavigation } from '@/utils/contact';
@@ -18,12 +19,12 @@ type Props = {
   product: ProductCard | null;
   visible: boolean;
   onClose: () => void;
-  onDressAvatar: (product: ProductCard) => void;
-  onAddToCart: (product: ProductCard) => void;
+  onDressAvatar: (product: ProductCard, size: string) => void;
+  onAddToCart: (product: ProductCard, size: string) => void;
   preferredSize?: string;
 };
 
-/** כרטיס פריט מלא — תמונה, חנות+כתובת, ניווט, הלבשה, סל */
+/** כרטיס פריט מלא — מידות, חנות, הלבשה לפי מידה */
 export function ProductDetailSheet({
   product,
   visible,
@@ -34,10 +35,25 @@ export function ProductDetailSheet({
 }: Props) {
   const { height } = useWindowDimensions();
   const [liked, setLiked] = useState(false);
+  const [selectedSize, setSelectedSize] = useState(preferredSize);
+
+  const sizeOptions = useMemo(() => {
+    if (!product) return ['S', 'M', 'L'];
+    return SIZE_OPTIONS_BY_CATEGORY[product.category] ?? ['S', 'M', 'L', 'XL'];
+  }, [product]);
 
   useEffect(() => {
     setLiked(false);
-  }, [product?.id]);
+    if (!product) return;
+    const opts = SIZE_OPTIONS_BY_CATEGORY[product.category] ?? ['S', 'M', 'L'];
+    setSelectedSize(
+      opts.includes(preferredSize)
+        ? preferredSize
+        : opts.includes('M')
+          ? 'M'
+          : opts[Math.floor(opts.length / 2)],
+    );
+  }, [product?.id, product?.category, preferredSize]);
 
   if (!product) return null;
 
@@ -102,11 +118,37 @@ export function ProductDetailSheet({
                   : '—'}
               </Text>
               <Text className="font-bodyMedium text-sm text-ink-muted">
-                {he.sizeLabel}: {preferredSize}
+                {he.sizeLabel}: {selectedSize}
               </Text>
             </View>
 
-            <View className="mt-4 gap-2 rounded-2xl bg-[#F7F4EF] px-4 py-3">
+            <Text className="mb-2 mt-4 text-right font-bodyMedium text-xs text-ink-muted">
+              {he.chooseSizeHint}
+            </Text>
+            <View className="flex-row flex-wrap justify-end">
+              {sizeOptions.map((size) => {
+                const active = selectedSize === size;
+                return (
+                  <Pressable
+                    key={size}
+                    onPress={() => setSelectedSize(size)}
+                    className={`mb-2 ml-2 min-w-[44px] items-center rounded-md px-3 py-2 ${
+                      active ? 'bg-teal' : 'bg-[#F3F0EB]'
+                    }`}
+                  >
+                    <Text
+                      className={`font-bodyBold text-sm ${
+                        active ? 'text-white' : 'text-ink'
+                      }`}
+                    >
+                      {size}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <View className="mt-2 gap-2 rounded-2xl bg-[#F7F4EF] px-4 py-3">
               <Row label={he.brandLabel} value={product.brand || '—'} />
               <Row label={he.storeLabel} value={product.storeName || '—'} />
               <Row
@@ -137,7 +179,7 @@ export function ProductDetailSheet({
             <View className="mt-3 flex-row gap-3">
               <Pressable
                 onPress={() => {
-                  onAddToCart(product);
+                  onAddToCart(product, selectedSize);
                   onClose();
                 }}
                 className="flex-1 flex-row items-center justify-center rounded-2xl border border-[#D9D3C9] bg-white py-3.5"
@@ -149,7 +191,7 @@ export function ProductDetailSheet({
               </Pressable>
               <Pressable
                 onPress={() => {
-                  onDressAvatar(product);
+                  onDressAvatar(product, selectedSize);
                   onClose();
                 }}
                 className="flex-1 flex-row items-center justify-center rounded-2xl bg-ink py-3.5"
