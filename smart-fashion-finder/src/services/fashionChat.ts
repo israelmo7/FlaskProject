@@ -40,18 +40,22 @@ export function createWelcomeMessage(): ChatMessage {
 export function matchProducts(intent: ChatIntent, limit = 4): ProductCard[] {
   const scored = PRODUCTS.map((p) => {
     let score = 0;
-    if (intent.category && p.category === intent.category) score += 5;
+    if (intent.category) {
+      if (p.category === intent.category) score += 6;
+      else return { p, score: -100 }; // לא מציגים קטגוריה אחרת כשיש כוונה ברורה
+    }
     if (intent.color) {
       const pc = p.color.toLowerCase();
       const ic = intent.color.toLowerCase();
-      if (pc.includes(ic) || ic.includes(pc.split(' ')[0])) score += 4;
+      if (pc === ic || pc.includes(ic) || ic.includes(pc.split(' ')[0])) score += 5;
+      else score -= 2;
     }
     if (intent.brand && p.brand?.toLowerCase().includes(intent.brand.toLowerCase())) {
       score += 3;
     }
     if (typeof intent.maxPrice === 'number' && typeof p.price === 'number') {
       if (p.price <= intent.maxPrice) score += 2;
-      else score -= 3;
+      else return { p, score: -100 };
     }
     const blob = `${p.title} ${p.subcategory} ${p.color} ${p.brand ?? ''}`.toLowerCase();
     for (const kw of intent.keywords) {
@@ -78,7 +82,13 @@ export function matchProducts(intent: ChatIntent, limit = 4): ProductCard[] {
 
   if (scored.length === 0) {
     const pool = intent.category
-      ? PRODUCTS.filter((p) => p.category === intent.category)
+      ? PRODUCTS.filter(
+          (p) =>
+            p.category === intent.category &&
+            (typeof intent.maxPrice !== 'number' ||
+              typeof p.price !== 'number' ||
+              p.price <= intent.maxPrice),
+        )
       : PRODUCTS;
     return pool.slice(0, limit);
   }

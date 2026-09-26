@@ -72,7 +72,7 @@ export default function ChatScreen() {
 
   const onProductPress = (product: ProductCard) => {
     router.push({
-      pathname: '/',
+      pathname: '/(tabs)',
       params: { openProductId: product.id },
     });
   };
