@@ -117,11 +117,16 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
         }}
       />
 
-      {/* שכבות בגדים מעל הדמות */}
+      {/* שכבות בגדים — blend כדי שייראו חלק מהדמות המצוירת */}
       <Svg
         width={width}
         height={height}
-        style={{ position: 'absolute', left: 0, top: 0 }}
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          mixBlendMode: 'multiply',
+        }}
         pointerEvents="none"
       >
         {layers.bottom && !layers.dress ? (
