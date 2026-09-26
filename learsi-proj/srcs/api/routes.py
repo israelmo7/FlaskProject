@@ -1,8 +1,8 @@
-"""JSON APIs for React (chat + adminPanel lists). Auth still checked here."""
+"""JSON APIs for React. Auth = same door check as /room/<path>."""
 
 from flask import Blueprint, jsonify, request, session
 
-from srcs.rooms.routes import has_admin_key, has_right_key, path_room_to_id
+from srcs.rooms.routes import ADMIN_ROOM_PATH, has_right_key, path_room_to_id
 
 api_bp = Blueprint(
     'api_bp', __name__, template_folder='templates', static_folder='static'
@@ -31,6 +31,14 @@ def _require_guest():
     if not gid:
         return None
     return gid[:8]
+
+
+def _may_use_admin_panel(gid):
+    """Same as entering /room/adminPanel — has_right_key on that room."""
+    admin_id = path_room_to_id(ADMIN_ROOM_PATH)
+    if admin_id is None:
+        return False
+    return has_right_key(admin_id, gid) is not None
 
 
 @api_bp.route('/<room_path>/messages', methods=['GET'])
@@ -67,22 +75,22 @@ def api_send_message(room_path):
 
 @api_bp.route('/admin/rooms', methods=['GET'])
 def api_admin_rooms():
-    """Live room list for AdminPanel.jsx (needs builtin key 999)."""
+    """Live room list for AdminPanel.jsx."""
     gid = _require_guest()
     if not gid:
         return jsonify(error='unauthorized'), 401
-    if not has_admin_key(gid):
+    if not _may_use_admin_panel(gid):
         return jsonify(error='forbidden'), 403
     return jsonify(rooms=rooms_c.list_rooms())
 
 
 @api_bp.route('/admin/guests', methods=['GET'])
 def api_admin_guests():
-    """Live guest list for AdminPanel.jsx (needs builtin key 999)."""
+    """Live guest list for AdminPanel.jsx."""
     gid = _require_guest()
     if not gid:
         return jsonify(error='unauthorized'), 401
-    if not has_admin_key(gid):
+    if not _may_use_admin_panel(gid):
         return jsonify(error='forbidden'), 403
     return jsonify(guests=guests_c.list_guests())
 

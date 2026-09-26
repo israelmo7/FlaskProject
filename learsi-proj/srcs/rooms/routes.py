@@ -3,14 +3,13 @@ import time
 
 from flask import Blueprint, redirect, render_template, request, session
 
-from srcs.db import ADMIN_KEY_ID
 from srcs.utils import fdebug
 
 rooms_bp = Blueprint(
     'rooms_bp', __name__, template_folder='templates', static_folder='static'
 )
 
-# Special room path (.adminPanel. in DB). Enter like any room: /room/adminPanel
+# Path of the adminPanel room row (.adminPanel.). Enter like any room.
 ADMIN_ROOM_PATH = 'adminPanel'
 
 rooms_c, keys_c, guests_c = 0, 0, 0
@@ -58,13 +57,11 @@ def path_room_to_id(room_path):
     return rows[0][0]
 
 
-def room_type_for(room_path, room_id):
-    """chat | admin — from DB rtype, else path fallback."""
+def room_type_for(room_id):
+    """Return rooms.rtype from DB ('chat', 'admin', …). Default chat."""
     rtype = rooms_c.get_rtype(room_id) if rooms_c else None
-    if rtype in ('chat', 'admin'):
-        return rtype
-    if room_path in (ADMIN_ROOM_PATH, 'admin'):
-        return 'admin'
+    if rtype:
+        return str(rtype)
     return 'chat'
 
 
@@ -88,14 +85,8 @@ def has_right_key(room_id, guest_id):
     return None
 
 
-def has_admin_key(guest_id):
-    """True if guest currently holds builtin ADMIN_KEY_ID."""
-    matches = keys_c.find_key_by_session(guest_id) or []
-    return any(m[0] == ADMIN_KEY_ID for m in matches)
-
-
 def render_room_shell(room_path, room_type, gid):
-    """One React shell; App.jsx picks Chat vs AdminPanel from data-room-type."""
+    """One React shell; App.jsx picks the page from data-room-type."""
     return render_template(
         "room_app.html",
         room_path=room_path,
@@ -104,49 +95,43 @@ def render_room_shell(room_path, room_type, gid):
     )
 
 
+def _admit_guest(room_path, room_id, gid):
+    """Shared enter logic: key check, guest row, builtin key grant, React shell."""
+    rtype = room_type_for(room_id)
+    kid = has_right_key(room_id, gid)
+    if kid is None:
+        return None
+
+    if not guests_c.get_guest(gid):
+        guests_c.add_guest(gid, kid)
+
+    # Builtin key 999: granted in code after a normal (non-admin) room enter.
+    if rtype != 'admin':
+        keys_c.grant_admin_key(gid)
+
+    return render_room_shell(room_path, rtype, gid)
+
+
 @rooms_bp.route('/<value>', methods=['GET'])
 def enter_room(value):
-    """Same door for every room type. React types get the shell immediately."""
-    ans = redirect('/room/')
-
+    """Same door for every room → one React shell (Chat / AdminPanel / …)."""
     gid = session.get('id')
     rid = path_room_to_id(value)
 
     fdebug("gid", gid, "ENTER-ROOM")
     fdebug("rid", rid, "ENTER-ROOM")
 
-    if gid and rid is not None:
-        gid = gid[:8]
-        print(f"[ENTER-ROOM]: gid={gid} rid={rid} path={value}")
-        rtype = room_type_for(value, rid)
-
-        kid = has_right_key(rid, gid)
-        if kid is None and rtype == 'admin' and keys_c.find_key_by_session(gid):
-            keys_c.grant_admin_key(gid)
-            kid = has_right_key(rid, gid)
-
-        if kid is not None:
-            if not guests_c.get_guest(gid):
-                guests_c.add_guest(gid, kid)
-            if rtype != 'admin':
-                keys_c.grant_admin_key(gid)
-
-            if rtype == 'admin':
-                ans = render_room_shell(value, 'admin', gid)
-            else:
-                ans = render_template(
-                    "panel.html",
-                    se=gid,
-                    room_id=rid,
-                    room_path=value,
-                    room_type=rtype,
-                )
-        else:
-            print("[ENTER-ROOM]: Cant get In\n")
-    else:
+    if not gid or rid is None:
         print("[ENTER-ROOM]: Couldnt find SessionID\n")
+        return redirect('/room/')
 
-    return ans
+    gid = gid[:8]
+    print(f"[ENTER-ROOM]: gid={gid} rid={rid} path={value}")
+    page = _admit_guest(value, rid, gid)
+    if page is None:
+        print("[ENTER-ROOM]: Cant get In\n")
+        return redirect('/room/')
+    return page
 
 
 @rooms_bp.route('/<room_path>/messages', methods=['GET'])
@@ -157,7 +142,7 @@ def get_messages(room_path):
     if not gid or room_id is None:
         return redirect('/')
 
-    if room_type_for(room_path, room_id) == 'admin':
+    if room_type_for(room_id) == 'admin':
         return redirect(f'/room/{room_path}')
 
     print(f"[GET-MESSAGES]: path={room_path} room_id={room_id}, gid={gid}")
@@ -191,7 +176,7 @@ def send_message(room_path):
     room_id = path_room_to_id(room_path)
     if room_id is None:
         return redirect('/')
-    if room_type_for(room_path, room_id) == 'admin':
+    if room_type_for(room_id) == 'admin':
         return redirect(f'/room/{room_path}')
     if has_right_key(room_id, gid[:8]) is None:
         return redirect('/')
@@ -202,26 +187,17 @@ def send_message(room_path):
 
 @rooms_bp.route('/<room_path>/app', methods=['GET'])
 def room_app(room_path):
-    """Serve React shell; room_type tells App.jsx what to show."""
+    """Same admit path as enter_room (alias URL for the React shell)."""
     gid = session.get('id')
     room_id = path_room_to_id(room_path)
 
     if not gid or room_id is None:
         return redirect('/')
 
-    gid = gid[:8]
-    rtype = room_type_for(room_path, room_id)
-
-    if has_right_key(room_id, gid) is None:
-        if rtype == 'admin' and keys_c.find_key_by_session(gid):
-            keys_c.grant_admin_key(gid)
-        if has_right_key(room_id, gid) is None:
-            return redirect('/')
-
-    if rtype != 'admin':
-        keys_c.grant_admin_key(gid)
-
-    return render_room_shell(room_path, rtype, gid)
+    page = _admit_guest(room_path, room_id, gid[:8])
+    if page is None:
+        return redirect('/')
+    return page
 
 
 @rooms_bp.route('/', methods=['GET'])
