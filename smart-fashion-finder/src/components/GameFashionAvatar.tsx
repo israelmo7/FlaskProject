@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
   PanResponder,
@@ -9,16 +9,12 @@ import {
 } from 'react-native';
 import { buildWidthScale, heightScale, isFemalePersona } from '@/constants/avatar';
 import {
-  catalogIdFromPieceId,
-  comboLookAtYaw,
-  fittedLookForId,
-  fittedOverlayForId,
   frontFacingAmount,
-  isTshirtJeansCombo,
+  resolveOutfitLook,
   turnBaseForPersona,
 } from '@/constants/avatarAssets';
 import { he } from '@/i18n/he';
-import type { AvatarProfile, OutfitLayers, OutfitPiece } from '@/types';
+import type { AvatarProfile, OutfitLayers } from '@/types';
 
 type Props = {
   profile: AvatarProfile;
@@ -27,25 +23,41 @@ type Props = {
   height: number;
 };
 
+function layersKey(layers: OutfitLayers): string {
+  return [
+    layers.top?.id,
+    layers.bottom?.id,
+    layers.outer?.id,
+    layers.dress?.id,
+    layers.shoes?.id,
+    layers.hat?.id,
+  ].join('|');
+}
+
 /**
- * דמות משחק — לוקים מצוירים + סיבוב 180° (החלקה אופקית).
+ * דמות משחק — לוקים מצוירים לכל בגד + סיבוב 180°.
  */
 export function GameFashionAvatar({ profile, layers, width, height }: Props) {
   const female = isFemalePersona(profile.persona);
   const wScale = buildWidthScale(profile.build);
-  const hScale = heightScale(profile.heightCm, profile.persona);
-  void hScale;
+  void heightScale(profile.heightCm, profile.persona);
 
   const [yaw, setYaw] = useState(0);
   const yawRef = useRef(0);
   const startYaw = useRef(0);
+  const outfitKey = layersKey(layers);
+
+  // איפוס סיבוב כשמשנים לוק — כדי לראות את ההלבשה בחזית
+  useEffect(() => {
+    yawRef.current = 0;
+    setYaw(0);
+  }, [outfitKey]);
 
   const pan = useMemo(
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: (_e, g) =>
-          Math.abs(g.dx) > 4 || Math.abs(g.dy) > 4,
+        onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 3,
         onPanResponderGrant: () => {
           startYaw.current = yawRef.current;
         },
@@ -53,13 +65,11 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
           _e: GestureResponderEvent,
           g: PanResponderGestureState,
         ) => {
-          // גרירה ימינה = סיבוב לכיוון הגב
-          const next = Math.max(0, Math.min(180, startYaw.current + g.dx * 0.55));
+          const next = Math.max(0, Math.min(180, startYaw.current + g.dx * 0.6));
           yawRef.current = next;
           setYaw(next);
         },
         onPanResponderRelease: () => {
-          // snap עדין לפריימים עגולים
           const snapped = Math.round(yawRef.current / 45) * 45;
           const clamped = Math.max(0, Math.min(180, snapped));
           yawRef.current = clamped;
@@ -69,62 +79,26 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
     [],
   );
 
-  const wornIds = useMemo(() => {
-    const pieces = [
-      layers.bottom,
-      layers.top,
-      layers.dress,
-      layers.outer,
-      layers.shoes,
-    ].filter(Boolean) as OutfitPiece[];
-    return pieces
-      .map((p) => catalogIdFromPieceId(p.id))
-      .filter(Boolean) as string[];
-  }, [layers]);
+  const resolved = useMemo(
+    () => resolveOutfitLook(layers, yaw, female),
+    [layers, yaw, female],
+  );
 
   const facing = frontFacingAmount(yaw);
-  const combo = isTshirtJeansCombo(layers);
-  const comboSrc = combo ? comboLookAtYaw(yaw) : null;
-
-  // לוק מלא יחיד — כשיש פריט מרכזי אחד (או שמלה)
-  const soloLook = useMemo(() => {
-    if (combo) return null;
-    if (layers.dress) {
-      const id = catalogIdFromPieceId(layers.dress.id);
-      return id ? fittedLookForId(id, female) : null;
-    }
-    const mains = wornIds.filter((id) => id !== 'p-sneakers' && id !== 'p-hat');
-    if (mains.length === 1 && !layers.outer) {
-      return fittedLookForId(mains[0], female);
-    }
-    // רק נעליים / כובע — נשארים על בסיס
-    return null;
-  }, [combo, layers, wornIds, female]);
-
-  const useOverlays =
-    !comboSrc &&
-    !soloLook &&
-    wornIds.length > 0 &&
-    facing > 0.15;
-
   const baseSrc = turnBaseForPersona(profile.persona, yaw);
   const scaleX = Math.min(1.15, Math.max(0.88, wScale));
 
-  const overlayOrder = [
-    layers.bottom,
-    layers.top,
-    layers.dress,
-    layers.outer,
-    layers.shoes,
-  ].filter(Boolean) as OutfitPiece[];
+  const hero = resolved.hero;
+  const showHero = Boolean(hero) && (resolved.heroTracksYaw || facing > 0.28);
+  const showBase =
+    !showHero || (!resolved.heroTracksYaw && facing < 0.92) || !hero;
 
-  // מקור תצוגה ראשי
-  const heroSrc = comboSrc ?? (soloLook && facing > 0.35 ? soloLook : null);
-  const showBaseUnder = !heroSrc || (soloLook && facing <= 0.85);
+  const overlayOpacity = resolved.heroTracksYaw
+    ? 1
+    : Math.max(0, 0.15 + facing * 0.85);
 
   return (
     <View style={{ width, height }} {...pan.panHandlers}>
-      {/* צל במה */}
       <View
         pointerEvents="none"
         style={{
@@ -138,7 +112,7 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
         }}
       />
 
-      {showBaseUnder ? (
+      {showBase ? (
         <Image
           source={baseSrc}
           resizeMode="contain"
@@ -147,49 +121,42 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
             width,
             height,
             transform: [{ scaleX }],
-            opacity: heroSrc ? 1 - facing * 0.85 : 1,
+            opacity: showHero ? Math.max(0, 1 - facing * 0.95) : 1,
           }}
         />
       ) : null}
 
-      {heroSrc ? (
+      {showHero && hero ? (
         <Image
-          source={heroSrc}
+          source={hero}
           resizeMode="contain"
           style={{
             position: 'absolute',
             width,
             height,
             transform: [{ scaleX }],
-            opacity: comboSrc ? 1 : Math.max(0.2, facing),
+            opacity: resolved.heroTracksYaw ? 1 : Math.max(0.25, facing),
           }}
         />
       ) : null}
 
-      {useOverlays
-        ? overlayOrder.map((piece) => {
-            const id = catalogIdFromPieceId(piece.id);
-            if (!id) return null;
-            const src = fittedOverlayForId(id);
-            if (!src) return null;
-            return (
-              <Image
-                key={piece.id}
-                source={src}
-                resizeMode="contain"
-                style={{
-                  position: 'absolute',
-                  width,
-                  height,
-                  transform: [{ scaleX }],
-                  opacity: 0.25 + facing * 0.75,
-                }}
-              />
-            );
-          })
+      {facing > 0.2
+        ? resolved.overlays.map((src, i) => (
+            <Image
+              key={`ov-${i}`}
+              source={src}
+              resizeMode="contain"
+              style={{
+                position: 'absolute',
+                width,
+                height,
+                transform: [{ scaleX }],
+                opacity: overlayOpacity,
+              }}
+            />
+          ))
         : null}
 
-      {/* רמז סיבוב */}
       <View
         pointerEvents="none"
         style={{

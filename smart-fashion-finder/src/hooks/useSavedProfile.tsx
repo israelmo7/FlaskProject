@@ -66,7 +66,14 @@ function priceForPiece(piece: OutfitPiece): number {
 }
 
 function layersToPieces(layers: OutfitLayers): OutfitPiece[] {
-  return [layers.dress, layers.top, layers.bottom, layers.outer, layers.shoes].filter(
+  return [
+    layers.dress,
+    layers.top,
+    layers.bottom,
+    layers.outer,
+    layers.shoes,
+    layers.hat,
+  ].filter(
     Boolean,
   ) as OutfitPiece[];
 }

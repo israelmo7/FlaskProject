@@ -118,7 +118,12 @@ export default function AvatarScreen() {
 
   const findNearMe = () => {
     const focus =
-      layers.top || layers.bottom || layers.dress || layers.outer || layers.shoes;
+      layers.top ||
+      layers.bottom ||
+      layers.dress ||
+      layers.outer ||
+      layers.shoes ||
+      layers.hat;
     if (!focus) {
       Alert.alert(he.chooseGarmentAlert);
       return;

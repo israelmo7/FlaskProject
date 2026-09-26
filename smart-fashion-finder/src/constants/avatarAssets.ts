@@ -49,14 +49,25 @@ export const FITTED_LOOKS_WOMAN: Record<string, ImageSourcePropType> = {
   'p-dress': require('../../assets/images/fit/woman/p-dress.png'),
 };
 
-/** קומבו חולצה+ג׳ינס עם פריימי 180° */
+/** קומבואים מצוירים — מפתח topId|bottomId או outerId|bottomId */
+export const FITTED_COMBOS: Record<string, ImageSourcePropType> = {
+  'p-tshirt|p-jeans': require('../../assets/images/fit/man/combo-tshirt-jeans_0.png'),
+  'p-hoodie|p-jeans': require('../../assets/images/fit/man/combo-hoodie-jeans.png'),
+  'p-turtleneck|p-jeans': require('../../assets/images/fit/man/combo-turtleneck-jeans.png'),
+  'p-oxford|p-jeans': require('../../assets/images/fit/man/combo-oxford-jeans.png'),
+  'p-tshirt|p-cargo': require('../../assets/images/fit/man/combo-tshirt-cargo.png'),
+  'p-denim-jkt|p-jeans': require('../../assets/images/fit/man/combo-denim-jkt-jeans.png'),
+  'p-leather|p-jeans': require('../../assets/images/fit/man/combo-leather-jeans.png'),
+};
+
+/** קומבו טי+ג׳ינס עם פריימי 180° */
 export const COMBO_TSHIRT_JEANS: Partial<Record<TurnYaw, ImageSourcePropType>> = {
   0: require('../../assets/images/fit/man/combo-tshirt-jeans_0.png'),
   90: require('../../assets/images/fit/man/combo-tshirt-jeans_90.png'),
   180: require('../../assets/images/fit/man/combo-tshirt-jeans_180.png'),
 };
 
-/** שכבות בגד בלבד (לקומפוזיציה) */
+/** שכבות בגד (אזור גוף מהלוק המצויר) */
 export const FITTED_OVERLAYS_MAN: Record<string, ImageSourcePropType> = {
   'p-tshirt': require('../../assets/images/fit/man/overlay/p-tshirt.png'),
   'p-hoodie': require('../../assets/images/fit/man/overlay/p-hoodie.png'),
@@ -72,7 +83,6 @@ export const FITTED_OVERLAYS_MAN: Record<string, ImageSourcePropType> = {
   'p-hat': require('../../assets/images/fit/man/overlay/p-hat.png'),
 };
 
-/** שכבות בגדים לפי מזהה פריט בארון (לפני סיומת מידה) — תאימות לאחור */
 export const GARMENT_LAYER_IMAGES: Record<string, ImageSourcePropType> = {
   'w-black-shirt': require('../../assets/images/layers/black-shirt-v2.png'),
   'w-white-oxford': require('../../assets/images/layers/white-shirt-v2.png'),
@@ -107,7 +117,6 @@ export function layerImageForPieceId(pieceId: string): ImageSourcePropType | nul
   return null;
 }
 
-/** מזהה קטלוג מתוך id של פריט לבוש (כולל סיומת מידה) */
 export function catalogIdFromPieceId(pieceId: string): string | null {
   const keys = [
     'p-tshirt',
@@ -131,7 +140,7 @@ export function catalogIdFromPieceId(pieceId: string): string | null {
     'w-sneakers',
     'w-hat',
   ];
-  const sorted = keys.sort((a, b) => b.length - a.length);
+  const sorted = [...keys].sort((a, b) => b.length - a.length);
   for (const k of sorted) {
     if (pieceId.includes(k)) {
       if (k === 'w-black-shirt') return 'p-tshirt';
@@ -169,12 +178,10 @@ export function turnBaseForPersona(
   if (isFemalePersona(persona)) {
     const exact = WOMAN_TURN[frame];
     if (exact) return exact;
-    // מיפוי לפריימים הקיימים
     if (frame <= 45) return WOMAN_TURN[0]!;
     if (frame <= 135) return WOMAN_TURN[90]!;
     return WOMAN_TURN[180]!;
   }
-  // נער/ילד — משתמשים בסיבוב הגבר
   return MAN_TURN[frame];
 }
 
@@ -190,27 +197,159 @@ export function fittedOverlayForId(catalogId: string): ImageSourcePropType | nul
   return FITTED_OVERLAYS_MAN[catalogId] ?? null;
 }
 
-export function isTshirtJeansCombo(layers: OutfitLayers): boolean {
-  const topId = layers.top ? catalogIdFromPieceId(layers.top.id) : null;
-  const bottomId = layers.bottom ? catalogIdFromPieceId(layers.bottom.id) : null;
-  return (
-    topId === 'p-tshirt' &&
-    bottomId === 'p-jeans' &&
-    !layers.dress &&
-    !layers.outer
-  );
-}
-
-export function comboLookAtYaw(yaw: number): ImageSourcePropType | null {
-  const frame = nearestTurnYaw(yaw);
-  if (COMBO_TSHIRT_JEANS[frame]) return COMBO_TSHIRT_JEANS[frame]!;
-  if (frame <= 45) return COMBO_TSHIRT_JEANS[0] ?? null;
-  if (frame <= 135) return COMBO_TSHIRT_JEANS[90] ?? null;
-  return COMBO_TSHIRT_JEANS[180] ?? null;
-}
-
-/** כמה הבגד הקדמי נראה בסיבוב (1 בחזית, 0 באחור) */
 export function frontFacingAmount(yaw: number): number {
   const rad = (Math.max(0, Math.min(180, yaw)) * Math.PI) / 180;
   return Math.max(0, Math.cos(rad));
+}
+
+export type ResolvedOutfit = {
+  /** תמונת גוף מלאה (לוק / קומבו / בסיס) */
+  hero: ImageSourcePropType | null;
+  /** האם ה־hero כבר כולל סיבוב לפי yaw */
+  heroTracksYaw: boolean;
+  /** שכבות נוספות מעל ה־hero (אזורי בגד) */
+  overlays: ImageSourcePropType[];
+};
+
+function pieceCatalogId(
+  piece: { id: string } | undefined,
+): string | null {
+  return piece ? catalogIdFromPieceId(piece.id) : null;
+}
+
+/**
+ * בחירת לוק מצויר / קומבו / שכבות — כדי שכל בגד יישב טוב על הדמות.
+ */
+export function resolveOutfitLook(
+  layers: OutfitLayers,
+  yaw: number,
+  female: boolean,
+): ResolvedOutfit {
+  const topId = pieceCatalogId(layers.top);
+  const bottomId = pieceCatalogId(layers.bottom);
+  const outerId = pieceCatalogId(layers.outer);
+  const dressId = pieceCatalogId(layers.dress);
+  const shoesId = pieceCatalogId(layers.shoes);
+  const hatId = pieceCatalogId(layers.hat);
+  const facing = frontFacingAmount(yaw);
+
+  // שמלה
+  if (dressId) {
+    const dress = fittedLookForId(dressId, female);
+    const extras: ImageSourcePropType[] = [];
+    if (shoesId && facing > 0.35) {
+      const o = fittedOverlayForId(shoesId);
+      if (o) extras.push(o);
+    }
+    if (hatId && facing > 0.35) {
+      const o = fittedOverlayForId(hatId);
+      if (o) extras.push(o);
+    }
+    return { hero: dress, heroTracksYaw: false, overlays: extras };
+  }
+
+  // קומבו טי+ג׳ינס עם סיבוב מלא
+  if (topId === 'p-tshirt' && bottomId === 'p-jeans' && !outerId) {
+    const frame = nearestTurnYaw(yaw);
+    let hero =
+      COMBO_TSHIRT_JEANS[frame] ??
+      (frame <= 45
+        ? COMBO_TSHIRT_JEANS[0]
+        : frame <= 135
+          ? COMBO_TSHIRT_JEANS[90]
+          : COMBO_TSHIRT_JEANS[180]) ??
+      null;
+    const extras: ImageSourcePropType[] = [];
+    if (shoesId && facing > 0.4) {
+      const o = fittedOverlayForId(shoesId);
+      if (o) extras.push(o);
+    }
+    if (hatId && facing > 0.4) {
+      const o = fittedOverlayForId(hatId);
+      if (o) extras.push(o);
+    }
+    return { hero, heroTracksYaw: true, overlays: extras };
+  }
+
+  // קומבואים מצוירים אחרים (חזית)
+  const comboKeys: string[] = [];
+  if (outerId && bottomId) comboKeys.push(`${outerId}|${bottomId}`);
+  if (topId && bottomId) comboKeys.push(`${topId}|${bottomId}`);
+  for (const key of comboKeys) {
+    const combo = FITTED_COMBOS[key];
+    if (combo) {
+      const extras: ImageSourcePropType[] = [];
+      // אם יש גם עליונית מעל קומבו טופ+תחתון
+      if (outerId && key.startsWith(topId + '|')) {
+        const o = fittedOverlayForId(outerId);
+        if (o && facing > 0.35) extras.push(o);
+      }
+      if (shoesId && facing > 0.35) {
+        const o = fittedOverlayForId(shoesId);
+        if (o) extras.push(o);
+      }
+      if (hatId && facing > 0.35) {
+        const o = fittedOverlayForId(hatId);
+        if (o) extras.push(o);
+      }
+      return { hero: combo, heroTracksYaw: false, overlays: extras };
+    }
+  }
+
+  // פריט יחיד עיקרי — לוק מלא
+  const mains = [outerId, topId, bottomId].filter(Boolean) as string[];
+  if (mains.length === 1) {
+    const hero = fittedLookForId(mains[0], female);
+    const extras: ImageSourcePropType[] = [];
+    if (shoesId && facing > 0.35) {
+      const o = fittedOverlayForId(shoesId);
+      if (o) extras.push(o);
+    }
+    if (hatId && facing > 0.35) {
+      const o = fittedOverlayForId(hatId);
+      if (o) extras.push(o);
+    }
+    return { hero, heroTracksYaw: false, overlays: extras };
+  }
+
+  // כמה שכבות בלי קומבו מוכן:
+  // גוף = לוק המכנסיים (או עליונית/טופ), מעליו שכבות אזוריות מצוירות
+  const overlays: ImageSourcePropType[] = [];
+  let hero: ImageSourcePropType | null = null;
+
+  if (bottomId) {
+    hero = fittedLookForId(bottomId, female);
+    if (topId) {
+      const o = fittedOverlayForId(topId);
+      if (o) overlays.push(o);
+    }
+    if (outerId) {
+      const o = fittedOverlayForId(outerId);
+      if (o) overlays.push(o);
+    }
+  } else if (topId) {
+    hero = fittedLookForId(topId, female);
+    if (outerId) {
+      const o = fittedOverlayForId(outerId);
+      if (o) overlays.push(o);
+    }
+  } else if (outerId) {
+    hero = fittedLookForId(outerId, female);
+  }
+
+  if (shoesId) {
+    const o = fittedOverlayForId(shoesId);
+    if (o) overlays.push(o);
+  }
+  if (hatId) {
+    const o = fittedOverlayForId(hatId);
+    if (o) overlays.push(o);
+  }
+
+  // רק אקססוריז
+  if (!hero && overlays.length > 0) {
+    return { hero: null, heroTracksYaw: false, overlays };
+  }
+
+  return { hero, heroTracksYaw: false, overlays };
 }

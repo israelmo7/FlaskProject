@@ -128,8 +128,9 @@ export function categoryToSlot(category: GarmentCategory): OutfitSlot {
     case 'Socks':
       return 'bottom';
     case 'Outerwear':
-    case 'Hats':
       return 'outer';
+    case 'Hats':
+      return 'hat';
     case 'Dresses':
       return 'dress';
     case 'Shoes':
@@ -161,7 +162,14 @@ export function removeSlot(layers: OutfitLayers, slot: OutfitSlot): OutfitLayers
 }
 
 export function outfitSummary(layers: OutfitLayers): string {
-  const parts = [layers.dress, layers.top, layers.bottom, layers.outer, layers.shoes]
+  const parts = [
+    layers.dress,
+    layers.top,
+    layers.bottom,
+    layers.outer,
+    layers.shoes,
+    layers.hat,
+  ]
     .filter(Boolean)
     .map((p) => `${p!.label} (${p!.size})`);
   return parts.length ? parts.join(' · ') : 'רק תחתונים';

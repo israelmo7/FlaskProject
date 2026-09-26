@@ -39,9 +39,14 @@ export function DressableFigure({
   const dollW = baseW * Math.min(1.2, Math.max(0.82, wScale));
   const dollH = baseH * hScale;
 
-  const worn = [layers.dress, layers.top, layers.bottom, layers.outer, layers.shoes].filter(
-    Boolean,
-  ) as OutfitPiece[];
+  const worn = [
+    layers.dress,
+    layers.top,
+    layers.bottom,
+    layers.outer,
+    layers.shoes,
+    layers.hat,
+  ].filter(Boolean) as OutfitPiece[];
 
   return (
     <View className="items-start">

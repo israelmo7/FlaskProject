@@ -25,7 +25,7 @@ export type AvatarPersona =
 /** מבנה גוף — ניסוח עדין */
 export type BodyBuild = 'slim' | 'average' | 'full' | 'plus';
 
-export type OutfitSlot = 'top' | 'bottom' | 'outer' | 'shoes' | 'dress';
+export type OutfitSlot = 'top' | 'bottom' | 'outer' | 'shoes' | 'dress' | 'hat';
 
 /** מצב חיפוש לפי מיקום בדף הבית */
 export type LocationSearchMode = 'nearby' | 'other' | 'onTheWay';
@@ -53,6 +53,7 @@ export interface OutfitLayers {
   outer?: OutfitPiece;
   shoes?: OutfitPiece;
   dress?: OutfitPiece;
+  hat?: OutfitPiece;
 }
 
 export interface AvatarProfile {

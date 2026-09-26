@@ -82,7 +82,13 @@ export default function HomeScreen() {
   }, [params.openProductId]);
 
   const focusPiece = useMemo(
-    () => layers.top || layers.bottom || layers.dress || layers.outer || layers.shoes,
+    () =>
+      layers.top ||
+      layers.bottom ||
+      layers.dress ||
+      layers.outer ||
+      layers.shoes ||
+      layers.hat,
     [layers],
   );
 
