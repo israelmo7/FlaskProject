@@ -280,7 +280,7 @@ export function resolveOutfitLook(
     if (combo) {
       const extras: ImageSourcePropType[] = [];
       // אם יש גם עליונית מעל קומבו טופ+תחתון
-      if (outerId && key.startsWith(topId + '|')) {
+      if (outerId && topId && key === `${topId}|${bottomId}`) {
         const o = fittedOverlayForId(outerId);
         if (o && facing > 0.35) extras.push(o);
       }
