@@ -213,6 +213,8 @@ export const he = {
   chooseSizeFirst: 'בחרו מידה לפריט',
   layersStay: 'כל הפריטים שנבחרו נשארים על הבובה',
   rotateAvatarHint: 'החליקו לסיבוב 180°',
+  sideViewHint: 'מבט צד',
+  backViewHint: 'מבט אחורי',
   readyToDress: 'בלי בגדים — בחרו פריט להלבשה',
 
   historyTitle: 'היסטוריית חיפושים',

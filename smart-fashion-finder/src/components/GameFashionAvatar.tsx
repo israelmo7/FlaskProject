@@ -86,7 +86,10 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 3,
+        onStartShouldSetPanResponderCapture: () => true,
+        onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 2,
+        onMoveShouldSetPanResponderCapture: (_e, g) => Math.abs(g.dx) > 2,
+        onPanResponderTerminationRequest: () => false,
         onPanResponderGrant: () => {
           startYaw.current = yawRef.current;
         },
@@ -94,12 +97,12 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
           _e: GestureResponderEvent,
           g: PanResponderGestureState,
         ) => {
-          const next = Math.max(0, Math.min(180, startYaw.current + g.dx * 0.6));
+          const next = Math.max(0, Math.min(180, startYaw.current + g.dx * 0.65));
           yawRef.current = next;
           setYaw(next);
         },
         onPanResponderRelease: () => {
-          // קפיצה חלקה ל־0 / 90 / 180 — בלי זוויות מכווצות
+          // קפיצה ל־0 / 90 / 180 — הדמות נשארת מלאה בכל זווית
           const snapped = Math.round(yawRef.current / 90) * 90;
           const clamped = Math.max(0, Math.min(180, snapped));
           yawRef.current = clamped;
@@ -135,8 +138,15 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
 
   const frame = nearestTurnYaw(yaw);
 
+  const viewLabel =
+    yaw <= 45 ? '' : yaw <= 135 ? he.sideViewHint : he.backViewHint;
+
   return (
-    <View style={{ width, height }} {...pan.panHandlers}>
+    <View
+      collapsable={false}
+      style={{ width, height, minHeight: 160 }}
+      {...pan.panHandlers}
+    >
       <View
         pointerEvents="none"
         style={{
@@ -200,11 +210,11 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
         <Text
           style={{
             fontSize: 10,
-            color: 'rgba(40,30,20,0.4)',
+            color: 'rgba(40,30,20,0.45)',
             fontFamily: 'DMSans_500Medium',
           }}
         >
-          {he.rotateAvatarHint}
+          {viewLabel || he.rotateAvatarHint}
         </Text>
       </View>
     </View>
