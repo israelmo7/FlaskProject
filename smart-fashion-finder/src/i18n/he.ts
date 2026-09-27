@@ -215,6 +215,11 @@ export const he = {
   rotateAvatarHint: 'החליקו לסיבוב 180°',
   sideViewHint: 'מבט צד',
   backViewHint: 'מבט אחורי',
+  frontViewHint: 'מבט קדמי',
+  expandAvatar: 'הגדלת הדמות',
+  closeExpand: 'סגירה',
+  rotate180Btn: 'סיבוב 180°',
+  expandRotateHint: 'לחצו על הכפתורים או החליקו על הדמות לסיבוב',
   readyToDress: 'בלי בגדים — בחרו פריט להלבשה',
 
   historyTitle: 'היסטוריית חיפושים',

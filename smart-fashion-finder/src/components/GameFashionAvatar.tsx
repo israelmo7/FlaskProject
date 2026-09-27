@@ -26,6 +26,11 @@ type Props = {
   layers: OutfitLayers;
   width: number;
   height: number;
+  /** זווית נשלטת מבחוץ (מסך מוגדל) */
+  yaw?: number;
+  onYawChange?: (yaw: number) => void;
+  enablePan?: boolean;
+  showHint?: boolean;
 };
 
 function layersKey(layers: OutfitLayers): string {
@@ -63,32 +68,64 @@ function hasOuterClothes(layers: OutfitLayers): boolean {
 }
 
 /**
- * דמות משחק — הגוף תמיד בגודל קבוע; רק הבגד משתנה לפי מידה.
- * סיבוב 180° בלי לכיווץ הדמות לקו דק.
+ * דמות משחק — גוף קבוע, בגדים לפי מידה, סיבוב 180° מלא לכל persona.
  */
-export function GameFashionAvatar({ profile, layers, width, height }: Props) {
+export function GameFashionAvatar({
+  profile,
+  layers,
+  width,
+  height,
+  yaw: controlledYaw,
+  onYawChange,
+  enablePan = true,
+  showHint = true,
+}: Props) {
   const female = isFemalePersona(profile.persona);
   const wScale = buildWidthScale(profile.build);
   const hasTurnFrames = personaHasTurnFrames(profile.persona);
+  const controlled = typeof controlledYaw === 'number';
 
-  const [yaw, setYaw] = useState(0);
-  const yawRef = useRef(0);
+  const [internalYaw, setInternalYaw] = useState(0);
+  const yaw = controlled ? controlledYaw! : internalYaw;
+  const yawRef = useRef(yaw);
   const startYaw = useRef(0);
+  const onYawChangeRef = useRef(onYawChange);
+  const controlledRef = useRef(controlled);
   const outfitKey = layersKey(layers);
   const clothed = hasOuterClothes(layers);
 
   useEffect(() => {
-    yawRef.current = 0;
-    setYaw(0);
-  }, [outfitKey, profile.persona]);
+    onYawChangeRef.current = onYawChange;
+    controlledRef.current = controlled;
+  }, [onYawChange, controlled]);
+
+  useEffect(() => {
+    yawRef.current = yaw;
+  }, [yaw]);
+
+  const applyYaw = (next: number) => {
+    const clamped = Math.max(0, Math.min(180, next));
+    yawRef.current = clamped;
+    if (controlledRef.current) onYawChangeRef.current?.(clamped);
+    else setInternalYaw(clamped);
+  };
+
+  useEffect(() => {
+    if (!controlled) {
+      yawRef.current = 0;
+      setInternalYaw(0);
+    }
+  }, [outfitKey, profile.persona, controlled]);
 
   const pan = useMemo(
     () =>
       PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onStartShouldSetPanResponderCapture: () => true,
-        onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 2,
-        onMoveShouldSetPanResponderCapture: (_e, g) => Math.abs(g.dx) > 2,
+        onStartShouldSetPanResponder: () => enablePan,
+        onStartShouldSetPanResponderCapture: () => enablePan,
+        onMoveShouldSetPanResponder: (_e, g) =>
+          enablePan && Math.abs(g.dx) > 2,
+        onMoveShouldSetPanResponderCapture: (_e, g) =>
+          enablePan && Math.abs(g.dx) > 2,
         onPanResponderTerminationRequest: () => false,
         onPanResponderGrant: () => {
           startYaw.current = yawRef.current;
@@ -97,19 +134,17 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
           _e: GestureResponderEvent,
           g: PanResponderGestureState,
         ) => {
-          const next = Math.max(0, Math.min(180, startYaw.current + g.dx * 0.65));
-          yawRef.current = next;
-          setYaw(next);
+          if (!enablePan) return;
+          applyYaw(startYaw.current + g.dx * 0.7);
         },
         onPanResponderRelease: () => {
-          // קפיצה ל־0 / 90 / 180 — הדמות נשארת מלאה בכל זווית
-          const snapped = Math.round(yawRef.current / 90) * 90;
-          const clamped = Math.max(0, Math.min(180, snapped));
-          yawRef.current = clamped;
-          setYaw(clamped);
+          if (!enablePan) return;
+          // לכל הדמויות: רק חזית (0) או גב (180)
+          const snapped = yawRef.current >= 90 ? 180 : 0;
+          applyYaw(snapped);
         },
       }),
-    [],
+    [enablePan],
   );
 
   const resolved = useMemo(
@@ -125,27 +160,33 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
   );
 
   const baseSrc = turnBaseForPersona(profile.persona, yaw);
-  // רוחב גוף לפי מבנה בלבד — לא לפי מידת בגד
   const bodyScaleX = Math.min(1.18, Math.max(0.82, wScale));
 
-  // סיבוב: היפוך מלא ב־180° — הדמות נשארת דמות (בלי כיווץ ל־0.22)
+  // לכל הדמויות: חזית מלאה או גב מלא (היפוך) — בלי כיווץ
   const facingBack = yaw > 90;
   const mirror = facingBack ? -1 : 1;
-  // עם פריימי סיבוב אמיתיים — הפריים כבר מראה זווית, בלי היפוך על הבסיס
-  const baseScaleX = hasTurnFrames ? bodyScaleX : mirror * bodyScaleX;
-  // בגדים תמיד מתהפכים יחד עם הכיוון הוויזואלי
-  const clothScaleX = mirror * bodyScaleX;
+
+  // עם פריימי סיבוב: משתמשים בפריים האחורי ב־180, בלי היפוך נוסף על הבסיס
+  // בלי פריימים (ילד/ילדה/נער): היפוך אופקי מלא — הדמות נשארת דמות
+  const baseScaleX = hasTurnFrames && !facingBack
+    ? bodyScaleX
+    : hasTurnFrames && facingBack
+      ? bodyScaleX // פריים אחורי אמיתי
+      : mirror * bodyScaleX;
+
+  // בגדים נשארים על הדמות — אותו כיוון ויזואלי
+  const clothScaleX = hasTurnFrames && facingBack
+    ? -bodyScaleX // על פריים אחורי — שיקוף קל של שכבת הבגד
+    : mirror * bodyScaleX;
 
   const frame = nearestTurnYaw(yaw);
-
-  const viewLabel =
-    yaw <= 45 ? '' : yaw <= 135 ? he.sideViewHint : he.backViewHint;
+  const viewLabel = facingBack ? he.backViewHint : '';
 
   return (
     <View
       collapsable={false}
       style={{ width, height, minHeight: 160 }}
-      {...pan.panHandlers}
+      {...(enablePan ? pan.panHandlers : {})}
     >
       <View
         pointerEvents="none"
@@ -160,7 +201,6 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
         }}
       />
 
-      {/* גוף הדמות — תמיד אותו גודל, לא מושפע ממידת בגד */}
       <Image
         source={baseSrc}
         resizeMode="contain"
@@ -172,7 +212,6 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
         }}
       />
 
-      {/* בגדים בלבד — כאן משתנה המידה (S/M/L) */}
       {clothed
         ? resolved.overlays.map((ov, i) => {
             const garmentScale = ov.scale * ov.bodyScale;
@@ -197,26 +236,28 @@ export function GameFashionAvatar({ profile, layers, width, height }: Props) {
           })
         : null}
 
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          bottom: 4,
-          left: 0,
-          right: 0,
-          alignItems: 'center',
-        }}
-      >
-        <Text
+      {showHint ? (
+        <View
+          pointerEvents="none"
           style={{
-            fontSize: 10,
-            color: 'rgba(40,30,20,0.45)',
-            fontFamily: 'DMSans_500Medium',
+            position: 'absolute',
+            bottom: 4,
+            left: 0,
+            right: 0,
+            alignItems: 'center',
           }}
         >
-          {viewLabel || he.rotateAvatarHint}
-        </Text>
-      </View>
+          <Text
+            style={{
+              fontSize: 10,
+              color: 'rgba(40,30,20,0.45)',
+              fontFamily: 'DMSans_500Medium',
+            }}
+          >
+            {viewLabel || he.rotateAvatarHint}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 }

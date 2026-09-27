@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   PERSONA_OPTIONS,
@@ -8,6 +10,7 @@ import {
   heightScale,
 } from '@/constants/avatar';
 import { catalogIdFromPieceId } from '@/constants/avatarAssets';
+import { AvatarExpandModal } from '@/components/AvatarExpandModal';
 import { GameFashionAvatar } from '@/components/GameFashionAvatar';
 import { he } from '@/i18n/he';
 import type { AvatarProfile, OutfitLayers, OutfitPiece } from '@/types';
@@ -28,7 +31,7 @@ function isVisibleWorn(piece: OutfitPiece): boolean {
 }
 
 /**
- * אווטאר — גובה אמיתי, בסיס חשוף, בגדים לפי מידה ו־persona.
+ * אווטאר — כפתור שקוף להגדלה + סיבוב 180°.
  */
 export function DressableFigure({
   profile,
@@ -37,6 +40,7 @@ export function DressableFigure({
   compact = false,
   hideMeta = false,
 }: Props) {
+  const [expanded, setExpanded] = useState(false);
   const wScale = buildWidthScale(profile.build);
   const hScale = heightScale(profile.heightCm, profile.persona);
   const personaLabel =
@@ -63,35 +67,60 @@ export function DressableFigure({
       <View style={{ width: Math.max(dollW + 16, 120), paddingVertical: 4 }}>
         <Text
           className={`mb-1.5 text-left ${
-            hideMeta ? 'font-bodyMedium text-[11px] text-ink-muted' : 'font-display text-sm text-ink'
+            hideMeta
+              ? 'font-bodyMedium text-[11px] text-ink-muted'
+              : 'font-display text-sm text-ink'
           }`}
         >
           {personaLabel} · {formatHeightMeters(profile.heightCm)}
           {!hideMeta ? ` (${profile.heightCm} ס״מ)` : ''}
         </Text>
 
-        <LinearGradient
-          colors={['#FFFBF5', '#F3EBE0', '#E8DFD4']}
-          start={{ x: 0.15, y: 0 }}
-          end={{ x: 0.85, y: 1 }}
-          style={{
-            width: dollW,
-            height: dollH,
-            borderRadius: 22,
-            overflow: 'hidden',
-            alignSelf: 'flex-start',
-            borderWidth: 1,
-            borderColor: 'rgba(40,30,20,0.06)',
-          }}
-        >
-          <GameFashionAvatar
-            key={`avatar-${profile.persona}-${profile.heightCm}-${profile.build}`}
-            profile={profile}
-            layers={layers}
-            width={dollW}
-            height={dollH}
-          />
-        </LinearGradient>
+        <View style={{ width: dollW, height: dollH, alignSelf: 'flex-start' }}>
+          <LinearGradient
+            colors={['#FFFBF5', '#F3EBE0', '#E8DFD4']}
+            start={{ x: 0.15, y: 0 }}
+            end={{ x: 0.85, y: 1 }}
+            style={{
+              width: dollW,
+              height: dollH,
+              borderRadius: 22,
+              overflow: 'hidden',
+              borderWidth: 1,
+              borderColor: 'rgba(40,30,20,0.06)',
+            }}
+          >
+            <GameFashionAvatar
+              key={`avatar-${profile.persona}-${profile.heightCm}-${profile.build}`}
+              profile={profile}
+              layers={layers}
+              width={dollW}
+              height={dollH}
+            />
+          </LinearGradient>
+
+          {/* כפתור שקוף על הדמות — הגדלת מסך + סיבוב */}
+          <Pressable
+            onPress={() => setExpanded(true)}
+            accessibilityLabel={he.expandAvatar}
+            hitSlop={8}
+            style={{
+              position: 'absolute',
+              top: 8,
+              left: 8,
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'rgba(255,255,255,0.38)',
+              borderWidth: 1,
+              borderColor: 'rgba(255,255,255,0.55)',
+            }}
+          >
+            <Ionicons name="expand-outline" size={18} color="rgba(20,18,16,0.75)" />
+          </Pressable>
+        </View>
       </View>
 
       {worn.length > 0 ? (
@@ -114,6 +143,13 @@ export function DressableFigure({
           {he.readyToDress}
         </Text>
       )}
+
+      <AvatarExpandModal
+        visible={expanded}
+        onClose={() => setExpanded(false)}
+        profile={profile}
+        layers={layers}
+      />
     </View>
   );
 }
