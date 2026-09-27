@@ -251,8 +251,21 @@ export function nearestTurnYaw(yaw: number): TurnYaw {
   return best;
 }
 
-/** האם לדמות יש פריימי סיבוב ייעודיים */
+/** האם לדמות יש פריימי סיבוב ייעודיים (קדמי/אחורי) */
 export function personaHasTurnFrames(persona: AvatarPersona): boolean {
+  // כולם: גבר/אישה מצוירים; ילדה/ילד/נער — בסיס 180° ייעודי
+  return (
+    persona === 'man' ||
+    persona === 'woman' ||
+    persona === 'girl' ||
+    persona === 'boy' ||
+    persona === 'teenGirl' ||
+    persona === 'teenBoy'
+  );
+}
+
+/** פריימי גב מצוירים אמיתיים (לא רק בסיס 180) — בלי היפוך שכבות בגד */
+export function personaHasPaintedTurn(persona: AvatarPersona): boolean {
   return persona === 'man' || persona === 'woman';
 }
 

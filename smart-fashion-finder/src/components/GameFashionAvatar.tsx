@@ -14,7 +14,7 @@ import {
 import {
   catalogIdFromPieceId,
   nearestTurnYaw,
-  personaHasTurnFrames,
+  personaHasPaintedTurn,
   resolveOutfitLook,
   turnBaseForPersona,
 } from '@/constants/avatarAssets';
@@ -84,7 +84,7 @@ export function GameFashionAvatar({
 }: Props) {
   const female = isFemalePersona(profile.persona);
   const wScale = buildWidthScale(profile.build);
-  const hasTurnFrames = personaHasTurnFrames(profile.persona);
+  const paintedTurn = personaHasPaintedTurn(profile.persona);
   const controlled = typeof controlledYaw === 'number';
 
   const [internalYaw, setInternalYaw] = useState(0);
@@ -162,11 +162,11 @@ export function GameFashionAvatar({
   const bodyScaleX = Math.min(1.18, Math.max(0.82, wScale));
   const facingBack = yaw > 90;
   const frame = nearestTurnYaw(yaw);
-  // ילדים/נערים: בסיס PNG מורחב (מראה) — בלי תלות ב־CSS transform של הורה
-  const mirrorPersona = facingBack && !hasTurnFrames;
+  // ילדים/נערים: בסיס 180° ייעודי; שכבות בגד בהיפוך קל כשאין לוק מצויר מלא
+  const mirrorOverlays = facingBack && !paintedTurn;
   const baseSrc = turnBaseForPersona(profile.persona, yaw);
   const viewLabel = facingBack ? he.backViewHint : '';
-  const overlayFlip = mirrorPersona ? -1 : 1;
+  const overlayFlip = mirrorOverlays ? -1 : 1;
 
   return (
     <View
@@ -196,7 +196,7 @@ export function GameFashionAvatar({
         }}
       >
         <Image
-          key={`base-${profile.persona}-${frame}-${mirrorPersona ? 'm' : 'f'}`}
+          key={`base-${profile.persona}-${frame}-${facingBack ? 'back' : 'front'}`}
           source={baseSrc}
           resizeMode="contain"
           style={{ position: 'absolute', width, height }}
@@ -206,7 +206,7 @@ export function GameFashionAvatar({
               const garmentScale = ov.scale * ov.bodyScale;
               return (
                 <Image
-                  key={`ov-${ov.key}-${i}-${frame}-${mirrorPersona ? 'm' : 'f'}`}
+                  key={`ov-${ov.key}-${i}-${frame}-${facingBack ? 'back' : 'front'}`}
                   source={ov.src}
                   resizeMode="contain"
                   style={{
