@@ -102,12 +102,13 @@ export default function OnboardingScreen() {
     const next = buildNextProfile();
     if (!next || !canContinue) return;
 
-    // שמירה אטומית אחת — מונעת דריסה / חזרה לדמות הקודמת
+    // שמירה אטומית — דמות חדשה מתחילה בלי בגדים (בסיס חשוף)
     if (editing) {
+      const personaChanged = next.persona !== profile.persona;
       saveAll({
         profile: next,
         preferredSize: preferredSize || 'M',
-        layers,
+        layers: personaChanged ? {} : layers,
         onboardingComplete: true,
       });
       dirtyRef.current = false;

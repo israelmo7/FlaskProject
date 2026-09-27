@@ -10,14 +10,17 @@ type BrandRowProps = {
   onSelect?: (brandId: string) => void;
 };
 
-/** שורת מותגים עגולה — בלי טקסט מתחת */
+/** שורת מותגים — קומפקטית ומהירה לסינון */
 export function BrandCircles({ selectedId, onSelect }: BrandRowProps) {
   return (
-    <View className="mt-5">
+    <View className="mt-4">
+      <Text className="mb-2 px-4 text-right font-bodyMedium text-[11px] text-ink-muted">
+        {he.brandsRow}
+      </Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerClassName="gap-3.5 px-4 pb-1"
+        contentContainerClassName="gap-2.5 px-4 pb-1"
       >
         {BRANDS.map((brand) => {
           const active = selectedId === brand.id;
@@ -33,15 +36,21 @@ export function BrandCircles({ selectedId, onSelect }: BrandRowProps) {
                   active ? 'border-2 border-[#E07A4F]' : 'border border-[#E8E4DE]'
                 }`}
                 style={{
-                  width: 64,
-                  height: 64,
+                  width: 56,
+                  height: 56,
                   backgroundColor: brand.color,
                 }}
               >
-                <Text className="font-bodyBold text-sm text-white">
+                <Text className="font-bodyBold text-xs text-white">
                   {brand.initials}
                 </Text>
               </View>
+              <Text
+                className="mt-1 max-w-[64px] text-center font-body text-[9px] text-ink-muted"
+                numberOfLines={1}
+              >
+                {brand.name}
+              </Text>
             </Pressable>
           );
         })}

@@ -118,6 +118,11 @@ const BRAND_KEYS = [
   'terminal',
   'fox',
   'רמי',
+  'bershka',
+  'mango',
+  'renuar',
+  'american eagle',
+  'american',
 ];
 
 function capitalizeBrand(b: string): string {
@@ -130,6 +135,10 @@ function capitalizeBrand(b: string): string {
   if (b === 'pull&bear') return 'Pull&Bear';
   if (b === 'fox') return 'Fox';
   if (b === 'רמי') return 'רמי';
+  if (b === 'bershka') return 'Bershka';
+  if (b === 'mango') return 'Mango';
+  if (b === 'renuar') return 'Renuar';
+  if (b === 'american eagle' || b === 'american') return 'American Eagle';
   return b;
 }
 

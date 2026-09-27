@@ -62,6 +62,8 @@ export const he = {
   profileUpdated: 'הפרופיל עודכן',
   chooseSizeHint: 'בחרו מידה — L גדול יותר מ־S על הבובה',
   heightOnDoll: 'גובה הבובה',
+  brandsRow: 'מותגים',
+  nakedBaseHint: 'הבובה מתחילה בלי בגדים — הלבישו פריט מהקטלוג',
 
   heroTitle: 'קולקציות חדשות לנשים',
   heroCaption: 'מכנסיים מחויטים',
@@ -211,7 +213,7 @@ export const he = {
   chooseSizeFirst: 'בחרו מידה לפריט',
   layersStay: 'כל הפריטים שנבחרו נשארים על הבובה',
   rotateAvatarHint: 'החליקו לסיבוב 180°',
-  readyToDress: 'מוכן להלבשה',
+  readyToDress: 'בלי בגדים — בחרו פריט להלבשה',
 
   historyTitle: 'היסטוריית חיפושים',
   historyHint: 'חזרו ללוק שאהבתם ובדקו מלאי מעודכן לידכם.',

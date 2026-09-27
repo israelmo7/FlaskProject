@@ -242,7 +242,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
+    <View className="flex-1 bg-[#FAF7F2]" style={{ paddingTop: insets.top }}>
       <SiteHeader
         query={query}
         onQueryChange={setQuery}

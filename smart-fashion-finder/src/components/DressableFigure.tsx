@@ -7,6 +7,7 @@ import {
   garmentColorHex,
   heightScale,
 } from '@/constants/avatar';
+import { catalogIdFromPieceId } from '@/constants/avatarAssets';
 import { GameFashionAvatar } from '@/components/GameFashionAvatar';
 import { he } from '@/i18n/he';
 import type { AvatarProfile, OutfitLayers, OutfitPiece } from '@/types';
@@ -16,12 +17,18 @@ type Props = {
   layers: OutfitLayers;
   onRemovePiece?: (piece: OutfitPiece) => void;
   compact?: boolean;
-  /** הסתרת תווית גובה בדף הבית */
   hideMeta?: boolean;
 };
 
+function isVisibleWorn(piece: OutfitPiece): boolean {
+  const id = catalogIdFromPieceId(piece.id);
+  if (piece.category === 'Underwear' || id === 'p-underwear') return false;
+  if (piece.category === 'Socks' || id === 'p-socks') return false;
+  return true;
+}
+
 /**
- * אווטאר משחק אופנה — גובה אמיתי + בגדים לפי מידה.
+ * אווטאר — גובה אמיתי, בסיס חשוף, בגדים לפי מידה ו־persona.
  */
 export function DressableFigure({
   profile,
@@ -35,9 +42,8 @@ export function DressableFigure({
   const personaLabel =
     PERSONA_OPTIONS.find((p) => p.id === profile.persona)?.label ?? '';
 
-  // גובה בסיס × סולם גובה — 1.78מ׳ גבוה מ־1.65מ׳ באופן ברור
-  const baseW = compact ? 168 : 200;
-  const baseH = compact ? 300 : 360;
+  const baseW = compact ? 172 : 208;
+  const baseH = compact ? 310 : 372;
   const dollW = baseW * Math.min(1.22, Math.max(0.78, wScale));
   const dollH = Math.round(baseH * hScale);
 
@@ -48,32 +54,34 @@ export function DressableFigure({
     layers.outer,
     layers.shoes,
     layers.hat,
-  ].filter(Boolean) as OutfitPiece[];
+  ]
+    .filter(Boolean)
+    .filter((p) => isVisibleWorn(p!)) as OutfitPiece[];
 
   return (
     <View className="items-start">
       <View style={{ width: Math.max(dollW + 16, 120), paddingVertical: 4 }}>
-        {!hideMeta ? (
-          <Text className="mb-1.5 text-left font-display text-sm text-ink">
-            {personaLabel} · {formatHeightMeters(profile.heightCm)} (
-            {profile.heightCm} ס״מ)
-          </Text>
-        ) : (
-          <Text className="mb-1 text-left font-bodyMedium text-[11px] text-ink-muted">
-            {personaLabel} · {formatHeightMeters(profile.heightCm)}
-          </Text>
-        )}
+        <Text
+          className={`mb-1.5 text-left ${
+            hideMeta ? 'font-bodyMedium text-[11px] text-ink-muted' : 'font-display text-sm text-ink'
+          }`}
+        >
+          {personaLabel} · {formatHeightMeters(profile.heightCm)}
+          {!hideMeta ? ` (${profile.heightCm} ס״מ)` : ''}
+        </Text>
 
         <LinearGradient
-          colors={['#F7F1E8', '#EDE4D6', '#E6DCCE']}
-          start={{ x: 0.2, y: 0 }}
-          end={{ x: 0.8, y: 1 }}
+          colors={['#FFFBF5', '#F3EBE0', '#E8DFD4']}
+          start={{ x: 0.15, y: 0 }}
+          end={{ x: 0.85, y: 1 }}
           style={{
             width: dollW,
             height: dollH,
-            borderRadius: 20,
+            borderRadius: 22,
             overflow: 'hidden',
             alignSelf: 'flex-start',
+            borderWidth: 1,
+            borderColor: 'rgba(40,30,20,0.06)',
           }}
         >
           <GameFashionAvatar

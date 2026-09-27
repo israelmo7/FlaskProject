@@ -91,9 +91,13 @@ import {
 import { extractIntent, colorMatches } from '../src/services/fashionChatIntent';
 
 import {
+  categoryToSlot,
   garmentFitOnBody,
   parseHeightInput,
+  wearPiece,
 } from '../src/constants/avatar';
+import { garmentHang } from '../src/constants/garmentLayout';
+import type { OutfitPiece } from '../src/types';
 
 assert(heightScale(140, 'woman') < heightScale(165, 'woman'), '140cm doll shorter than 165cm');
 assert(heightScale(178, 'man') > heightScale(165, 'woman'), '1.78m man taller than 1.65m woman');
@@ -107,6 +111,55 @@ assert(
 assert(garmentFitOnBody('L', 165) > garmentFitOnBody('S', 165), 'L fits larger than S on body');
 assert(parseHeightInput('1.78', 'man') === 178, '1.78 meters parses to 178cm');
 assert(parseHeightInput('178', 'man') === 178, '178 cm parses as 178');
+
+const hangShortL = garmentHang('L', 140, 'top');
+const hangTallS = garmentHang('S', 178, 'top');
+assert(hangShortL.translateY > hangTallS.translateY, 'L on short body hangs lower');
+assert(hangShortL.scaleY > hangTallS.scaleY, 'L on short body is longer');
+
+const shirtA: OutfitPiece = {
+  id: 'p-tshirt-M',
+  label: 'טי א',
+  category: 'Shirts',
+  subcategory: 'טי שירט',
+  color: 'Black',
+  size: 'M',
+  slot: categoryToSlot('Shirts'),
+};
+const shirtB: OutfitPiece = {
+  id: 'p-hoodie-L',
+  label: 'קפוצ׳ון',
+  category: 'Shirts',
+  subcategory: 'אוברסייז',
+  color: 'Beige',
+  size: 'L',
+  slot: categoryToSlot('Shirts'),
+};
+const jeans: OutfitPiece = {
+  id: 'p-jeans-M',
+  label: 'ג׳ינס',
+  category: 'Pants',
+  subcategory: 'ג׳ינס',
+  color: 'Blue',
+  size: 'M',
+  slot: categoryToSlot('Pants'),
+};
+const jeans2: OutfitPiece = {
+  id: 'p-jeans-black-M',
+  label: 'ג׳ינס שחור',
+  category: 'Pants',
+  subcategory: 'ג׳ינס',
+  color: 'Black',
+  size: 'M',
+  slot: categoryToSlot('Pants'),
+};
+let outfit = wearPiece({}, shirtA);
+outfit = wearPiece(outfit, jeans);
+assert(Boolean(outfit.top && outfit.bottom), 'shirt + jeans both stay');
+outfit = wearPiece(outfit, shirtB);
+assert(outfit.top?.id === shirtB.id && outfit.bottom?.id === jeans.id, 'new shirt replaces old; jeans stay');
+outfit = wearPiece(outfit, jeans2);
+assert(outfit.bottom?.id === jeans2.id && outfit.top?.id === shirtB.id, 'new jeans replace old; shirt stays');
 
 const blackShirtIntent = extractIntent('חולצה שחורה עד 150');
 assert(blackShirtIntent.category === 'Shirts', 'chat intent category Shirts');

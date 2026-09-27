@@ -185,10 +185,15 @@ export function categoryToSlot(category: GarmentCategory): OutfitSlot {
   }
 }
 
-/** הוספת פריט לשכבות — נשארים כל שאר הפריטים */
+/**
+ * הוספת פריט לשכבות:
+ * - אותו סלוט מחליף (ג׳ינס→ג׳ינס, חולצה→חולצה)
+ * - סלוטים שונים נשארים יחד (מכנסיים + חולצה)
+ */
 export function wearPiece(layers: OutfitLayers, piece: OutfitPiece): OutfitLayers {
-  const next = { ...layers };
-  // הלבשה תחתונה = חזרה לבסיס הדמות (מסירים בגדים עליונים)
+  const next: OutfitLayers = { ...layers };
+
+  // הלבשה תחתונה = חזרה לבסיס חשוף
   if (piece.category === 'Underwear') {
     return {
       bottom: piece,
@@ -196,16 +201,19 @@ export function wearPiece(layers: OutfitLayers, piece: OutfitPiece): OutfitLayer
       hat: next.hat,
     };
   }
+
   if (piece.slot === 'dress') {
-    // שמלה מחליפה עליון ותחתון ויזואלית, אבל לא מוחקת נעליים/עליונית
-    delete next.top;
-    delete next.bottom;
-    next.dress = piece;
-    return next;
+    // שמלה מחליפה עליון+תחתון, לא נוגעת בנעליים/כובע/עליונית
+    const { top: _t, bottom: _b, ...rest } = next;
+    return { ...rest, dress: piece };
   }
+
+  // חולצה/מכנסיים — מסירים שמלה אם יש, אבל לא את הסלוט השני
   if (piece.slot === 'top' || piece.slot === 'bottom') {
     delete next.dress;
   }
+
+  // החלפת אותו סלוט בלבד (הקודם נעלם, האחרים נשארים)
   next[piece.slot] = piece;
   return next;
 }
@@ -279,4 +287,9 @@ export const WARDROBE_ITEMS: WardrobeItem[] = [
   { id: 'p-hat', label: 'כובע', category: 'Hats', color: 'Black', subcategory: 'כובע' },
   { id: 'p-underwear', label: 'תחתון', category: 'Underwear', color: 'Charcoal', subcategory: 'הלבשה תחתונה' },
   { id: 'p-socks', label: 'גרביים', category: 'Socks', color: 'White', subcategory: 'גרביים' },
+  { id: 'p-tshirt-white', label: 'טי לבנה', category: 'Shirts', color: 'White', subcategory: 'טי שירט' },
+  { id: 'p-jeans-black', label: 'ג׳ינס שחור', category: 'Pants', color: 'Black', subcategory: 'ג׳ינס' },
+  { id: 'p-hoodie-black', label: 'קפוצ׳ון שחור', category: 'Shirts', color: 'Black', subcategory: 'אוברסייז' },
+  { id: 'p-blazer', label: 'בלייזר', category: 'Outerwear', color: 'Navy', subcategory: 'בלייזר' },
+  { id: 'p-joggers', label: 'ג׳וגרס', category: 'Pants', color: 'Charcoal', subcategory: 'מכנס ספורט' },
 ];

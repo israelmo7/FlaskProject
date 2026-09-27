@@ -76,8 +76,12 @@ export default function AvatarScreen() {
       heightCm: range.default,
       weightKg: weight.default,
     };
-    // שמירה אטומית — הדמות מתחלפת מיד ונשמרת
-    saveAll({ profile: next, preferredSize: selectedSize || preferredSize, layers });
+    // דמות חדשה תמיד בלי בגדים — רק בסיס
+    saveAll({
+      profile: next,
+      preferredSize: selectedSize || preferredSize,
+      layers: {},
+    });
     setHeightText(String(range.default));
   };
 
