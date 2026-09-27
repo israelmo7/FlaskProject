@@ -1,15 +1,7 @@
-import {
-  createElement,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
   PanResponder,
-  Platform,
   Text,
   View,
   type GestureResponderEvent,
@@ -75,55 +67,9 @@ function hasOuterClothes(layers: OutfitLayers): boolean {
 }
 
 /**
- * היפוך אופקי אמין:
- * - web: div עם CSS scaleX(-1) (לא תלוי ב־RN StyleSheet)
- * - native: View עם scaleX: -1
- */
-function FlipHost({
-  flip,
-  width,
-  height,
-  children,
-}: {
-  flip: boolean;
-  width: number;
-  height: number;
-  children: ReactNode;
-}) {
-  if (Platform.OS === 'web') {
-    return createElement(
-      'div',
-      {
-        'data-avatar-flip': flip ? '1' : '0',
-        style: {
-          width,
-          height,
-          position: 'relative' as const,
-          transform: flip ? 'scaleX(-1)' : 'none',
-          WebkitTransform: flip ? 'scaleX(-1)' : 'none',
-          transformOrigin: 'center center',
-        },
-      },
-      children,
-    );
-  }
-
-  return (
-    <View
-      collapsable={false}
-      style={{
-        width,
-        height,
-        transform: flip ? ([{ scaleX: -1 }] as const) : undefined,
-      }}
-    >
-      {children}
-    </View>
-  );
-}
-
-/**
- * דמות משחק — סיבוב 180° לכל persona,
+ * דמות משחק — סיבוב 180° לכל persona:
+ * - גבר/אישה: פריימי גב אמיתיים
+ * - ילדה/ילד/נער: PNG מראה מוכן + היפוך שכבות בגד
  * גוף קבוע, מידה רק על הבגד.
  */
 export function GameFashionAvatar({
@@ -213,14 +159,14 @@ export function GameFashionAvatar({
     [layers, yaw, female, profile.heightCm, profile.persona],
   );
 
-  const baseSrc = turnBaseForPersona(profile.persona, yaw);
   const bodyScaleX = Math.min(1.18, Math.max(0.82, wScale));
   const facingBack = yaw > 90;
   const frame = nearestTurnYaw(yaw);
-
-  // בלי פריימי גב: היפוך אופקי; עם פריימים — תמונת גב
-  const flipWhole = facingBack && !hasTurnFrames;
+  // ילדים/נערים: בסיס PNG מורחב (מראה) — בלי תלות ב־CSS transform של הורה
+  const mirrorPersona = facingBack && !hasTurnFrames;
+  const baseSrc = turnBaseForPersona(profile.persona, yaw);
   const viewLabel = facingBack ? he.backViewHint : '';
+  const overlayFlip = mirrorPersona ? -1 : 1;
 
   return (
     <View
@@ -241,50 +187,46 @@ export function GameFashionAvatar({
         }}
       />
 
-      <FlipHost
-        key={`flip-${profile.persona}-${flipWhole ? 'back' : 'front'}`}
-        flip={flipWhole}
-        width={width}
-        height={height}
+      <View
+        collapsable={false}
+        style={{
+          width,
+          height,
+          transform: [{ scaleX: bodyScaleX }],
+        }}
       >
-        <View
-          collapsable={false}
-          style={{
-            width,
-            height,
-            transform: [{ scaleX: bodyScaleX }],
-          }}
-        >
-          <Image
-            source={baseSrc}
-            resizeMode="contain"
-            style={{ position: 'absolute', width, height }}
-          />
-          {clothed
-            ? resolved.overlays.map((ov, i) => {
-                const garmentScale = ov.scale * ov.bodyScale;
-                return (
-                  <Image
-                    key={`ov-${ov.key}-${i}-${frame}`}
-                    source={ov.src}
-                    resizeMode="contain"
-                    style={{
-                      position: 'absolute',
-                      width,
-                      height,
-                      transform: [
-                        { translateX: ov.translateX * width },
-                        { translateY: ov.translateY * height },
-                        { scaleX: garmentScale },
-                        { scaleY: garmentScale * ov.scaleY },
-                      ],
-                    }}
-                  />
-                );
-              })
-            : null}
-        </View>
-      </FlipHost>
+        <Image
+          key={`base-${profile.persona}-${frame}-${mirrorPersona ? 'm' : 'f'}`}
+          source={baseSrc}
+          resizeMode="contain"
+          style={{ position: 'absolute', width, height }}
+        />
+        {clothed
+          ? resolved.overlays.map((ov, i) => {
+              const garmentScale = ov.scale * ov.bodyScale;
+              return (
+                <Image
+                  key={`ov-${ov.key}-${i}-${frame}-${mirrorPersona ? 'm' : 'f'}`}
+                  source={ov.src}
+                  resizeMode="contain"
+                  style={{
+                    position: 'absolute',
+                    width,
+                    height,
+                    transform: [
+                      {
+                        translateX: ov.translateX * width * overlayFlip,
+                      },
+                      { translateY: ov.translateY * height },
+                      { scaleX: garmentScale * overlayFlip },
+                      { scaleY: garmentScale * ov.scaleY },
+                    ],
+                  }}
+                />
+              );
+            })
+          : null}
+      </View>
 
       {showHint ? (
         <View

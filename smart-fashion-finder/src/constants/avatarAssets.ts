@@ -39,6 +39,14 @@ const WOMAN_TURN: Partial<Record<TurnYaw, ImageSourcePropType>> = {
   180: require('../../assets/images/bases/turn/woman_180.png'),
 };
 
+/** היפוך אופקי מוכן מראש לילדה/ילד/נער — גיבוי ל־180° בלי פריימי גב מצוירים */
+const MIRROR_TURN_180: Partial<Record<AvatarPersona, ImageSourcePropType>> = {
+  girl: require('../../assets/images/bases/turn/girl_180.png'),
+  boy: require('../../assets/images/bases/turn/boy_180.png'),
+  teenGirl: require('../../assets/images/bases/turn/teenGirl_180.png'),
+  teenBoy: require('../../assets/images/bases/turn/teenBoy_180.png'),
+};
+
 /** לוקים מלאים — בגד לבוש על הדמות (חזית) */
 export const FITTED_LOOKS_MAN: Record<string, ImageSourcePropType> = {
   'p-tshirt': require('../../assets/images/fit/man/p-tshirt.png'),
@@ -250,7 +258,7 @@ export function personaHasTurnFrames(persona: AvatarPersona): boolean {
 
 /**
  * בסיס הדמות לפי persona — ילדה/ילד/נער מקבלים את התמונה שלהם,
- * לא גבר/אישה.
+ * לא גבר/אישה. ב־180° משתמשים ב־PNG מורחב (מראה) כשאין פריימי גב.
  */
 export function turnBaseForPersona(
   persona: AvatarPersona,
@@ -267,7 +275,10 @@ export function turnBaseForPersona(
     if (frame <= 135) return WOMAN_TURN[90]!;
     return WOMAN_TURN[180]!;
   }
-  // ילד / ילדה / נער / נערה — בסיס ייעודי (סיבוב ב־scaleX בקומפוננטה)
+  // ילד / ילדה / נער / נערה — בסיס ייעודי; ב־180° קובץ מראה מוכן
+  if (yaw > 90 && MIRROR_TURN_180[persona]) {
+    return MIRROR_TURN_180[persona]!;
+  }
   return PERSONA_BASE_IMAGES[persona];
 }
 

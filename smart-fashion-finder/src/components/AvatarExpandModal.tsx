@@ -90,7 +90,7 @@ export function AvatarExpandModal({
             }}
           >
             <GameFashionAvatar
-              key={`expand-${profile.persona}-${visible}-${yaw > 90 ? 'back' : 'front'}`}
+              key={`expand-${profile.persona}-${visible}`}
               profile={profile}
               layers={layers}
               width={stageW}
