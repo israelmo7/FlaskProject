@@ -1,7 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createElement,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import {
   Image,
   PanResponder,
+  Platform,
   Text,
   View,
   type GestureResponderEvent,
@@ -67,7 +75,55 @@ function hasOuterClothes(layers: OutfitLayers): boolean {
 }
 
 /**
- * דמות משחק — סיבוב 180° לכל persona (היפוך ב־View ל־web),
+ * היפוך אופקי אמין:
+ * - web: div עם CSS scaleX(-1) (לא תלוי ב־RN StyleSheet)
+ * - native: View עם scaleX: -1
+ */
+function FlipHost({
+  flip,
+  width,
+  height,
+  children,
+}: {
+  flip: boolean;
+  width: number;
+  height: number;
+  children: ReactNode;
+}) {
+  if (Platform.OS === 'web') {
+    return createElement(
+      'div',
+      {
+        'data-avatar-flip': flip ? '1' : '0',
+        style: {
+          width,
+          height,
+          position: 'relative' as const,
+          transform: flip ? 'scaleX(-1)' : 'none',
+          WebkitTransform: flip ? 'scaleX(-1)' : 'none',
+          transformOrigin: 'center center',
+        },
+      },
+      children,
+    );
+  }
+
+  return (
+    <View
+      collapsable={false}
+      style={{
+        width,
+        height,
+        transform: flip ? ([{ scaleX: -1 }] as const) : undefined,
+      }}
+    >
+      {children}
+    </View>
+  );
+}
+
+/**
+ * דמות משחק — סיבוב 180° לכל persona,
  * גוף קבוע, מידה רק על הבגד.
  */
 export function GameFashionAvatar({
@@ -162,53 +218,9 @@ export function GameFashionAvatar({
   const facingBack = yaw > 90;
   const frame = nearestTurnYaw(yaw);
 
-  // בלי פריימי גב: הופכים את כל הדמות ב־View (עובד ב־web)
-  // עם פריימים: מציגים פריים אחורי בלי היפוך נוסף
+  // בלי פריימי גב: היפוך אופקי; עם פריימים — תמונת גב
   const flipWhole = facingBack && !hasTurnFrames;
   const viewLabel = facingBack ? he.backViewHint : '';
-
-  const character = (
-    <View
-      style={{
-        width,
-        height,
-        transform: [{ scaleX: bodyScaleX }],
-      }}
-    >
-      <Image
-        source={baseSrc}
-        resizeMode="contain"
-        style={{
-          position: 'absolute',
-          width,
-          height,
-        }}
-      />
-      {clothed
-        ? resolved.overlays.map((ov, i) => {
-            const garmentScale = ov.scale * ov.bodyScale;
-            return (
-              <Image
-                key={`ov-${ov.key}-${i}-${frame}`}
-                source={ov.src}
-                resizeMode="contain"
-                style={{
-                  position: 'absolute',
-                  width,
-                  height,
-                  transform: [
-                    { translateX: ov.translateX * width },
-                    { translateY: ov.translateY * height },
-                    { scaleX: garmentScale },
-                    { scaleY: garmentScale * ov.scaleY },
-                  ],
-                }}
-              />
-            );
-          })
-        : null}
-    </View>
-  );
 
   return (
     <View
@@ -229,16 +241,50 @@ export function GameFashionAvatar({
         }}
       />
 
-      {/* היפוך ב־View — אמין בכל הדמויות ב־web */}
-      <View
-        style={{
-          width,
-          height,
-          transform: flipWhole ? [{ scaleX: -1 }] : undefined,
-        }}
+      <FlipHost
+        key={`flip-${profile.persona}-${flipWhole ? 'back' : 'front'}`}
+        flip={flipWhole}
+        width={width}
+        height={height}
       >
-        {character}
-      </View>
+        <View
+          collapsable={false}
+          style={{
+            width,
+            height,
+            transform: [{ scaleX: bodyScaleX }],
+          }}
+        >
+          <Image
+            source={baseSrc}
+            resizeMode="contain"
+            style={{ position: 'absolute', width, height }}
+          />
+          {clothed
+            ? resolved.overlays.map((ov, i) => {
+                const garmentScale = ov.scale * ov.bodyScale;
+                return (
+                  <Image
+                    key={`ov-${ov.key}-${i}-${frame}`}
+                    source={ov.src}
+                    resizeMode="contain"
+                    style={{
+                      position: 'absolute',
+                      width,
+                      height,
+                      transform: [
+                        { translateX: ov.translateX * width },
+                        { translateY: ov.translateY * height },
+                        { scaleX: garmentScale },
+                        { scaleY: garmentScale * ov.scaleY },
+                      ],
+                    }}
+                  />
+                );
+              })
+            : null}
+        </View>
+      </FlipHost>
 
       {showHint ? (
         <View
