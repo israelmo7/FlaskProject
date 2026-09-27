@@ -26,7 +26,6 @@ type Props = {
   layers: OutfitLayers;
   width: number;
   height: number;
-  /** זווית נשלטת מבחוץ (מסך מוגדל) */
   yaw?: number;
   onYawChange?: (yaw: number) => void;
   enablePan?: boolean;
@@ -68,7 +67,8 @@ function hasOuterClothes(layers: OutfitLayers): boolean {
 }
 
 /**
- * דמות משחק — גוף קבוע, בגדים לפי מידה, סיבוב 180° מלא לכל persona.
+ * דמות משחק — סיבוב 180° לכל persona (היפוך ב־View ל־web),
+ * גוף קבוע, מידה רק על הבגד.
  */
 export function GameFashionAvatar({
   profile,
@@ -139,9 +139,7 @@ export function GameFashionAvatar({
         },
         onPanResponderRelease: () => {
           if (!enablePan) return;
-          // לכל הדמויות: רק חזית (0) או גב (180)
-          const snapped = yawRef.current >= 90 ? 180 : 0;
-          applyYaw(snapped);
+          applyYaw(yawRef.current >= 90 ? 180 : 0);
         },
       }),
     [enablePan],
@@ -161,26 +159,56 @@ export function GameFashionAvatar({
 
   const baseSrc = turnBaseForPersona(profile.persona, yaw);
   const bodyScaleX = Math.min(1.18, Math.max(0.82, wScale));
-
-  // לכל הדמויות: חזית מלאה או גב מלא (היפוך) — בלי כיווץ
   const facingBack = yaw > 90;
-  const mirror = facingBack ? -1 : 1;
-
-  // עם פריימי סיבוב: משתמשים בפריים האחורי ב־180, בלי היפוך נוסף על הבסיס
-  // בלי פריימים (ילד/ילדה/נער): היפוך אופקי מלא — הדמות נשארת דמות
-  const baseScaleX = hasTurnFrames && !facingBack
-    ? bodyScaleX
-    : hasTurnFrames && facingBack
-      ? bodyScaleX // פריים אחורי אמיתי
-      : mirror * bodyScaleX;
-
-  // בגדים נשארים על הדמות — אותו כיוון ויזואלי
-  const clothScaleX = hasTurnFrames && facingBack
-    ? -bodyScaleX // על פריים אחורי — שיקוף קל של שכבת הבגד
-    : mirror * bodyScaleX;
-
   const frame = nearestTurnYaw(yaw);
+
+  // בלי פריימי גב: הופכים את כל הדמות ב־View (עובד ב־web)
+  // עם פריימים: מציגים פריים אחורי בלי היפוך נוסף
+  const flipWhole = facingBack && !hasTurnFrames;
   const viewLabel = facingBack ? he.backViewHint : '';
+
+  const character = (
+    <View
+      style={{
+        width,
+        height,
+        transform: [{ scaleX: bodyScaleX }],
+      }}
+    >
+      <Image
+        source={baseSrc}
+        resizeMode="contain"
+        style={{
+          position: 'absolute',
+          width,
+          height,
+        }}
+      />
+      {clothed
+        ? resolved.overlays.map((ov, i) => {
+            const garmentScale = ov.scale * ov.bodyScale;
+            return (
+              <Image
+                key={`ov-${ov.key}-${i}-${frame}`}
+                source={ov.src}
+                resizeMode="contain"
+                style={{
+                  position: 'absolute',
+                  width,
+                  height,
+                  transform: [
+                    { translateX: ov.translateX * width },
+                    { translateY: ov.translateY * height },
+                    { scaleX: garmentScale },
+                    { scaleY: garmentScale * ov.scaleY },
+                  ],
+                }}
+              />
+            );
+          })
+        : null}
+    </View>
+  );
 
   return (
     <View
@@ -201,40 +229,16 @@ export function GameFashionAvatar({
         }}
       />
 
-      <Image
-        source={baseSrc}
-        resizeMode="contain"
+      {/* היפוך ב־View — אמין בכל הדמויות ב־web */}
+      <View
         style={{
-          position: 'absolute',
           width,
           height,
-          transform: [{ scaleX: baseScaleX }],
+          transform: flipWhole ? [{ scaleX: -1 }] : undefined,
         }}
-      />
-
-      {clothed
-        ? resolved.overlays.map((ov, i) => {
-            const garmentScale = ov.scale * ov.bodyScale;
-            return (
-              <Image
-                key={`ov-${ov.key}-${i}-${frame}`}
-                source={ov.src}
-                resizeMode="contain"
-                style={{
-                  position: 'absolute',
-                  width,
-                  height,
-                  transform: [
-                    { translateX: ov.translateX * width },
-                    { translateY: ov.translateY * height },
-                    { scaleX: clothScaleX * garmentScale },
-                    { scaleY: garmentScale * ov.scaleY },
-                  ],
-                }}
-              />
-            );
-          })
-        : null}
+      >
+        {character}
+      </View>
 
       {showHint ? (
         <View
