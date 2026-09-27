@@ -402,25 +402,8 @@ export function resolveOutfitLook(
   heightCm = 165,
   persona: AvatarPersona = 'man',
 ): ResolvedOutfit {
-  // אישה / ילדים / נערים — תמיד בסיס הדמות + שכבות בגד בלבד
+  // תמיד בסיס הדמות + שכבות בגד — הגוף לא מוחלף ולא משתנה עם מידה
   if (!usesPaintedAdultLooks(persona)) {
-    // שמלה לאישה — לוק מצויר ייעודי (גוף אישה לבוש)
-    if (persona === 'woman' && layers.dress) {
-      const dressId = pieceCatalogId(layers.dress);
-      const dressLook = dressId ? fittedLookForId(dressId, true) : null;
-      const extras: ResolvedOverlay[] = [];
-      pushOverlayLayer(extras, layers.shoes, heightCm, persona, ['p-socks']);
-      pushOverlayLayer(extras, layers.hat, heightCm, persona);
-      if (dressLook) {
-        return {
-          hero: dressLook,
-          heroTracksYaw: false,
-          heroScale: fitFor(layers.dress, heightCm),
-          overlays: extras,
-          overlayOnly: false,
-        };
-      }
-    }
     return resolveOverlayOnlyStack(layers, heightCm, persona);
   }
 

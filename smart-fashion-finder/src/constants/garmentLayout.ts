@@ -82,8 +82,7 @@ export function slotLayoutFor(
 }
 
 /**
- * מידה גדולה על גוף נמוך — הבגד ארוך יותר ו״יורד״ למטה.
- * מחזיר translateY (חלק מגובה) + הארכת scaleY.
+ * מידה גדולה — רק הבגד ארוך יותר ויורד למטה (הגוף לא משתנה).
  */
 export function garmentHang(
   size: string | undefined,
@@ -93,34 +92,37 @@ export function garmentHang(
   if (!size) return { translateY: 0, scaleY: 1 };
   const sizeS = sizeFitScale(size);
   const rel = sizeRelativeToHeight(size, heightCm);
-  // עודף מידה ביחס לגוף
-  const oversize = Math.max(0, (sizeS - 1) * 0.65 + (rel - 1) * 0.35);
-  const short = Math.max(0, (160 - heightCm) / 80); // בולט מתחת ל־160
-  const hang = oversize * (0.05 + short * 0.08);
+  // עודף מידה ביחס לגוף — משפיע על הבגד בלבד
+  const oversize = Math.max(0, (sizeS - 1) * 0.7 + Math.max(0, rel - 1) * 0.3);
+  const short = Math.max(0, (160 - heightCm) / 80);
+  const hang = oversize * (0.055 + short * 0.09);
 
   if (slot === 'top' || slot === 'outer' || slot === 'dress') {
-    // חולצה L על קצר — ארוכה ויורדת
     return {
       translateY: hang,
-      scaleY: 1 + hang * 2.2,
+      scaleY: 1 + hang * 2.4,
     };
   }
   if (slot === 'bottom') {
     return {
-      translateY: hang * 0.45,
-      scaleY: 1 + hang * 1.4,
+      translateY: hang * 0.4,
+      scaleY: 1 + hang * 1.5,
     };
   }
-  return { translateY: hang * 0.25, scaleY: 1 + hang * 0.5 };
+  return { translateY: hang * 0.2, scaleY: 1 + hang * 0.45 };
 }
 
-/** סולם מידה כולל לגוף + תלייה */
+/**
+ * סולם מידת הבגד בלבד — לא משנה את גודל הדמות.
+ * M = 1, S קטן יותר, L גדול יותר.
+ */
 export function garmentVisualScale(
   size: string | undefined,
   heightCm: number,
 ): number {
   if (!size) return 1;
   const bySize = sizeFitScale(size);
+  // התאמה עדינה לגובה — בלי לכווץ את הגוף, רק את הפריט
   const byHeight = sizeRelativeToHeight(size, heightCm);
-  return Math.min(1.45, Math.max(0.62, bySize * 0.6 + byHeight * 0.4));
+  return Math.min(1.38, Math.max(0.72, bySize * 0.75 + byHeight * 0.25));
 }
