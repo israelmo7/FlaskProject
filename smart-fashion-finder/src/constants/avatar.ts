@@ -161,8 +161,9 @@ export function garmentFitOnBody(size: string | undefined, heightCm: number): nu
   return Math.min(1.4, Math.max(0.65, bySize * 0.55 + byHeight * 0.45));
 }
 
+/** לוקים מצוירים מלאים (גוף+בגד) — רק לגבר; אישה/ילדים נשארים על בסיס הדמות + שכבות */
 export function usesPaintedAdultLooks(persona: AvatarPersona): boolean {
-  return persona === 'man' || persona === 'woman';
+  return persona === 'man';
 }
 
 export function categoryToSlot(category: GarmentCategory): OutfitSlot {
