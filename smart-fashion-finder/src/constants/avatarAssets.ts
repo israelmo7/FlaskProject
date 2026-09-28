@@ -455,7 +455,7 @@ function fitFor(piece: OutfitPiece | undefined, heightCm: number): number {
 function heroFitFor(
   piece: OutfitPiece | undefined,
   heightCm: number,
-  persona: AvatarPersona,
+  _persona: AvatarPersona,
 ): GarmentTransform | null {
   if (!piece) return null;
   // Perfect-Fit = גוף+בגד בתמונה אחת — לא מצמצמים את כל הדמות.
@@ -468,8 +468,11 @@ function heroFitFor(
         : piece.slot === 'top'
           ? 'top'
           : 'outer';
-  const layout = { bodyScale: 1, y: 0, x: 0 };
-  const raw = garmentFitTransform(piece.size, heightCm, slot, layout);
+  const raw = garmentFitTransform(piece.size, heightCm, slot, {
+    bodyScale: 1,
+    y: 0,
+    x: 0,
+  });
   const damp = (v: number) => 1 + (v - 1) * 0.35;
   return {
     scaleX: Math.min(1.1, Math.max(0.95, damp(raw.scaleX))),

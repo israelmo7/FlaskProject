@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
   Modal,
@@ -24,6 +24,18 @@ type Props = {
   preferredSize?: string;
 };
 
+function pickInitialSize(
+  category: ProductCard['category'] | undefined,
+  preferredSize: string,
+): string {
+  const opts = category
+    ? SIZE_OPTIONS_BY_CATEGORY[category] ?? ['S', 'M', 'L']
+    : ['S', 'M', 'L'];
+  if (opts.includes(preferredSize)) return preferredSize;
+  if (opts.includes('M')) return 'M';
+  return opts[Math.floor(opts.length / 2)];
+}
+
 /** כרטיס פריט מלא — מידות, חנות, הלבשה לפי מידה */
 export function ProductDetailSheet({
   product,
@@ -36,24 +48,27 @@ export function ProductDetailSheet({
   const { height } = useWindowDimensions();
   const [liked, setLiked] = useState(false);
   const [selectedSize, setSelectedSize] = useState(preferredSize);
+  const selectedSizeRef = useRef(selectedSize);
+  selectedSizeRef.current = selectedSize;
+  const openedProductId = useRef<string | null>(null);
 
   const sizeOptions = useMemo(() => {
     if (!product) return ['S', 'M', 'L'];
     return SIZE_OPTIONS_BY_CATEGORY[product.category] ?? ['S', 'M', 'L', 'XL'];
   }, [product]);
 
+  // אתחול מידה רק בפתיחת מוצר חדש — לא לדרוס בחירה כש־preferredSize מתעדכן
   useEffect(() => {
+    if (!visible || !product) return;
+    if (openedProductId.current === product.id) return;
+    openedProductId.current = product.id;
     setLiked(false);
-    if (!product) return;
-    const opts = SIZE_OPTIONS_BY_CATEGORY[product.category] ?? ['S', 'M', 'L'];
-    setSelectedSize(
-      opts.includes(preferredSize)
-        ? preferredSize
-        : opts.includes('M')
-          ? 'M'
-          : opts[Math.floor(opts.length / 2)],
-    );
-  }, [product?.id, product?.category, preferredSize]);
+    setSelectedSize(pickInitialSize(product.category, preferredSize));
+  }, [visible, product?.id, product?.category, preferredSize]);
+
+  useEffect(() => {
+    if (!visible) openedProductId.current = null;
+  }, [visible]);
 
   if (!product) return null;
 
@@ -179,7 +194,8 @@ export function ProductDetailSheet({
             <View className="mt-3 flex-row gap-3">
               <Pressable
                 onPress={() => {
-                  onAddToCart(product, selectedSize);
+                  const size = selectedSizeRef.current;
+                  onAddToCart(product, size);
                   onClose();
                 }}
                 className="flex-1 flex-row items-center justify-center rounded-2xl border border-[#D9D3C9] bg-white py-3.5"
@@ -191,7 +207,8 @@ export function ProductDetailSheet({
               </Pressable>
               <Pressable
                 onPress={() => {
-                  onDressAvatar(product, selectedSize);
+                  const size = selectedSizeRef.current;
+                  onDressAvatar(product, size);
                   onClose();
                 }}
                 className="flex-1 flex-row items-center justify-center rounded-2xl bg-ink py-3.5"
