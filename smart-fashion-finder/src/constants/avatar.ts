@@ -88,11 +88,13 @@ export const ABS_REF_HEIGHT_CM = 165;
 
 /**
  * סולם גובה הבובה לפי ס״מ אמיתיים.
- * 178 ס״מ (1.78מ׳) > 165 > 130 — ההבדל נראה על הבובה.
+ * 1.70מ׳ מול 1.85מ׳ — הבדל סימטרי וברור בפרופורציות הדמות.
  */
 export function heightScale(heightCm: number, _persona?: AvatarPersona): number {
   const raw = heightCm / ABS_REF_HEIGHT_CM;
-  return Math.min(1.42, Math.max(0.58, raw));
+  // הגזמה קלה כדי שהבדלי גובה יהיו קריאים ב־UI
+  const eased = 1 + (raw - 1) * 1.18;
+  return Math.min(1.5, Math.max(0.55, eased));
 }
 
 /** המרת קלט גובה: 1.78 → 178, או 178 כמו שהוא */

@@ -1,55 +1,92 @@
 import type { AvatarPersona, OutfitSlot } from '@/types';
 import { sizeFitScale, sizeRelativeToHeight } from '@/constants/avatar';
 
-/** פריסת בגד על גוף הדמות */
+/** פריסת עוגן בסיסית על גוף הדמות (cutouts רשומים על 480×900) */
 export type SlotLayout = {
-  /** סולם ביחס למסגרת הדמות */
+  /** סולם בסיס ביחס למסגרת הדמות */
   bodyScale: number;
-  /** הזזה אנכית (חלק מגובה הבובה, חיובי = למטה) */
+  /** הזזה אנכית בסיסית (חלק מגובה, חיובי = למטה) */
   y: number;
-  /** הזזה אופקית (חלק מרוחב) */
+  /** הזזה אופקית בסיסית */
   x: number;
 };
 
 export type GarmentFitMode = 'baked' | 'cutout';
 
-/** שכבות מצוירות של גבר (כוללות גוף) — כיול על בסיס הגבר */
+/** טרנספורם סופי של בגד על הגוף */
+export type GarmentTransform = {
+  scaleX: number;
+  scaleY: number;
+  translateX: number;
+  translateY: number;
+};
+
+/** שכבות מצוירות של גבר (כוללות גוף) */
 const MAN_BAKED: Record<OutfitSlot, SlotLayout> = {
   top: { bodyScale: 1, y: 0, x: 0 },
   bottom: { bodyScale: 1, y: 0, x: 0 },
-  outer: { bodyScale: 1.02, y: -0.01, x: 0 },
+  outer: { bodyScale: 1.02, y: -0.008, x: 0 },
   dress: { bodyScale: 1, y: 0, x: 0 },
-  shoes: { bodyScale: 1, y: 0.01, x: 0 },
-  hat: { bodyScale: 1, y: -0.02, x: 0 },
+  shoes: { bodyScale: 1, y: 0.012, x: 0 },
+  hat: { bodyScale: 1, y: -0.018, x: 0 },
 };
 
 /**
- * cutouts רשומים על 480×900 — סקייל עדין לפי persona בלבד.
+ * cutouts רשומים לאותו קנבס כמו הבסיס — סקייל קרוב ל־1
+ * כדי שהכתפיים/זרועות יישבו על הגוף (לא "צפים" קטנים).
  */
-function uniformSlots(
-  scale: number,
-  yShift = 0,
-): Record<OutfitSlot, SlotLayout> {
-  return {
-    top: { bodyScale: scale, y: yShift, x: 0 },
-    bottom: { bodyScale: scale * 0.98, y: yShift + 0.01, x: 0 },
-    outer: { bodyScale: scale * 1.03, y: yShift - 0.005, x: 0 },
-    dress: { bodyScale: scale, y: yShift + 0.005, x: 0 },
-    shoes: { bodyScale: scale * 0.95, y: yShift + 0.01, x: 0 },
-    hat: { bodyScale: scale * 0.92, y: yShift - 0.01, x: 0 },
-  };
-}
-
 const CUTOUT_BY_PERSONA: Record<
   AvatarPersona,
   Record<OutfitSlot, SlotLayout>
 > = {
-  man: uniformSlots(1.0, 0),
-  woman: uniformSlots(0.92, 0.01),
-  teenBoy: uniformSlots(0.9, 0.015),
-  teenGirl: uniformSlots(0.86, 0.02),
-  boy: uniformSlots(0.72, 0.04),
-  girl: uniformSlots(0.7, 0.045),
+  man: {
+    top: { bodyScale: 1.02, y: -0.01, x: 0 },
+    bottom: { bodyScale: 1.0, y: 0.005, x: 0 },
+    outer: { bodyScale: 1.05, y: -0.015, x: 0 },
+    dress: { bodyScale: 1.02, y: -0.005, x: 0 },
+    shoes: { bodyScale: 0.98, y: 0.015, x: 0 },
+    hat: { bodyScale: 0.96, y: -0.02, x: 0 },
+  },
+  woman: {
+    top: { bodyScale: 1.0, y: -0.005, x: 0 },
+    bottom: { bodyScale: 0.98, y: 0.01, x: 0 },
+    outer: { bodyScale: 1.03, y: -0.012, x: 0 },
+    dress: { bodyScale: 1.0, y: 0, x: 0 },
+    shoes: { bodyScale: 0.95, y: 0.018, x: 0 },
+    hat: { bodyScale: 0.94, y: -0.018, x: 0 },
+  },
+  teenBoy: {
+    top: { bodyScale: 0.98, y: 0, x: 0 },
+    bottom: { bodyScale: 0.96, y: 0.012, x: 0 },
+    outer: { bodyScale: 1.0, y: -0.008, x: 0 },
+    dress: { bodyScale: 0.98, y: 0.004, x: 0 },
+    shoes: { bodyScale: 0.94, y: 0.02, x: 0 },
+    hat: { bodyScale: 0.92, y: -0.015, x: 0 },
+  },
+  teenGirl: {
+    top: { bodyScale: 0.96, y: 0.004, x: 0 },
+    bottom: { bodyScale: 0.94, y: 0.014, x: 0 },
+    outer: { bodyScale: 0.98, y: -0.006, x: 0 },
+    dress: { bodyScale: 0.96, y: 0.006, x: 0 },
+    shoes: { bodyScale: 0.92, y: 0.02, x: 0 },
+    hat: { bodyScale: 0.9, y: -0.014, x: 0 },
+  },
+  boy: {
+    top: { bodyScale: 0.94, y: 0.01, x: 0 },
+    bottom: { bodyScale: 0.92, y: 0.02, x: 0 },
+    outer: { bodyScale: 0.96, y: 0.004, x: 0 },
+    dress: { bodyScale: 0.94, y: 0.012, x: 0 },
+    shoes: { bodyScale: 0.9, y: 0.025, x: 0 },
+    hat: { bodyScale: 0.88, y: -0.01, x: 0 },
+  },
+  girl: {
+    top: { bodyScale: 0.93, y: 0.012, x: 0 },
+    bottom: { bodyScale: 0.91, y: 0.022, x: 0 },
+    outer: { bodyScale: 0.95, y: 0.006, x: 0 },
+    dress: { bodyScale: 0.93, y: 0.014, x: 0 },
+    shoes: { bodyScale: 0.88, y: 0.026, x: 0 },
+    hat: { bodyScale: 0.86, y: -0.008, x: 0 },
+  },
 };
 
 export function slotLayoutFor(
@@ -61,50 +98,125 @@ export function slotLayoutFor(
     return MAN_BAKED[slot] ?? { bodyScale: 1, y: 0, x: 0 };
   }
   return (
-    CUTOUT_BY_PERSONA[persona]?.[slot] ??
-    uniformSlots(1)[slot] ?? { bodyScale: 1, y: 0, x: 0 }
+    CUTOUT_BY_PERSONA[persona]?.[slot] ?? {
+      bodyScale: 1,
+      y: 0,
+      x: 0,
+    }
   );
 }
 
 /**
- * מידה גדולה — רק הבגד ארוך יותר ויורד למטה (הגוף לא משתנה).
+ * מקדם התאמה משולב: מידת בגד × התאמה לגובה הדמות.
+ * M על 165 ≈ 1 · S על גוף גבוה < 1 · L על גוף נמוך > 1
  */
-export function garmentHang(
-  size: string | undefined,
-  heightCm: number,
-  slot: OutfitSlot,
-): { translateY: number; scaleY: number } {
-  if (!size) return { translateY: 0, scaleY: 1 };
-  const sizeS = sizeFitScale(size);
-  const rel = sizeRelativeToHeight(size, heightCm);
-  const oversize = Math.max(0, (sizeS - 1) * 0.7 + Math.max(0, rel - 1) * 0.3);
-  const short = Math.max(0, (160 - heightCm) / 80);
-  const hang = oversize * (0.05 + short * 0.08);
-
-  if (slot === 'top' || slot === 'outer' || slot === 'dress') {
-    return {
-      translateY: hang,
-      scaleY: 1 + hang * 2.2,
-    };
-  }
-  if (slot === 'bottom') {
-    return {
-      translateY: hang * 0.35,
-      scaleY: 1 + hang * 1.4,
-    };
-  }
-  return { translateY: hang * 0.15, scaleY: 1 + hang * 0.4 };
-}
-
-/**
- * סולם מידת הבגד בלבד — לא משנה את גודל הדמות.
- */
-export function garmentVisualScale(
+export function garmentFitFactor(
   size: string | undefined,
   heightCm: number,
 ): number {
   if (!size) return 1;
   const bySize = sizeFitScale(size);
   const byHeight = sizeRelativeToHeight(size, heightCm);
-  return Math.min(1.32, Math.max(0.75, bySize * 0.78 + byHeight * 0.22));
+  return Math.min(1.4, Math.max(0.7, bySize * 0.68 + byHeight * 0.32));
+}
+
+/**
+ * טרנספורם בגד עם עגינה בכתפיים/מותן:
+ * - S/XS: צר יותר + קצר יותר (שוליים עולים, שרוולים מתקצרים)
+ * - L/XL: רחב יותר + ארוך יותר (שוליים יורדים, שרוולים ארוכים)
+ * - transform origin במרכז → פיצוי translateY כדי לשמור כתפיים קבועות
+ */
+export function garmentFitTransform(
+  size: string | undefined,
+  heightCm: number,
+  slot: OutfitSlot,
+  layout: SlotLayout,
+): GarmentTransform {
+  const fit = garmentFitFactor(size, heightCm);
+  const base = layout.bodyScale;
+
+  if (slot === 'top' || slot === 'outer' || slot === 'dress') {
+    // אורך רגיש יותר מרוחב — כמו חולצה אמיתית
+    const widthFactor = 1 + (fit - 1) * 0.9;
+    const lengthFactor = 1 + (fit - 1) * 1.45;
+    const scaleX = base * widthFactor;
+    const scaleY = base * lengthFactor;
+    // עוגן כתפיים (~30% מעל מרכז המסגרת)
+    const shoulderAnchor = 0.32;
+    let translateY =
+      layout.y + (lengthFactor - 1) * shoulderAnchor;
+    // עודף oversize — שוליים נוספים למטה
+    if (fit > 1) translateY += (fit - 1) * 0.045;
+    // מידה קטנה — שוליים עולים מעט יותר
+    if (fit < 1) translateY += (fit - 1) * 0.035;
+    return {
+      scaleX,
+      scaleY,
+      translateX: layout.x,
+      translateY,
+    };
+  }
+
+  if (slot === 'bottom') {
+    const widthFactor = 1 + (fit - 1) * 0.8;
+    const lengthFactor = 1 + (fit - 1) * 1.2;
+    const scaleX = base * widthFactor;
+    const scaleY = base * lengthFactor;
+    // עוגן מותן/ירך
+    const hipAnchor = 0.14;
+    let translateY = layout.y + (lengthFactor - 1) * hipAnchor;
+    if (fit > 1) translateY += (fit - 1) * 0.02;
+    if (fit < 1) translateY += (fit - 1) * 0.015;
+    return {
+      scaleX,
+      scaleY,
+      translateX: layout.x,
+      translateY,
+    };
+  }
+
+  if (slot === 'shoes') {
+    const f = 1 + (fit - 1) * 0.45;
+    return {
+      scaleX: base * f,
+      scaleY: base * f,
+      translateX: layout.x,
+      translateY: layout.y + (fit - 1) * 0.008,
+    };
+  }
+
+  // hat
+  const f = 1 + (fit - 1) * 0.5;
+  return {
+    scaleX: base * f,
+    scaleY: base * f,
+    translateX: layout.x,
+    translateY: layout.y + (1 - f) * 0.02,
+  };
+}
+
+/**
+ * תאימות לאחור / smoke tests — אורך+הזזה אנכית.
+ */
+export function garmentHang(
+  size: string | undefined,
+  heightCm: number,
+  slot: OutfitSlot,
+): { translateY: number; scaleY: number } {
+  const t = garmentFitTransform(size, heightCm, slot, {
+    bodyScale: 1,
+    y: 0,
+    x: 0,
+  });
+  return { translateY: t.translateY, scaleY: t.scaleY };
+}
+
+/**
+ * סולם מידת הבגד (רוחב) — לא משנה את גודל הדמות.
+ */
+export function garmentVisualScale(
+  size: string | undefined,
+  heightCm: number,
+): number {
+  return garmentFitFactor(size, heightCm);
 }

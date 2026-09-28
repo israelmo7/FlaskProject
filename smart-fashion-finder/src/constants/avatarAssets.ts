@@ -7,9 +7,10 @@ import type {
 } from '@/types';
 import { usesPaintedAdultLooks } from '@/constants/avatar';
 import {
-  garmentHang,
+  garmentFitTransform,
   garmentVisualScale,
   slotLayoutFor,
+  type GarmentTransform,
 } from '@/constants/garmentLayout';
 
 export const PERSONA_BASE_IMAGES: Record<AvatarPersona, ImageSourcePropType> = {
@@ -419,22 +420,25 @@ export function frontFacingAmount(yaw: number): number {
 
 export type ResolvedOverlay = {
   src: ImageSourcePropType;
-  scale: number;
+  /** סקייל רוחב סופי (כולל bodyScale + מידה) */
+  scaleX: number;
+  /** סקייל אורך סופי */
   scaleY: number;
   translateY: number;
   translateX: number;
-  bodyScale: number;
   slot: OutfitSlot;
   key: string;
 };
 
 export type ResolvedOutfit = {
-  /** תמונת גוף מלאה (לוק / קומבו) — רק לגבר כשמתאים */
+  /** תמונת גוף מלאה (לוק / קומבו) */
   hero: ImageSourcePropType | null;
   heroTracksYaw: boolean;
   heroScale: number;
+  /** טרנספורם מידה על לוק Perfect-Fit (כתפיים קבועות) */
+  heroFit: GarmentTransform | null;
   overlays: ResolvedOverlay[];
-  /** תמיד true לאישה/ילדים — בסיס הדמות נשאר, רק בגדים מעליו */
+  /** true = בסיס persona + שכבות; false = hero מלא */
   overlayOnly: boolean;
 };
 
@@ -446,6 +450,17 @@ function pieceCatalogId(
 
 function fitFor(piece: OutfitPiece | undefined, heightCm: number): number {
   return garmentVisualScale(piece?.size, heightCm);
+}
+
+function heroFitFor(
+  piece: OutfitPiece | undefined,
+  heightCm: number,
+  persona: AvatarPersona,
+): GarmentTransform | null {
+  if (!piece) return null;
+  const slot = piece.slot === 'dress' ? 'dress' : piece.slot === 'bottom' ? 'outer' : piece.slot === 'top' ? 'top' : 'outer';
+  const layout = slotLayoutFor(persona, slot, 'cutout');
+  return garmentFitTransform(piece.size, heightCm, slot, layout);
 }
 
 function isUnderwearPiece(piece: OutfitPiece | undefined): boolean {
@@ -477,14 +492,13 @@ function pushOverlayLayer(
   if (!o) return;
   const slot = piece.slot;
   const layout = slotLayoutFor(persona, slot, baked ? 'baked' : 'cutout');
-  const hang = garmentHang(piece.size, heightCm, slot);
+  const fit = garmentFitTransform(piece.size, heightCm, slot, layout);
   extras.push({
     src: o,
-    scale: fitFor(piece, heightCm),
-    scaleY: hang.scaleY,
-    translateY: layout.y + hang.translateY,
-    translateX: layout.x,
-    bodyScale: layout.bodyScale,
+    scaleX: fit.scaleX,
+    scaleY: fit.scaleY,
+    translateY: fit.translateY,
+    translateX: fit.translateX,
     slot,
     key: `${id}-${piece.size ?? 'M'}-${slot}-${baked ? 'b' : 'c'}`,
   });
@@ -514,6 +528,7 @@ function resolveOverlayOnlyStack(
     hero: null,
     heroTracksYaw: false,
     heroScale: fitFor(dominant, heightCm),
+    heroFit: null,
     overlays,
     overlayOnly: true,
   };
@@ -542,6 +557,7 @@ export function resolveOutfitLook(
       hero: turnHero,
       heroTracksYaw: true,
       heroScale: fitFor(dominant, heightCm),
+      heroFit: heroFitFor(dominant, heightCm, persona),
       overlays: extras,
       overlayOnly: false,
     };
@@ -567,6 +583,7 @@ export function resolveOutfitLook(
       hero: null,
       heroTracksYaw: false,
       heroScale: 1,
+      heroFit: null,
       overlays: [],
       overlayOnly: true,
     };
@@ -601,6 +618,7 @@ export function resolveOutfitLook(
       hero: safeHero,
       heroTracksYaw,
       heroScale: fitFor(dominant, heightCm),
+      heroFit: safeHero ? heroFitFor(dominant, heightCm, persona) : null,
       overlays: extras,
       overlayOnly: !safeHero,
     };

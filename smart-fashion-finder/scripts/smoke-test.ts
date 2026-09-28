@@ -96,7 +96,7 @@ import {
   parseHeightInput,
   wearPiece,
 } from '../src/constants/avatar';
-import { garmentHang } from '../src/constants/garmentLayout';
+import { garmentHang, garmentFitTransform } from '../src/constants/garmentLayout';
 import type { OutfitPiece } from '../src/types';
 
 assert(heightScale(140, 'woman') < heightScale(165, 'woman'), '140cm doll shorter than 165cm');
@@ -116,6 +116,17 @@ const hangShortL = garmentHang('L', 140, 'top');
 const hangTallS = garmentHang('S', 178, 'top');
 assert(hangShortL.translateY > hangTallS.translateY, 'L on short body hangs lower');
 assert(hangShortL.scaleY > hangTallS.scaleY, 'L on short body is longer');
+
+const fitS = garmentFitTransform('S', 170, 'top', { bodyScale: 1, y: 0, x: 0 });
+const fitM = garmentFitTransform('M', 170, 'top', { bodyScale: 1, y: 0, x: 0 });
+const fitL = garmentFitTransform('L', 170, 'top', { bodyScale: 1, y: 0, x: 0 });
+assert(fitS.scaleY < fitM.scaleY, 'S top shorter than M');
+assert(fitL.scaleY > fitM.scaleY, 'L top longer than M');
+assert(fitS.scaleX < fitM.scaleX, 'S top narrower than M');
+assert(fitL.translateY > fitS.translateY, 'L hem hangs below S hem');
+const mShort = garmentFitTransform('M', 170, 'top', { bodyScale: 1, y: 0, x: 0 });
+const mTall = garmentFitTransform('M', 190, 'top', { bodyScale: 1, y: 0, x: 0 });
+assert(mShort.scaleY > mTall.scaleY, 'M on 170cm longer relative than M on 190cm');
 
 const shirtA: OutfitPiece = {
   id: 'p-tshirt-M',

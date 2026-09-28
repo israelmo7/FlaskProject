@@ -199,10 +199,27 @@ export function GameFashionAvatar({
       >
         {useHero ? (
           <Image
-            key={`hero-${profile.persona}-${frame}-${facingBack ? 'back' : 'front'}`}
+            key={`hero-${profile.persona}-${frame}-${facingBack ? 'back' : 'front'}-${resolved.heroFit?.scaleY ?? 1}`}
             source={resolved.hero!}
             resizeMode="contain"
-            style={{ position: 'absolute', width, height }}
+            style={{
+              position: 'absolute',
+              width,
+              height,
+              transform: resolved.heroFit
+                ? [
+                    {
+                      translateX:
+                        resolved.heroFit.translateX * width * overlayFlip,
+                    },
+                    { translateY: resolved.heroFit.translateY * height },
+                    {
+                      scaleX: resolved.heroFit.scaleX * overlayFlip,
+                    },
+                    { scaleY: resolved.heroFit.scaleY },
+                  ]
+                : undefined,
+            }}
           />
         ) : (
           <Image
@@ -212,30 +229,49 @@ export function GameFashionAvatar({
             style={{ position: 'absolute', width, height }}
           />
         )}
-        {clothed && (!useHero || resolved.overlays.length > 0)
-          ? resolved.overlays.map((ov, i) => {
-              const garmentScale = ov.scale * ov.bodyScale;
-              return (
-                <Image
-                  key={`ov-${ov.key}-${i}-${frame}-${facingBack ? 'back' : 'front'}`}
-                  source={ov.src}
-                  resizeMode="contain"
-                  style={{
-                    position: 'absolute',
-                    width,
-                    height,
-                    transform: [
-                      {
-                        translateX: ov.translateX * width * overlayFlip,
-                      },
-                      { translateY: ov.translateY * height },
-                      { scaleX: garmentScale * overlayFlip },
-                      { scaleY: garmentScale * ov.scaleY },
-                    ],
-                  }}
-                />
-              );
-            })
+        {clothed && !useHero
+          ? resolved.overlays.map((ov, i) => (
+              <Image
+                key={`ov-${ov.key}-${i}-${frame}-${facingBack ? 'back' : 'front'}`}
+                source={ov.src}
+                resizeMode="contain"
+                style={{
+                  position: 'absolute',
+                  width,
+                  height,
+                  transform: [
+                    {
+                      translateX: ov.translateX * width * overlayFlip,
+                    },
+                    { translateY: ov.translateY * height },
+                    { scaleX: ov.scaleX * overlayFlip },
+                    { scaleY: ov.scaleY },
+                  ],
+                }}
+              />
+            ))
+          : null}
+        {useHero && resolved.overlays.length > 0
+          ? resolved.overlays.map((ov, i) => (
+              <Image
+                key={`acc-${ov.key}-${i}-${frame}`}
+                source={ov.src}
+                resizeMode="contain"
+                style={{
+                  position: 'absolute',
+                  width,
+                  height,
+                  transform: [
+                    {
+                      translateX: ov.translateX * width * overlayFlip,
+                    },
+                    { translateY: ov.translateY * height },
+                    { scaleX: ov.scaleX * overlayFlip },
+                    { scaleY: ov.scaleY },
+                  ],
+                }}
+              />
+            ))
           : null}
       </View>
 
