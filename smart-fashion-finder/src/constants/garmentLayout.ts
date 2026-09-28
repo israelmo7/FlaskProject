@@ -13,7 +13,7 @@ export type SlotLayout = {
 
 export type GarmentFitMode = 'baked' | 'cutout';
 
-/** שכבות מצוירות של גבר (כוללות גוף) — כיול מדויק על בסיס הגבר */
+/** שכבות מצוירות של גבר (כוללות גוף) — כיול על בסיס הגבר */
 const MAN_BAKED: Record<OutfitSlot, SlotLayout> = {
   top: { bodyScale: 1, y: 0, x: 0 },
   bottom: { bodyScale: 1, y: 0, x: 0 },
@@ -24,74 +24,32 @@ const MAN_BAKED: Record<OutfitSlot, SlotLayout> = {
 };
 
 /**
- * בגדי cutout נקיים (בלי ידיים) — ממוקמים על אזור הגוף לפי persona.
- * ערכים מכוילים לתמונות layers/product על בסיסי 480×900.
+ * cutouts רשומים על 480×900 — סקייל עדין לפי persona בלבד.
  */
-const WOMAN_CUTOUT: Record<OutfitSlot, SlotLayout> = {
-  top: { bodyScale: 0.78, y: -0.02, x: 0 },
-  bottom: { bodyScale: 0.72, y: 0.08, x: 0 },
-  outer: { bodyScale: 0.82, y: -0.025, x: 0 },
-  dress: { bodyScale: 0.8, y: 0.02, x: 0 },
-  shoes: { bodyScale: 0.55, y: 0.28, x: 0 },
-  hat: { bodyScale: 0.42, y: -0.32, x: 0 },
-};
-
-const TEEN_GIRL_CUTOUT: Record<OutfitSlot, SlotLayout> = {
-  top: { bodyScale: 0.72, y: 0.0, x: 0 },
-  bottom: { bodyScale: 0.66, y: 0.1, x: 0 },
-  outer: { bodyScale: 0.76, y: -0.01, x: 0 },
-  dress: { bodyScale: 0.74, y: 0.03, x: 0 },
-  shoes: { bodyScale: 0.5, y: 0.3, x: 0 },
-  hat: { bodyScale: 0.4, y: -0.3, x: 0 },
-};
-
-const TEEN_BOY_CUTOUT: Record<OutfitSlot, SlotLayout> = {
-  top: { bodyScale: 0.76, y: -0.01, x: 0 },
-  bottom: { bodyScale: 0.7, y: 0.09, x: 0 },
-  outer: { bodyScale: 0.8, y: -0.015, x: 0 },
-  dress: { bodyScale: 0.76, y: 0.02, x: 0 },
-  shoes: { bodyScale: 0.52, y: 0.29, x: 0 },
-  hat: { bodyScale: 0.4, y: -0.3, x: 0 },
-};
-
-const GIRL_CUTOUT: Record<OutfitSlot, SlotLayout> = {
-  top: { bodyScale: 0.58, y: 0.04, x: 0 },
-  bottom: { bodyScale: 0.52, y: 0.14, x: 0 },
-  outer: { bodyScale: 0.6, y: 0.03, x: 0 },
-  dress: { bodyScale: 0.58, y: 0.06, x: 0 },
-  shoes: { bodyScale: 0.42, y: 0.32, x: 0 },
-  hat: { bodyScale: 0.36, y: -0.26, x: 0 },
-};
-
-const BOY_CUTOUT: Record<OutfitSlot, SlotLayout> = {
-  top: { bodyScale: 0.6, y: 0.03, x: 0 },
-  bottom: { bodyScale: 0.54, y: 0.13, x: 0 },
-  outer: { bodyScale: 0.62, y: 0.025, x: 0 },
-  dress: { bodyScale: 0.6, y: 0.05, x: 0 },
-  shoes: { bodyScale: 0.44, y: 0.31, x: 0 },
-  hat: { bodyScale: 0.36, y: -0.26, x: 0 },
-};
-
-/** גבר עם cutout (גיבוי אם אין baked) */
-const MAN_CUTOUT: Record<OutfitSlot, SlotLayout> = {
-  top: { bodyScale: 0.85, y: -0.03, x: 0 },
-  bottom: { bodyScale: 0.8, y: 0.06, x: 0 },
-  outer: { bodyScale: 0.9, y: -0.035, x: 0 },
-  dress: { bodyScale: 0.85, y: 0.01, x: 0 },
-  shoes: { bodyScale: 0.58, y: 0.27, x: 0 },
-  hat: { bodyScale: 0.44, y: -0.34, x: 0 },
-};
+function uniformSlots(
+  scale: number,
+  yShift = 0,
+): Record<OutfitSlot, SlotLayout> {
+  return {
+    top: { bodyScale: scale, y: yShift, x: 0 },
+    bottom: { bodyScale: scale * 0.98, y: yShift + 0.01, x: 0 },
+    outer: { bodyScale: scale * 1.03, y: yShift - 0.005, x: 0 },
+    dress: { bodyScale: scale, y: yShift + 0.005, x: 0 },
+    shoes: { bodyScale: scale * 0.95, y: yShift + 0.01, x: 0 },
+    hat: { bodyScale: scale * 0.92, y: yShift - 0.01, x: 0 },
+  };
+}
 
 const CUTOUT_BY_PERSONA: Record<
   AvatarPersona,
   Record<OutfitSlot, SlotLayout>
 > = {
-  man: MAN_CUTOUT,
-  woman: WOMAN_CUTOUT,
-  teenGirl: TEEN_GIRL_CUTOUT,
-  teenBoy: TEEN_BOY_CUTOUT,
-  girl: GIRL_CUTOUT,
-  boy: BOY_CUTOUT,
+  man: uniformSlots(1.0, 0),
+  woman: uniformSlots(0.92, 0.01),
+  teenBoy: uniformSlots(0.9, 0.015),
+  teenGirl: uniformSlots(0.86, 0.02),
+  boy: uniformSlots(0.72, 0.04),
+  girl: uniformSlots(0.7, 0.045),
 };
 
 export function slotLayoutFor(
@@ -104,7 +62,7 @@ export function slotLayoutFor(
   }
   return (
     CUTOUT_BY_PERSONA[persona]?.[slot] ??
-    MAN_CUTOUT[slot] ?? { bodyScale: 1, y: 0, x: 0 }
+    uniformSlots(1)[slot] ?? { bodyScale: 1, y: 0, x: 0 }
   );
 }
 
@@ -140,7 +98,6 @@ export function garmentHang(
 
 /**
  * סולם מידת הבגד בלבד — לא משנה את גודל הדמות.
- * M = 1, S קטן יותר, L גדול יותר.
  */
 export function garmentVisualScale(
   size: string | undefined,
