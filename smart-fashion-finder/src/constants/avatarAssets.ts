@@ -130,16 +130,22 @@ export const GARMENT_LAYER_IMAGES: Record<string, ImageSourcePropType> = {
   'p-hoodie': require('../../assets/images/product-hoodie.png'),
   'p-oxford': require('../../assets/images/layers/white-shirt-v2.png'),
   'p-turtleneck': require('../../assets/images/product-turtleneck.png'),
+  'p-polo': require('../../assets/images/product-polo.png'),
+  'p-linen': require('../../assets/images/product-linen.png'),
   'p-jeans': require('../../assets/images/layers/blue-jeans-v2.png'),
   'p-shorts': require('../../assets/images/product-denim-shorts.png'),
   'p-cargo': require('../../assets/images/layers/olive-pants-v2.png'),
   'p-sport': require('../../assets/images/product-sport-pants.png'),
+  'p-chinos': require('../../assets/images/product-chinos.png'),
+  'p-swim': require('../../assets/images/product-swim.png'),
   'p-denim-jkt': require('../../assets/images/layers/denim-jacket-v2.png'),
   'p-leather': require('../../assets/images/product-leather.png'),
+  'p-bomber': require('../../assets/images/product-bomber.png'),
   'p-dress': require('../../assets/images/product-dress.png'),
   'p-skirt': require('../../assets/images/product-dress.png'),
   'p-sneakers': require('../../assets/images/layers/sneakers.png'),
   'p-sandals': require('../../assets/images/layers/sneakers.png'),
+  'p-boots': require('../../assets/images/product-boots.png'),
   'p-hat': require('../../assets/images/layers/hat.png'),
   'p-cap': require('../../assets/images/layers/hat.png'),
   'p-blazer': require('../../assets/images/product-denim-jacket.png'),
@@ -147,7 +153,7 @@ export const GARMENT_LAYER_IMAGES: Record<string, ImageSourcePropType> = {
   'p-joggers': require('../../assets/images/product-sport-pants.png'),
   'p-cardigan': require('../../assets/images/product-turtleneck.png'),
   'p-tee-stripe': require('../../assets/images/product-polo.png'),
-  'p-tshirt-white': require('../../assets/images/layers/black-shirt-v2.png'),
+  'p-tshirt-white': require('../../assets/images/layers/white-shirt-v2.png'),
   'p-tshirt-navy': require('../../assets/images/layers/black-shirt-v2.png'),
   'p-hoodie-black': require('../../assets/images/product-hoodie.png'),
   'p-jeans-black': require('../../assets/images/layers/blue-jeans-v2.png'),
@@ -303,7 +309,15 @@ export function fittedLookForId(
   return FITTED_LOOKS_MAN[catalogId] ?? FITTED_LOOKS_WOMAN[catalogId] ?? null;
 }
 
-export function fittedOverlayForId(catalogId: string): ImageSourcePropType | null {
+/**
+ * שכבות מצוירות של גבר כוללות ידיים/עור — רק על דמות גבר.
+ * לשאר הדמויות מחזירים null כדי ליפול לשכבות בגד נקיות (בלי גוף).
+ */
+export function fittedOverlayForId(
+  catalogId: string,
+  persona?: AvatarPersona,
+): ImageSourcePropType | null {
+  if (persona && persona !== 'man') return null;
   return FITTED_OVERLAYS_MAN[catalogId] ?? null;
 }
 
@@ -365,14 +379,13 @@ function pushOverlayLayer(
   if (!piece || isUnderwearPiece(piece) || isSocksPiece(piece)) return;
   const id = pieceCatalogId(piece);
   if (!id || skipIds?.includes(id)) return;
-  // שכבה מכוילת → ואם אין, תמונת שכבה/מוצר כגיבוי (כל הדמויות)
+  // גבר: שכבה מצוירת על הגוף. אחרים: בגד נקי בלי ידיים/עור של גבר.
+  const baked = fittedOverlayForId(id, persona);
   const o =
-    fittedOverlayForId(id) ??
-    layerImageForPieceId(id) ??
-    layerImageForPieceId(piece.id);
+    baked ?? layerImageForPieceId(id) ?? layerImageForPieceId(piece.id);
   if (!o) return;
   const slot = piece.slot;
-  const layout = slotLayoutFor(persona, slot);
+  const layout = slotLayoutFor(persona, slot, baked ? 'baked' : 'cutout');
   const hang = garmentHang(piece.size, heightCm, slot);
   extras.push({
     src: o,
@@ -382,7 +395,7 @@ function pushOverlayLayer(
     translateX: layout.x,
     bodyScale: layout.bodyScale,
     slot,
-    key: `${id}-${piece.size ?? 'M'}-${slot}`,
+    key: `${id}-${piece.size ?? 'M'}-${slot}-${baked ? 'b' : 'c'}`,
   });
 }
 

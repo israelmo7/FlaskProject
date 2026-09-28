@@ -10,7 +10,7 @@ type BrandRowProps = {
   onSelect?: (brandId: string) => void;
 };
 
-/** שורת מותגים — קומפקטית ומהירה לסינון */
+/** שורת מותגים — כרטיסי לוגו מלבניים */
 export function BrandCircles({ selectedId, onSelect }: BrandRowProps) {
   return (
     <View className="mt-4">
@@ -32,21 +32,38 @@ export function BrandCircles({ selectedId, onSelect }: BrandRowProps) {
               className="items-center"
             >
               <View
-                className={`items-center justify-center rounded-full ${
-                  active ? 'border-2 border-[#E07A4F]' : 'border border-[#E8E4DE]'
-                }`}
                 style={{
-                  width: 56,
-                  height: 56,
+                  width: 92,
+                  height: 48,
+                  borderRadius: 10,
                   backgroundColor: brand.color,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingHorizontal: 8,
+                  borderWidth: active ? 2 : 1,
+                  borderColor: active ? '#E07A4F' : 'rgba(40,30,20,0.1)',
+                  shadowColor: '#1A1510',
+                  shadowOpacity: active ? 0.12 : 0.04,
+                  shadowRadius: 6,
+                  shadowOffset: { width: 0, height: 2 },
+                  elevation: active ? 3 : 1,
                 }}
               >
-                <Text className="font-bodyBold text-xs text-white">
-                  {brand.initials}
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    color: brand.ink,
+                    fontFamily: 'Fraunces_600SemiBold',
+                    fontSize: brand.wordmark.length > 6 ? 12 : 14,
+                    letterSpacing: brand.wordmark.length <= 4 ? 1.2 : 0.4,
+                    textAlign: 'center',
+                  }}
+                >
+                  {brand.wordmark}
                 </Text>
               </View>
               <Text
-                className="mt-1 max-w-[64px] text-center font-body text-[9px] text-ink-muted"
+                className="mt-1 max-w-[92px] text-center font-body text-[9px] text-ink-muted"
                 numberOfLines={1}
               >
                 {brand.name}

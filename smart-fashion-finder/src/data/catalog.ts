@@ -507,27 +507,32 @@ export const MENU_CATEGORIES: MenuCategory[] = [
 export type BrandCircle = {
   id: string;
   name: string;
+  /** רקע כרטיס הלוגו */
   color: string;
+  /** צבע טקסט הלוגו */
+  ink: string;
+  /** מילה/סימן מותג על הכרטיס */
+  wordmark: string;
   initials: string;
 };
 
 export const BRANDS: BrandCircle[] = [
-  { id: 'zara', name: 'Zara', color: '#1A1A1A', initials: 'ZA' },
-  { id: 'castro', name: 'Castro', color: '#C45C26', initials: 'CA' },
-  { id: 'hm', name: 'H&M', color: '#E50010', initials: 'HM' },
-  { id: 'bershka', name: 'Bershka', color: '#1C1C1C', initials: 'BE' },
-  { id: 'mango', name: 'Mango', color: '#C4A35A', initials: 'MG' },
-  { id: 'renuar', name: 'Renuar', color: '#2C3E50', initials: 'RE' },
-  { id: 'ae', name: 'American Eagle', color: '#B22222', initials: 'AE' },
-  { id: 'adidas', name: 'Adidas', color: '#000000', initials: 'AD' },
-  { id: 'nike', name: 'Nike', color: '#111111', initials: 'NK' },
-  { id: 'fox', name: 'Fox', color: '#E85D04', initials: 'FX' },
-  { id: 'golf', name: 'Golf', color: '#1B4332', initials: 'GO' },
-  { id: 'pullbear', name: 'Pull&Bear', color: '#3D3D3D', initials: 'PB' },
-  { id: 'footlocker', name: 'Foot Locker', color: '#E31837', initials: 'FL' },
-  { id: 'victoria', name: 'Victoria', color: '#8B4557', initials: 'VI' },
-  { id: 'eli-gadi', name: 'אלי וגדי', color: '#2E5A3C', initials: 'אג' },
-  { id: 'rami', name: 'רמי', color: '#1E3A5F', initials: 'רמ' },
+  { id: 'zara', name: 'Zara', color: '#111111', ink: '#FFFFFF', wordmark: 'ZARA', initials: 'ZA' },
+  { id: 'castro', name: 'Castro', color: '#F4EDE4', ink: '#C45C26', wordmark: 'CASTRO', initials: 'CA' },
+  { id: 'hm', name: 'H&M', color: '#E50010', ink: '#FFFFFF', wordmark: 'H&M', initials: 'HM' },
+  { id: 'bershka', name: 'Bershka', color: '#FFFFFF', ink: '#111111', wordmark: 'BERSHKA', initials: 'BE' },
+  { id: 'mango', name: 'Mango', color: '#F7F1E6', ink: '#8A6A2F', wordmark: 'MANGO', initials: 'MG' },
+  { id: 'renuar', name: 'Renuar', color: '#1F2A36', ink: '#F2E8D5', wordmark: 'RENUAR', initials: 'RE' },
+  { id: 'ae', name: 'American Eagle', color: '#B22222', ink: '#FFFFFF', wordmark: 'AE', initials: 'AE' },
+  { id: 'adidas', name: 'Adidas', color: '#000000', ink: '#FFFFFF', wordmark: 'adidas', initials: 'AD' },
+  { id: 'nike', name: 'Nike', color: '#111111', ink: '#FFFFFF', wordmark: 'NIKE', initials: 'NK' },
+  { id: 'fox', name: 'Fox', color: '#FFF5ED', ink: '#E85D04', wordmark: 'FOX', initials: 'FX' },
+  { id: 'golf', name: 'Golf', color: '#EAF3EE', ink: '#1B4332', wordmark: 'GOLF', initials: 'GO' },
+  { id: 'pullbear', name: 'Pull&Bear', color: '#2B2B2B', ink: '#F5F5F5', wordmark: 'P&B', initials: 'PB' },
+  { id: 'footlocker', name: 'Foot Locker', color: '#E31837', ink: '#FFFFFF', wordmark: 'FL', initials: 'FL' },
+  { id: 'victoria', name: 'Victoria', color: '#F8EEF1', ink: '#8B4557', wordmark: 'Victoria', initials: 'VI' },
+  { id: 'eli-gadi', name: 'אלי וגדי', color: '#E8F0EA', ink: '#2E5A3C', wordmark: 'אלי וגדי', initials: 'אג' },
+  { id: 'rami', name: 'רמי', color: '#E8EEF5', ink: '#1E3A5F', wordmark: 'רמי', initials: 'רמ' },
 ];
 
 export const PILOT_AREAS = [
