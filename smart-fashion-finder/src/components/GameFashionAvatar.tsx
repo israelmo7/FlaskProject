@@ -141,7 +141,8 @@ export function GameFashionAvatar({
         },
         onPanResponderRelease: () => {
           if (!enablePan) return;
-          applyYaw(yawRef.current >= 90 ? 180 : 0);
+          // נצמד לפריים הקרוב: 0 / 45 / 90 / 135 / 180
+          applyYaw(nearestTurnYaw(yawRef.current));
         },
       }),
     [enablePan],

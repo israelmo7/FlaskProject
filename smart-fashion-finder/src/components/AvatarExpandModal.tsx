@@ -102,47 +102,39 @@ export function AvatarExpandModal({
           </View>
         </View>
 
-        {/* כפתורי סיבוב ברורים — 0° / 180° */}
-        <View className="flex-row items-center justify-center gap-3 px-6 pb-4">
-          <Pressable
-            onPress={() => setYaw(0)}
-            className={`min-w-[120px] items-center rounded-2xl px-5 py-3.5 ${
-              !isBack ? 'bg-white' : 'bg-white/20'
-            }`}
-          >
-            <Ionicons
-              name="person-outline"
-              size={20}
-              color={!isBack ? '#12161C' : '#FFF'}
-            />
-            <Text
-              className={`mt-1 font-bodyBold text-sm ${
-                !isBack ? 'text-ink' : 'text-white'
-              }`}
-            >
-              {he.frontViewHint}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => setYaw(180)}
-            className={`min-w-[120px] items-center rounded-2xl px-5 py-3.5 ${
-              isBack ? 'bg-white' : 'bg-white/20'
-            }`}
-          >
-            <Ionicons
-              name="sync-outline"
-              size={20}
-              color={isBack ? '#12161C' : '#FFF'}
-            />
-            <Text
-              className={`mt-1 font-bodyBold text-sm ${
-                isBack ? 'text-ink' : 'text-white'
-              }`}
-            >
-              {he.rotate180Btn}
-            </Text>
-          </Pressable>
+        {/* כפתורי סיבוב — חזית / צד / גב */}
+        <View className="flex-row items-center justify-center gap-2 px-4 pb-4">
+          {(
+            [
+              { yaw: 0, label: he.frontViewHint, icon: 'person-outline' as const },
+              { yaw: 90, label: he.sideViewHint, icon: 'swap-horizontal-outline' as const },
+              { yaw: 180, label: he.rotate180Btn, icon: 'sync-outline' as const },
+            ] as const
+          ).map((btn) => {
+            const active = Math.abs(yaw - btn.yaw) < 20;
+            return (
+              <Pressable
+                key={btn.yaw}
+                onPress={() => setYaw(btn.yaw)}
+                className={`min-w-[100px] items-center rounded-2xl px-4 py-3 ${
+                  active ? 'bg-white' : 'bg-white/20'
+                }`}
+              >
+                <Ionicons
+                  name={btn.icon}
+                  size={20}
+                  color={active ? '#12161C' : '#FFF'}
+                />
+                <Text
+                  className={`mt-1 font-bodyBold text-sm ${
+                    active ? 'text-ink' : 'text-white'
+                  }`}
+                >
+                  {btn.label}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
 
         <Text className="mb-3 text-center font-body text-xs text-white/50">
