@@ -75,7 +75,22 @@ function pickTurnFrame(
   return table[180] ?? table[90] ?? table[0] ?? fallback;
 }
 
-/** לוקים מלאים — בגד לבוש על הדמות (חזית) */
+/**
+ * Fitted Looks — גבר (חזית).
+ *
+ * קובץ זה: `src/constants/avatarAssets.ts`
+ *
+ * ## איך מוסיפים PNG חדש אחרי העלאה ל־assets
+ * 1. שמרו קובץ ב־`assets/images/fit/man/<id>.png` (480×900, גוף+בגד)
+ * 2. הוסיפו שורה כאן, למשל:
+ *    `'p-tshirt-white': require('../../assets/images/fit/man/p-tshirt-white.png'),`
+ * 3. אם היה alias ב־`CATALOG_ALIASES` לאותו id — מחקו את ה־alias
+ *    כדי שהלוק החדש ייטען במקום ה־placeholder.
+ *
+ * ## Placeholders בינתיים (בלי PNG חדש)
+ * וריאנטים כמו `p-tshirt-white` ממופים ב־`CATALOG_ALIASES` ללוק קיים
+ * (למשל `p-tshirt`). אין צורך בשורה נפרדת כאן עד שיש asset ייעודי.
+ */
 export const FITTED_LOOKS_MAN: Record<string, ImageSourcePropType> = {
   'p-tshirt': require('../../assets/images/fit/man/p-tshirt.png'),
   'p-hoodie': require('../../assets/images/fit/man/p-hoodie.png'),
@@ -92,17 +107,75 @@ export const FITTED_LOOKS_MAN: Record<string, ImageSourcePropType> = {
   'p-denim-jkt': require('../../assets/images/fit/man/p-denim-jkt.png'),
   'p-leather': require('../../assets/images/fit/man/p-leather.png'),
   'p-bomber': require('../../assets/images/fit/man/p-bomber.png'),
+  // placeholder — עד שיהיה fit/man/p-suit.png ייעודי
+  'p-suit': require('../../assets/images/fit/turn/man_suit_0.png'),
   'p-sneakers': require('../../assets/images/fit/man/p-sneakers.png'),
   'p-boots': require('../../assets/images/fit/man/p-boots.png'),
   'p-hat': require('../../assets/images/fit/man/p-hat.png'),
-  // תחתון = בסיס הדמות (ללא בגדים עליונים)
   'p-underwear': require('../../assets/images/bases/turn/man_0.png'),
-  // גרביים — על בסיס הדמות (נראים עם הנעליים הקיימות)
   'p-socks': require('../../assets/images/bases/turn/man_0.png'),
+  // ——— aliases as explicit placeholders (same files; safe direct lookup) ———
+  'p-tshirt-white': require('../../assets/images/fit/man/p-oxford.png'),
+  'p-tshirt-navy': require('../../assets/images/fit/man/p-tshirt.png'),
+  'p-hoodie-black': require('../../assets/images/fit/man/p-hoodie.png'),
+  'p-tee-stripe': require('../../assets/images/fit/man/p-polo.png'),
+  'p-cardigan': require('../../assets/images/fit/man/p-turtleneck.png'),
+  'p-jeans-black': require('../../assets/images/fit/man/p-jeans.png'),
+  'p-jeans-light': require('../../assets/images/fit/man/p-jeans.png'),
+  'p-joggers': require('../../assets/images/fit/man/p-sport.png'),
+  'p-blazer': require('../../assets/images/fit/man/p-denim-jkt.png'),
+  'p-coat': require('../../assets/images/fit/man/p-leather.png'),
+  'p-skirt': require('../../assets/images/fit/woman/p-dress.png'),
+  'p-cap': require('../../assets/images/fit/man/p-hat.png'),
+  'p-sandals': require('../../assets/images/fit/man/p-sneakers.png'),
 };
 
+/**
+ * Fitted Looks — אישה.
+ *
+ * ייעודיים: dress / suit / linen. השאר = placeholders מנכסים קיימים
+ * (כולל לוקים של גבר כגיבוי זמני) עד שיועלו PNG של אישה.
+ *
+ * הוספת PNG ייעודי:
+ * `'p-tshirt': require('../../assets/images/fit/woman/p-tshirt.png'),`
+ */
 export const FITTED_LOOKS_WOMAN: Record<string, ImageSourcePropType> = {
   'p-dress': require('../../assets/images/fit/woman/p-dress.png'),
+  'p-skirt': require('../../assets/images/fit/woman/p-dress.png'),
+  'p-suit': require('../../assets/images/fit/turn/woman_suit_0.png'),
+  'p-linen': require('../../assets/images/fit/turn/woman_linen_jeans_0.png'),
+  // placeholders — reused existing assets (no new PNGs)
+  'p-tshirt': require('../../assets/images/fit/man/p-tshirt.png'),
+  'p-tshirt-white': require('../../assets/images/fit/man/p-oxford.png'),
+  'p-tshirt-navy': require('../../assets/images/fit/man/p-tshirt.png'),
+  'p-hoodie': require('../../assets/images/fit/man/p-hoodie.png'),
+  'p-hoodie-black': require('../../assets/images/fit/man/p-hoodie.png'),
+  'p-oxford': require('../../assets/images/fit/man/p-oxford.png'),
+  'p-turtleneck': require('../../assets/images/fit/man/p-turtleneck.png'),
+  'p-cardigan': require('../../assets/images/fit/man/p-turtleneck.png'),
+  'p-polo': require('../../assets/images/fit/man/p-polo.png'),
+  'p-tee-stripe': require('../../assets/images/fit/man/p-polo.png'),
+  'p-jeans': require('../../assets/images/fit/man/p-jeans.png'),
+  'p-jeans-black': require('../../assets/images/fit/man/p-jeans.png'),
+  'p-jeans-light': require('../../assets/images/fit/man/p-jeans.png'),
+  'p-shorts': require('../../assets/images/fit/man/p-shorts.png'),
+  'p-cargo': require('../../assets/images/fit/man/p-cargo.png'),
+  'p-sport': require('../../assets/images/fit/man/p-sport.png'),
+  'p-joggers': require('../../assets/images/fit/man/p-sport.png'),
+  'p-chinos': require('../../assets/images/fit/man/p-chinos.png'),
+  'p-swim': require('../../assets/images/fit/man/p-swim.png'),
+  'p-denim-jkt': require('../../assets/images/fit/man/p-denim-jkt.png'),
+  'p-blazer': require('../../assets/images/fit/man/p-denim-jkt.png'),
+  'p-leather': require('../../assets/images/fit/man/p-leather.png'),
+  'p-coat': require('../../assets/images/fit/man/p-leather.png'),
+  'p-bomber': require('../../assets/images/fit/man/p-bomber.png'),
+  'p-sneakers': require('../../assets/images/fit/man/p-sneakers.png'),
+  'p-sandals': require('../../assets/images/fit/man/p-sneakers.png'),
+  'p-boots': require('../../assets/images/fit/man/p-boots.png'),
+  'p-hat': require('../../assets/images/fit/man/p-hat.png'),
+  'p-cap': require('../../assets/images/fit/man/p-hat.png'),
+  'p-underwear': require('../../assets/images/bases/turn/woman_0.png'),
+  'p-socks': require('../../assets/images/bases/turn/woman_0.png'),
 };
 
 /** קומבואים מצוירים — מפתח topId|bottomId או outerId|bottomId */
@@ -269,7 +342,11 @@ export function layerImageForPieceId(pieceId: string): ImageSourcePropType | nul
   return null;
 }
 
-/** מזהי קטלוג חדשים → לוק/שכבה קיימת */
+/**
+ * Aliases / placeholders — מזהה קטלוג → מפתח ב־FITTED_LOOKS_* הקיים.
+ * בלי PNG חדש: וריאנט צבע/סגנון מצביע ללוק הקרוב ביותר שכבר יש.
+ * כשמעלים PNG ייעודי — מוסיפים ל־FITTED_LOOKS_* ומוחקים מכאן.
+ */
 const CATALOG_ALIASES: Record<string, string> = {
   'p-tshirt-white': 'p-tshirt',
   'p-tshirt-navy': 'p-tshirt',
@@ -392,12 +469,35 @@ export function turnBaseForPersona(
   }
 }
 
+/**
+ * מחזיר Fitted Look לפי מזהה קטלוג.
+ * פותר aliases, לא זורק — מחזיר null רק אם אין שום placeholder.
+ */
 export function fittedLookForId(
   catalogId: string,
   female: boolean,
 ): ImageSourcePropType | null {
-  if (female && FITTED_LOOKS_WOMAN[catalogId]) return FITTED_LOOKS_WOMAN[catalogId];
-  return FITTED_LOOKS_MAN[catalogId] ?? FITTED_LOOKS_WOMAN[catalogId] ?? null;
+  try {
+    const aliased = CATALOG_ALIASES[catalogId] ?? catalogId;
+    if (female) {
+      return (
+        FITTED_LOOKS_WOMAN[catalogId] ??
+        FITTED_LOOKS_WOMAN[aliased] ??
+        FITTED_LOOKS_MAN[catalogId] ??
+        FITTED_LOOKS_MAN[aliased] ??
+        null
+      );
+    }
+    return (
+      FITTED_LOOKS_MAN[catalogId] ??
+      FITTED_LOOKS_MAN[aliased] ??
+      FITTED_LOOKS_WOMAN[catalogId] ??
+      FITTED_LOOKS_WOMAN[aliased] ??
+      null
+    );
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -570,14 +670,13 @@ export function resolveOutfitLook(
     };
   }
 
-  /** Fitted Look בלבד — כובע כשכבה יחידה מותרת; בלי overlay בגדים */
+  /** Fitted Look בלבד — כובע אופציונלי; אם אין hero → overlay stack בטוח */
   const withFittedHero = (
     hero: ImageSourcePropType | null,
     heroTracksYaw: boolean,
     _heroPiece: OutfitPiece | undefined,
   ): ResolvedOutfit => {
     const extras: ResolvedOverlay[] = [];
-    if (hero) pushOverlayLayer(extras, layers.hat, heightCm, persona);
     const safeHero: ImageSourcePropType | null =
       hero ??
       (outerId ? fittedLookForId(outerId, female) : null) ??
@@ -587,13 +686,18 @@ export function resolveOutfitLook(
         : null) ??
       (dressId ? fittedLookForId(dressId, female) : null) ??
       null;
+    if (!safeHero) {
+      // Fallback — לא קורסים; בסיס persona + שכבות cutout 1:1
+      return resolveOverlayOnlyStack(layers, heightCm, persona);
+    }
+    pushOverlayLayer(extras, layers.hat, heightCm, persona);
     return {
       hero: safeHero,
       heroTracksYaw,
       heroScale: 1,
       heroFit: null,
-      overlays: safeHero ? extras : [],
-      overlayOnly: !safeHero,
+      overlays: extras,
+      overlayOnly: false,
     };
   };
 

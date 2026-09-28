@@ -119,6 +119,67 @@ assert(fitS.scaleX === 1 && fitS.scaleY === 1, 'standard fit: S identity');
 assert(fitL.scaleX === fitS.scaleX && fitL.scaleY === fitS.scaleY, 'standard fit: L == S visually');
 assert(fitL.translateY === fitS.translateY, 'standard fit: no hem shift by size');
 
+// Fitted Look key coverage — parse avatarAssets.ts (avoid require() of PNGs in Node)
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+const CATALOG_IDS = [
+  'p-tshirt',
+  'p-hoodie',
+  'p-oxford',
+  'p-turtleneck',
+  'p-polo',
+  'p-linen',
+  'p-jeans',
+  'p-shorts',
+  'p-cargo',
+  'p-sport',
+  'p-chinos',
+  'p-swim',
+  'p-denim-jkt',
+  'p-leather',
+  'p-bomber',
+  'p-dress',
+  'p-sneakers',
+  'p-boots',
+  'p-hat',
+  'p-underwear',
+  'p-socks',
+  'p-tshirt-white',
+  'p-tshirt-navy',
+  'p-hoodie-black',
+  'p-tee-stripe',
+  'p-cardigan',
+  'p-jeans-black',
+  'p-jeans-light',
+  'p-joggers',
+  'p-suit',
+  'p-blazer',
+  'p-coat',
+  'p-skirt',
+  'p-cap',
+  'p-sandals',
+] as const;
+
+const avatarAssetsSrc = readFileSync(
+  join(__dirname, '../src/constants/avatarAssets.ts'),
+  'utf8',
+);
+const manBlock = avatarAssetsSrc.slice(
+  avatarAssetsSrc.indexOf('export const FITTED_LOOKS_MAN'),
+  avatarAssetsSrc.indexOf('export const FITTED_LOOKS_WOMAN'),
+);
+const womanBlock = avatarAssetsSrc.slice(
+  avatarAssetsSrc.indexOf('export const FITTED_LOOKS_WOMAN'),
+  avatarAssetsSrc.indexOf('export const FITTED_COMBOS'),
+);
+for (const id of CATALOG_IDS) {
+  const inMan = manBlock.includes(`'${id}'`);
+  const inWoman = womanBlock.includes(`'${id}'`);
+  assert(inMan || inWoman, `Fitted Look key/placeholder for ${id}`);
+  assert(inWoman, `woman Fitted Look key/placeholder for ${id}`);
+}
+
 const shirtA: OutfitPiece = {
   id: 'p-tshirt-M',
   label: 'טי א',
