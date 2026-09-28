@@ -8,7 +8,6 @@ import type {
 import { usesPaintedAdultLooks } from '@/constants/avatar';
 import {
   garmentFitTransform,
-  garmentVisualScale,
   slotLayoutFor,
   type GarmentTransform,
 } from '@/constants/garmentLayout';
@@ -448,38 +447,17 @@ function pieceCatalogId(
   return piece ? catalogIdFromPieceId(piece.id) : null;
 }
 
-function fitFor(piece: OutfitPiece | undefined, heightCm: number): number {
-  return garmentVisualScale(piece?.size, heightCm);
+function fitFor(_piece?: OutfitPiece, _heightCm?: number): number {
+  return 1;
 }
 
+/** Standard Fit — בלי affine על Fitted Look */
 function heroFitFor(
-  piece: OutfitPiece | undefined,
-  heightCm: number,
-  _persona: AvatarPersona,
+  _piece?: OutfitPiece,
+  _heightCm?: number,
+  _persona?: AvatarPersona,
 ): GarmentTransform | null {
-  if (!piece) return null;
-  // Perfect-Fit = גוף+בגד בתמונה אחת — לא מצמצמים את כל הדמות.
-  // רק אורך/שוליים עדינים לפי מידה (דעיכה 35%).
-  const slot =
-    piece.slot === 'dress'
-      ? 'dress'
-      : piece.slot === 'bottom'
-        ? 'outer'
-        : piece.slot === 'top'
-          ? 'top'
-          : 'outer';
-  const raw = garmentFitTransform(piece.size, heightCm, slot, {
-    bodyScale: 1,
-    y: 0,
-    x: 0,
-  });
-  const damp = (v: number) => 1 + (v - 1) * 0.35;
-  return {
-    scaleX: Math.min(1.1, Math.max(0.95, damp(raw.scaleX))),
-    scaleY: Math.min(1.14, Math.max(0.92, damp(raw.scaleY))),
-    translateX: raw.translateX * 0.35,
-    translateY: raw.translateY * 0.35,
-  };
+  return null;
 }
 
 function isUnderwearPiece(piece: OutfitPiece | undefined): boolean {
@@ -510,8 +488,9 @@ function pushOverlayLayer(
     baked ?? layerImageForPieceId(id) ?? layerImageForPieceId(piece.id);
   if (!o) return;
   const slot = piece.slot;
+  // Standard Fit: יישור 1:1 לגוף — בלי scale לפי מידה/גובה
   const layout = slotLayoutFor(persona, slot, baked ? 'baked' : 'cutout');
-  const fit = garmentFitTransform(piece.size, heightCm, slot, layout);
+  const fit = garmentFitTransform(undefined, heightCm, slot, layout);
   extras.push({
     src: o,
     scaleX: fit.scaleX,
@@ -519,7 +498,7 @@ function pushOverlayLayer(
     translateY: fit.translateY,
     translateX: fit.translateX,
     slot,
-    key: `${id}-${piece.size ?? 'M'}-${slot}-${baked ? 'b' : 'c'}`,
+    key: `${id}-std-${slot}-${baked ? 'b' : 'c'}`,
   });
 }
 

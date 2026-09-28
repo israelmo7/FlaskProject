@@ -70,31 +70,25 @@ export function personaToGenderFilter(persona: AvatarPersona): GenderFilter {
   return isFemalePersona(persona) ? 'Women' : 'Men';
 }
 
-export function buildWidthScale(build: BodyBuild): number {
-  switch (build) {
-    case 'slim':
-      return 0.82;
-    case 'average':
-      return 1;
-    case 'full':
-      return 1.18;
-    case 'plus':
-      return 1.35;
-  }
+/**
+ * Standard Fit — מבנה גוף לא משנה את רוחב הדמות הוויזואלי.
+ * (נשמר לפרופיל/מלאי בלבד)
+ */
+export function buildWidthScale(_build: BodyBuild): number {
+  return 1;
 }
 
-/** גובה ייחוס אבסולוטי (ס״מ) — כל הדמויות על אותו סולם */
+/** גובה ייחוס אבסולוטי (ס״מ) — מטא־דאטה בלבד */
 export const ABS_REF_HEIGHT_CM = 165;
 
 /**
- * סולם גובה הבובה לפי ס״מ אמיתיים.
- * 1.70מ׳ מול 1.85מ׳ — הבדל סימטרי וברור בפרופורציות הדמות.
+ * Standard Fit — גובה הפרופיל לא משנה את גודל הדמות הוויזואלי.
  */
-export function heightScale(heightCm: number, _persona?: AvatarPersona): number {
-  const raw = heightCm / ABS_REF_HEIGHT_CM;
-  // הגזמה קלה כדי שהבדלי גובה יהיו קריאים ב־UI
-  const eased = 1 + (raw - 1) * 1.18;
-  return Math.min(1.5, Math.max(0.55, eased));
+export function heightScale(
+  _heightCm: number,
+  _persona?: AvatarPersona,
+): number {
+  return 1;
 }
 
 /** המרת קלט גובה: 1.78 → 178, או 178 כמו שהוא */
@@ -111,64 +105,30 @@ export function formatHeightMeters(heightCm: number): string {
   return `${(heightCm / 100).toFixed(2)} מ׳`;
 }
 
-/** כמה הבגד גדול/קטן ביחס לגובה הגוף */
-export function sizeRelativeToHeight(size: string, heightCm: number): number {
-  const ideal =
-    heightCm < 140 ? 0 : heightCm < 155 ? 1 : heightCm < 168 ? 2 : heightCm < 178 ? 3 : heightCm < 188 ? 4 : 5;
-  const map: Record<string, number> = {
-    XS: 0,
-    S: 1,
-    M: 2,
-    L: 3,
-    XL: 4,
-    '30': 1,
-    '32': 2,
-    '34': 3,
-    '36': 4,
-    '36S': 2,
-    '37': 2,
-    '38': 2,
-    '39': 3,
-    '40': 3,
-    '41': 3,
-    '42': 4,
-    '43': 4,
-  };
-  const idx = map[size.toUpperCase()] ?? 2;
-  const delta = idx - Math.min(4, ideal);
-  // S על 178ס״מ → קטן יותר · L על 165 → גדול יותר
-  return Math.min(1.35, Math.max(0.68, 1 + delta * 0.12));
+/** @deprecated Standard Fit — תמיד 1 */
+export function sizeRelativeToHeight(_size: string, _heightCm: number): number {
+  return 1;
 }
 
-/** סולם מידה אבסולוטי — L גדול מ־S */
-export function sizeFitScale(size: string): number {
-  const s = size.toUpperCase();
-  if (s === 'XS' || s === '30') return 0.78;
-  if (s === 'S' || s === '32' || s === '36' || s === '37') return 0.88;
-  if (s === 'M' || s === '34' || s === '38' || s === '39') return 1;
-  if (s === 'L' || s === '40' || s === '41') return 1.14;
-  if (s === 'XL' || s === '42' || s === '43' || Number(s) >= 42) return 1.26;
+/** @deprecated Standard Fit — תמיד 1 (מידה נשמרת למלאי בלבד) */
+export function sizeFitScale(_size: string): number {
+  return 1;
+}
+
+/** @deprecated Standard Fit — תמיד 1 */
+export function garmentFitOnBody(
+  _size?: string,
+  _heightCm?: number,
+): number {
   return 1;
 }
 
 /**
- * התאמת בגד לבובה: מידת הפריט × התאמה לגובה.
- * L על אותו גוף נראה גדול יותר מ־S.
+ * Fitted Look כברירת מחדל לגבר/אישה — תמונת גוף+בגד מיושרת,
+ * בלי שכבות overlay עם scale/translate דינמי.
  */
-export function garmentFitOnBody(size: string | undefined, heightCm: number): number {
-  if (!size) return 1;
-  const bySize = sizeFitScale(size);
-  const byHeight = sizeRelativeToHeight(size, heightCm);
-  // ממוצע משוקלל — הבדל מידות בולט, עדיין יושב על הגוף
-  return Math.min(1.4, Math.max(0.65, bySize * 0.55 + byHeight * 0.45));
-}
-
-/**
- * לוקים מלאים (גוף+בגד) כבויים — תמיד בסיס persona + שכבות בגד.
- * כך הגוף לא קטן/גדל עם מידת הבגד, ורק הפריט משתנה.
- */
-export function usesPaintedAdultLooks(_persona: AvatarPersona): boolean {
-  return false;
+export function usesPaintedAdultLooks(persona: AvatarPersona): boolean {
+  return persona === 'man' || persona === 'woman';
 }
 
 export function categoryToSlot(category: GarmentCategory): OutfitSlot {
