@@ -33,19 +33,47 @@ const MAN_TURN: Record<TurnYaw, ImageSourcePropType> = {
   180: require('../../assets/images/bases/turn/man_180.png'),
 };
 
-const WOMAN_TURN: Partial<Record<TurnYaw, ImageSourcePropType>> = {
+const WOMAN_TURN: Record<TurnYaw, ImageSourcePropType> = {
   0: require('../../assets/images/bases/turn/woman_0.png'),
+  45: require('../../assets/images/bases/turn/woman_45.png'),
   90: require('../../assets/images/bases/turn/woman_90.png'),
+  135: require('../../assets/images/bases/turn/woman_135.png'),
   180: require('../../assets/images/bases/turn/woman_180.png'),
 };
 
-/** היפוך אופקי מוכן מראש לילדה/ילד/נער — גיבוי ל־180° בלי פריימי גב מצוירים */
-const MIRROR_TURN_180: Partial<Record<AvatarPersona, ImageSourcePropType>> = {
-  girl: require('../../assets/images/bases/turn/girl_180.png'),
-  boy: require('../../assets/images/bases/turn/boy_180.png'),
-  teenGirl: require('../../assets/images/bases/turn/teenGirl_180.png'),
-  teenBoy: require('../../assets/images/bases/turn/teenBoy_180.png'),
+/** פריימי סיבוב פוטוריאליסטיים — ילדה/ילד/נער (0 / 90 / 180) */
+const GIRL_TURN: Partial<Record<TurnYaw, ImageSourcePropType>> = {
+  0: require('../../assets/images/bases/turn/girl_0.png'),
+  90: require('../../assets/images/bases/turn/girl_90.png'),
+  180: require('../../assets/images/bases/turn/girl_180.png'),
 };
+const BOY_TURN: Partial<Record<TurnYaw, ImageSourcePropType>> = {
+  0: require('../../assets/images/bases/turn/boy_0.png'),
+  90: require('../../assets/images/bases/turn/boy_90.png'),
+  180: require('../../assets/images/bases/turn/boy_180.png'),
+};
+const TEEN_GIRL_TURN: Partial<Record<TurnYaw, ImageSourcePropType>> = {
+  0: require('../../assets/images/bases/turn/teenGirl_0.png'),
+  90: require('../../assets/images/bases/turn/teenGirl_90.png'),
+  180: require('../../assets/images/bases/turn/teenGirl_180.png'),
+};
+const TEEN_BOY_TURN: Partial<Record<TurnYaw, ImageSourcePropType>> = {
+  0: require('../../assets/images/bases/turn/teenBoy_0.png'),
+  90: require('../../assets/images/bases/turn/teenBoy_90.png'),
+  180: require('../../assets/images/bases/turn/teenBoy_180.png'),
+};
+
+function pickTurnFrame(
+  table: Partial<Record<TurnYaw, ImageSourcePropType>>,
+  yaw: number,
+  fallback: ImageSourcePropType,
+): ImageSourcePropType {
+  const frame = nearestTurnYaw(yaw);
+  if (table[frame]) return table[frame]!;
+  if (frame <= 45) return table[0] ?? fallback;
+  if (frame <= 135) return table[90] ?? table[0] ?? fallback;
+  return table[180] ?? table[90] ?? table[0] ?? fallback;
+}
 
 /** לוקים מלאים — בגד לבוש על הדמות (חזית) */
 export const FITTED_LOOKS_MAN: Record<string, ImageSourcePropType> = {
@@ -260,48 +288,40 @@ export function nearestTurnYaw(yaw: number): TurnYaw {
   return best;
 }
 
-/** האם לדמות יש פריימי סיבוב ייעודיים (קדמי/אחורי) */
-export function personaHasTurnFrames(persona: AvatarPersona): boolean {
-  // כולם: גבר/אישה מצוירים; ילדה/ילד/נער — בסיס 180° ייעודי
-  return (
-    persona === 'man' ||
-    persona === 'woman' ||
-    persona === 'girl' ||
-    persona === 'boy' ||
-    persona === 'teenGirl' ||
-    persona === 'teenBoy'
-  );
+/** האם לדמות יש פריימי סיבוב ייעודיים */
+export function personaHasTurnFrames(_persona: AvatarPersona): boolean {
+  return true;
 }
 
-/** פריימי גב מצוירים אמיתיים (לא רק בסיס 180) — בלי היפוך שכבות בגד */
-export function personaHasPaintedTurn(persona: AvatarPersona): boolean {
-  return persona === 'man' || persona === 'woman';
+/** פריימי סיבוב מצוירים אמיתיים (לא היפוך CSS) — כל ה־personas */
+export function personaHasPaintedTurn(_persona: AvatarPersona): boolean {
+  return true;
 }
 
 /**
- * בסיס הדמות לפי persona — ילדה/ילד/נער מקבלים את התמונה שלהם,
- * לא גבר/אישה. ב־180° משתמשים ב־PNG מורחב (מראה) כשאין פריימי גב.
+ * בסיס הדמות לפי persona + זווית — פריימים פוטוריאליסטיים עקביים.
  */
 export function turnBaseForPersona(
   persona: AvatarPersona,
   yaw: number,
 ): ImageSourcePropType {
-  if (persona === 'man') {
-    return MAN_TURN[nearestTurnYaw(yaw)];
+  const fallback = PERSONA_BASE_IMAGES[persona];
+  switch (persona) {
+    case 'man':
+      return MAN_TURN[nearestTurnYaw(yaw)];
+    case 'woman':
+      return WOMAN_TURN[nearestTurnYaw(yaw)];
+    case 'girl':
+      return pickTurnFrame(GIRL_TURN, yaw, fallback);
+    case 'boy':
+      return pickTurnFrame(BOY_TURN, yaw, fallback);
+    case 'teenGirl':
+      return pickTurnFrame(TEEN_GIRL_TURN, yaw, fallback);
+    case 'teenBoy':
+      return pickTurnFrame(TEEN_BOY_TURN, yaw, fallback);
+    default:
+      return fallback;
   }
-  if (persona === 'woman') {
-    const frame = nearestTurnYaw(yaw);
-    const exact = WOMAN_TURN[frame];
-    if (exact) return exact;
-    if (frame <= 45) return WOMAN_TURN[0]!;
-    if (frame <= 135) return WOMAN_TURN[90]!;
-    return WOMAN_TURN[180]!;
-  }
-  // ילד / ילדה / נער / נערה — בסיס ייעודי; ב־180° קובץ מראה מוכן
-  if (yaw > 90 && MIRROR_TURN_180[persona]) {
-    return MIRROR_TURN_180[persona]!;
-  }
-  return PERSONA_BASE_IMAGES[persona];
 }
 
 export function fittedLookForId(
