@@ -458,9 +458,25 @@ function heroFitFor(
   persona: AvatarPersona,
 ): GarmentTransform | null {
   if (!piece) return null;
-  const slot = piece.slot === 'dress' ? 'dress' : piece.slot === 'bottom' ? 'outer' : piece.slot === 'top' ? 'top' : 'outer';
-  const layout = slotLayoutFor(persona, slot, 'cutout');
-  return garmentFitTransform(piece.size, heightCm, slot, layout);
+  // Perfect-Fit = גוף+בגד בתמונה אחת — לא מצמצמים את כל הדמות.
+  // רק אורך/שוליים עדינים לפי מידה (דעיכה 35%).
+  const slot =
+    piece.slot === 'dress'
+      ? 'dress'
+      : piece.slot === 'bottom'
+        ? 'outer'
+        : piece.slot === 'top'
+          ? 'top'
+          : 'outer';
+  const layout = { bodyScale: 1, y: 0, x: 0 };
+  const raw = garmentFitTransform(piece.size, heightCm, slot, layout);
+  const damp = (v: number) => 1 + (v - 1) * 0.35;
+  return {
+    scaleX: Math.min(1.1, Math.max(0.95, damp(raw.scaleX))),
+    scaleY: Math.min(1.14, Math.max(0.92, damp(raw.scaleY))),
+    translateX: raw.translateX * 0.35,
+    translateY: raw.translateY * 0.35,
+  };
 }
 
 function isUnderwearPiece(piece: OutfitPiece | undefined): boolean {
