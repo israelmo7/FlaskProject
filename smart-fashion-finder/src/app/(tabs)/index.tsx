@@ -22,11 +22,13 @@ import {
   removeSlot,
   wearPiece,
 } from '@/constants/avatar';
+import { catalogIdFromPieceId } from '@/constants/avatarAssets';
 import { DEFAULT_FILTERS } from '@/constants/filters';
 import { PRODUCTS, areaLabelForId, type ProductCard } from '@/data/catalog';
 import { useGarmentRecognition } from '@/hooks/useGarmentRecognition';
 import { useSavedProfile } from '@/hooks/useSavedProfile';
 import { he } from '@/i18n/he';
+import { isVtonPocGarment, requestVtonTryOn } from '@/services/vton';
 import type {
   GarmentAnalysis,
   GarmentCategory,
@@ -70,6 +72,9 @@ export default function HomeScreen() {
   const [listening, setListening] = useState(false);
   const [filters] = useState<SearchFilters>(DEFAULT_FILTERS);
   const [detailProduct, setDetailProduct] = useState<ProductCard | null>(null);
+  const [vtonHeroUri, setVtonHeroUri] = useState<string | null>(null);
+  const [vtonLoading, setVtonLoading] = useState(false);
+  const [vtonStatus, setVtonStatus] = useState<string | null>(null);
 
   useEffect(() => {
     const id = typeof params.openProductId === 'string' ? params.openProductId : undefined;
@@ -131,6 +136,8 @@ export default function HomeScreen() {
 
   const onDressFromDetail = (product: ProductCard, size: string) => {
     updatePreferredSize(size);
+    setVtonHeroUri(null);
+    setVtonStatus(null);
     dressPiece(productToPiece(product, size));
   };
 
@@ -138,6 +145,36 @@ export default function HomeScreen() {
     updatePreferredSize(size);
     addPieceToCart(productToPiece(product, size));
     Alert.alert(he.addedToCart, `${product.title} · ${size}`);
+  };
+
+  const onVtonTryOn = async (product: ProductCard, size: string) => {
+    if (!isVtonPocGarment(product.id)) return;
+    updatePreferredSize(size);
+    dressPiece(productToPiece(product, size));
+    setVtonLoading(true);
+    setVtonStatus(he.dressVtonLoading);
+    try {
+      const result = await requestVtonTryOn({
+        persona: profile.persona,
+        garmentId: product.id,
+        category: 'upper_body',
+        garmentDes: product.title,
+        yaw: 0,
+      });
+      setVtonHeroUri(result.imageUrl);
+      setVtonStatus(
+        result.mode === 'live' ? he.dressVtonDoneLive : he.dressVtonDoneMock,
+      );
+    } catch (err) {
+      setVtonHeroUri(null);
+      setVtonStatus(null);
+      Alert.alert(
+        he.dressVtonFailed,
+        err instanceof Error ? err.message : String(err),
+      );
+    } finally {
+      setVtonLoading(false);
+    }
   };
 
   const onSearchSubmit = () => {
@@ -279,6 +316,8 @@ export default function HomeScreen() {
         onClose={() => setDetailProduct(null)}
         onDressAvatar={onDressFromDetail}
         onAddToCart={onAddToCartFromDetail}
+        onVtonTryOn={(p, s) => void onVtonTryOn(p, s)}
+        vtonLoading={vtonLoading}
         preferredSize={preferredSize || 'M'}
       />
 
@@ -290,11 +329,18 @@ export default function HomeScreen() {
         <HeroAvatarSection
           profile={profile}
           layers={layers}
-          onRemovePiece={(piece) =>
-            setLayers((prev) => removeSlot(prev, piece.slot))
-          }
+          onRemovePiece={(piece) => {
+            setLayers((prev) => removeSlot(prev, piece.slot));
+            const id = catalogIdFromPieceId(piece.id);
+            if (isVtonPocGarment(id)) {
+              setVtonHeroUri(null);
+              setVtonStatus(null);
+            }
+          }}
           onFindNearMe={goToStores}
           onSaveLook={onSaveLook}
+          vtonHeroUri={vtonHeroUri}
+          vtonStatus={vtonStatus}
         />
 
         <BrandCircles

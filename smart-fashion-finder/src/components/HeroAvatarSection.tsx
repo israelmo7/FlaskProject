@@ -10,6 +10,8 @@ type Props = {
   onRemovePiece?: (piece: OutfitPiece) => void;
   onFindNearMe?: () => void;
   onSaveLook?: () => number;
+  vtonHeroUri?: string | null;
+  vtonStatus?: string | null;
 };
 
 /** גיבור בית — במה לבובה + פעולות */
@@ -19,6 +21,8 @@ export function HeroAvatarSection({
   onRemovePiece,
   onFindNearMe,
   onSaveLook,
+  vtonHeroUri = null,
+  vtonStatus = null,
 }: Props) {
   const { width } = useWindowDimensions();
   const compact = width < 360;
@@ -65,6 +69,7 @@ export function HeroAvatarSection({
           layers={layers}
           onRemovePiece={onRemovePiece}
           hideMeta
+          vtonHeroUri={vtonHeroUri}
         />
 
         <View
@@ -94,6 +99,11 @@ export function HeroAvatarSection({
               {he.findNearMe}
             </Text>
           </Pressable>
+          {vtonStatus ? (
+            <Text className="mt-1 max-w-[160px] text-left font-body text-[10px] text-ink-muted">
+              {vtonStatus}
+            </Text>
+          ) : null}
         </View>
       </View>
     </LinearGradient>

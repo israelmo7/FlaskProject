@@ -1,0 +1,15 @@
+{
+  "name": "stylenear-vton-proxy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node vton-proxy.mjs",
+    "dev": "node --watch vton-proxy.mjs"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "replicate": "^1.0.1"
+  }
+}
