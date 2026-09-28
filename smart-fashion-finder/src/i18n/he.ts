@@ -43,9 +43,9 @@ export const he = {
   productDetails: 'פרטי הפריט',
 
   chat: 'צ׳אט AI',
-  chatTitle: 'סטייליסט AI',
-  chatSubtitle: 'תארו מה אתם מחפשים — נמצא אופציות לידכם',
-  chatPlaceholder: 'למשל: חולצה שחורה עד 150…',
+  chatTitle: 'עוזר קניות AI',
+  chatSubtitle: 'חפשו בקטלוג בשפה חופשית — נציג פריטים מתאימים',
+  chatPlaceholder: 'למשל: חולצה לבנה מכופתרת, מעיל חורף…',
   chatSend: 'שליחה',
 
   areaTitle: 'בחירת אזור',
