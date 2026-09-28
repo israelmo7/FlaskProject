@@ -390,6 +390,17 @@ export const PRODUCTS: ProductCard[] = [
     ...storeFields('store-adidas-carmel'),
   },
   {
+    id: 'p-suit',
+    title: 'חליפת שלושה חלקים שחורה',
+    price: 899,
+    image: require('../../assets/images/product-suit.png'),
+    category: 'Outerwear',
+    color: 'Black',
+    subcategory: 'חליפה',
+    brand: 'Renuar',
+    ...storeFields('store-golf-gc'),
+  },
+  {
     id: 'p-blazer',
     title: 'בלייזר כחול',
     price: 329,

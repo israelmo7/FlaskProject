@@ -162,11 +162,12 @@ export function GameFashionAvatar({
   const bodyScaleX = Math.min(1.18, Math.max(0.82, wScale));
   const facingBack = yaw > 90;
   const frame = nearestTurnYaw(yaw);
-  // ילדים/נערים: בסיס 180° ייעודי; שכבות בגד בהיפוך קל כשאין לוק מצויר מלא
   const mirrorOverlays = facingBack && !paintedTurn;
   const baseSrc = turnBaseForPersona(profile.persona, yaw);
   const viewLabel = facingBack ? he.backViewHint : '';
   const overlayFlip = mirrorOverlays ? -1 : 1;
+  // Perfect-Fit מצויר: גוף+בגד כתמונה אחת לפי זווית (גודל גוף קבוע)
+  const useHero = Boolean(resolved.hero && !resolved.overlayOnly);
 
   return (
     <View
@@ -195,13 +196,22 @@ export function GameFashionAvatar({
           transform: [{ scaleX: bodyScaleX }],
         }}
       >
-        <Image
-          key={`base-${profile.persona}-${frame}-${facingBack ? 'back' : 'front'}`}
-          source={baseSrc}
-          resizeMode="contain"
-          style={{ position: 'absolute', width, height }}
-        />
-        {clothed
+        {useHero ? (
+          <Image
+            key={`hero-${profile.persona}-${frame}-${facingBack ? 'back' : 'front'}`}
+            source={resolved.hero!}
+            resizeMode="contain"
+            style={{ position: 'absolute', width, height }}
+          />
+        ) : (
+          <Image
+            key={`base-${profile.persona}-${frame}-${facingBack ? 'back' : 'front'}`}
+            source={baseSrc}
+            resizeMode="contain"
+            style={{ position: 'absolute', width, height }}
+          />
+        )}
+        {clothed && (!useHero || resolved.overlays.length > 0)
           ? resolved.overlays.map((ov, i) => {
               const garmentScale = ov.scale * ov.bodyScale;
               return (

@@ -211,6 +211,15 @@ export function wearPiece(layers: OutfitLayers, piece: OutfitPiece): OutfitLayer
     return { ...rest, dress: piece };
   }
 
+  // חליפה מלאה — מחליפה עליון/תחתון/שמלה (לוק Perfect-Fit אחד)
+  if (piece.slot === 'outer' && piece.id.includes('p-suit')) {
+    return {
+      outer: piece,
+      shoes: next.shoes,
+      hat: next.hat,
+    };
+  }
+
   // חולצה/מכנסיים — מסירים שמלה אם יש, אבל לא את הסלוט השני
   if (piece.slot === 'top' || piece.slot === 'bottom') {
     delete next.dress;

@@ -124,6 +124,72 @@ export const COMBO_TSHIRT_JEANS: Partial<Record<TurnYaw, ImageSourcePropType>> =
   180: require('../../assets/images/fit/man/combo-tshirt-jeans_180.png'),
 };
 
+/**
+ * לוקים מצוירים Perfect-Fit על גוף פוטוריאליסטי — לפי persona + מפתח לוק + yaw.
+ * כוללים גוף+בגד בהתאמה מדויקת (בלי רווחים).
+ */
+const FITTED_TURN_LOOKS: Record<
+  string,
+  Partial<Record<TurnYaw, ImageSourcePropType>>
+> = {
+  'man|p-suit': {
+    0: require('../../assets/images/fit/turn/man_suit_0.png'),
+    45: require('../../assets/images/fit/turn/man_suit_45.png'),
+    90: require('../../assets/images/fit/turn/man_suit_90.png'),
+    135: require('../../assets/images/fit/turn/man_suit_135.png'),
+    180: require('../../assets/images/fit/turn/man_suit_180.png'),
+  },
+  'woman|p-suit': {
+    0: require('../../assets/images/fit/turn/woman_suit_0.png'),
+    45: require('../../assets/images/fit/turn/woman_suit_45.png'),
+    90: require('../../assets/images/fit/turn/woman_suit_90.png'),
+    135: require('../../assets/images/fit/turn/woman_suit_135.png'),
+    180: require('../../assets/images/fit/turn/woman_suit_180.png'),
+  },
+  'man|p-tshirt|p-jeans': {
+    0: require('../../assets/images/fit/turn/man_tshirt_jeans_0.png'),
+    90: require('../../assets/images/fit/turn/man_tshirt_jeans_90.png'),
+    180: require('../../assets/images/fit/turn/man_tshirt_jeans_180.png'),
+  },
+  'woman|p-linen|p-jeans': {
+    0: require('../../assets/images/fit/turn/woman_linen_jeans_0.png'),
+    90: require('../../assets/images/fit/turn/woman_linen_jeans_90.png'),
+    180: require('../../assets/images/fit/turn/woman_linen_jeans_180.png'),
+  },
+};
+
+function fittedTurnKey(
+  persona: AvatarPersona,
+  layers: OutfitLayers,
+): string | null {
+  const topId = pieceCatalogId(layers.top);
+  const bottomId = pieceCatalogId(layers.bottom);
+  const outerId = pieceCatalogId(layers.outer);
+  const dressId = pieceCatalogId(layers.dress);
+  if (dressId) return null;
+  if (outerId === 'p-suit') return `${persona}|p-suit`;
+  if (outerId) return null;
+  if (topId === 'p-tshirt' && bottomId === 'p-jeans') {
+    return `${persona}|p-tshirt|p-jeans`;
+  }
+  if (topId === 'p-linen' && bottomId === 'p-jeans') {
+    return `${persona}|p-linen|p-jeans`;
+  }
+  return null;
+}
+
+function fittedTurnLook(
+  persona: AvatarPersona,
+  layers: OutfitLayers,
+  yaw: number,
+): ImageSourcePropType | null {
+  const key = fittedTurnKey(persona, layers);
+  if (!key) return null;
+  const table = FITTED_TURN_LOOKS[key];
+  if (!table) return null;
+  return pickTurnFrame(table, yaw, table[0] ?? Object.values(table)[0]!);
+}
+
 /** שכבות בגד (אזור גוף מהלוק המצויר) */
 export const FITTED_OVERLAYS_MAN: Record<string, ImageSourcePropType> = {
   'p-tshirt': require('../../assets/images/fit/man/overlay/p-tshirt.png'),
@@ -179,6 +245,7 @@ export const GARMENT_LAYER_IMAGES: Record<string, ImageSourcePropType> = {
   'p-boots': require('../../assets/images/layers/cutouts/sneakers.png'),
   'p-hat': require('../../assets/images/layers/cutouts/hat.png'),
   'p-cap': require('../../assets/images/layers/cutouts/hat.png'),
+  'p-suit': require('../../assets/images/fit/turn/man_suit_0.png'),
   'p-blazer': require('../../assets/images/layers/cutouts/denim-jkt.png'),
   'p-coat': require('../../assets/images/layers/cutouts/leather.png'),
   'p-joggers': require('../../assets/images/layers/cutouts/sport.png'),
@@ -242,6 +309,7 @@ export function catalogIdFromPieceId(pieceId: string): string | null {
     'p-denim-jkt',
     'p-leather',
     'p-bomber',
+    'p-suit',
     'p-dress',
     'p-sneakers',
     'p-boots',
@@ -462,7 +530,24 @@ export function resolveOutfitLook(
   heightCm = 165,
   persona: AvatarPersona = 'man',
 ): ResolvedOutfit {
-  // תמיד בסיס הדמות + שכבות בגד — הגוף לא מוחלף ולא משתנה עם מידה
+  // Perfect-Fit מצויר (גוף+בגד) עם פריימי סיבוב — כשיש לוק ייעודי
+  const turnHero = fittedTurnLook(persona, layers, yaw);
+  if (turnHero) {
+    const extras: ResolvedOverlay[] = [];
+    // הלוק המלא כולל נעליים; רק כובע כשכבה נוספת
+    pushOverlayLayer(extras, layers.hat, heightCm, persona);
+    const dominant =
+      layers.outer || layers.dress || layers.top || layers.bottom;
+    return {
+      hero: turnHero,
+      heroTracksYaw: true,
+      heroScale: fitFor(dominant, heightCm),
+      overlays: extras,
+      overlayOnly: false,
+    };
+  }
+
+  // בסיס הדמות + שכבות בגד — הגוף לא מוחלף ולא משתנה עם מידה
   if (!usesPaintedAdultLooks(persona)) {
     return resolveOverlayOnlyStack(layers, heightCm, persona);
   }
