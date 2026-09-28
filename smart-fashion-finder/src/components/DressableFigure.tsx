@@ -21,6 +21,7 @@ type Props = {
   onRemovePiece?: (piece: OutfitPiece) => void;
   compact?: boolean;
   hideMeta?: boolean;
+  vtonHeroUri?: string | null;
 };
 
 function isVisibleWorn(piece: OutfitPiece): boolean {
@@ -39,6 +40,7 @@ export function DressableFigure({
   onRemovePiece,
   compact = false,
   hideMeta = false,
+  vtonHeroUri = null,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
   const wScale = buildWidthScale(profile.build);
@@ -91,11 +93,12 @@ export function DressableFigure({
             }}
           >
             <GameFashionAvatar
-              key={`avatar-${profile.persona}-${profile.heightCm}-${profile.build}`}
+              key={`avatar-${profile.persona}-${profile.heightCm}-${profile.build}-${vtonHeroUri ? 'vton' : 'fit'}`}
               profile={profile}
               layers={layers}
               width={dollW}
               height={dollH}
+              vtonHeroUri={vtonHeroUri}
             />
           </LinearGradient>
 
@@ -149,6 +152,7 @@ export function DressableFigure({
         onClose={() => setExpanded(false)}
         profile={profile}
         layers={layers}
+        vtonHeroUri={vtonHeroUri}
       />
     </View>
   );

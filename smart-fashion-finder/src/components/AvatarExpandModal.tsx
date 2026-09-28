@@ -19,6 +19,7 @@ type Props = {
   onClose: () => void;
   profile: AvatarProfile;
   layers: OutfitLayers;
+  vtonHeroUri?: string | null;
 };
 
 /**
@@ -29,6 +30,7 @@ export function AvatarExpandModal({
   onClose,
   profile,
   layers,
+  vtonHeroUri = null,
 }: Props) {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -90,7 +92,7 @@ export function AvatarExpandModal({
             }}
           >
             <GameFashionAvatar
-              key={`expand-${profile.persona}-${visible}`}
+              key={`expand-${profile.persona}-${visible}-${vtonHeroUri ? 'vton' : 'fit'}`}
               profile={profile}
               layers={layers}
               width={stageW}
@@ -98,6 +100,7 @@ export function AvatarExpandModal({
               yaw={yaw}
               onYawChange={setYaw}
               showHint
+              vtonHeroUri={vtonHeroUri}
             />
           </View>
         </View>

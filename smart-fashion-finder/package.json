@@ -9,7 +9,9 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "smoke": "tsx scripts/smoke-test.ts",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "vton:install": "npm install --prefix server",
+    "vton:start": "npm start --prefix server"
   },
   "dependencies": {
     "@expo-google-fonts/dm-sans": "^0.4.2",

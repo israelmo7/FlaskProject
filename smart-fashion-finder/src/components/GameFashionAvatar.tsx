@@ -30,6 +30,8 @@ type Props = {
   onYawChange?: (yaw: number) => void;
   enablePan?: boolean;
   showHint?: boolean;
+  /** תוצאת VTON (URL) — מחליפה את ה־hero המצויר */
+  vtonHeroUri?: string | null;
 };
 
 function layersKey(layers: OutfitLayers): string {
@@ -81,6 +83,7 @@ export function GameFashionAvatar({
   onYawChange,
   enablePan = true,
   showHint = true,
+  vtonHeroUri = null,
 }: Props) {
   const female = isFemalePersona(profile.persona);
   const wScale = buildWidthScale(profile.build);
@@ -167,8 +170,14 @@ export function GameFashionAvatar({
   const baseSrc = turnBaseForPersona(profile.persona, yaw);
   const viewLabel = facingBack ? he.backViewHint : '';
   const overlayFlip = mirrorOverlays ? -1 : 1;
-  // Perfect-Fit מצויר: גוף+בגד כתמונה אחת לפי זווית (גודל גוף קבוע)
-  const useHero = Boolean(resolved.hero && !resolved.overlayOnly);
+  // VTON / Perfect-Fit: גוף+בגד כתמונה אחת (גודל גוף קבוע)
+  const useVton = Boolean(vtonHeroUri);
+  const useHero = useVton || Boolean(resolved.hero && !resolved.overlayOnly);
+  const heroSource = useVton
+    ? { uri: vtonHeroUri! }
+    : resolved.hero
+      ? resolved.hero
+      : null;
 
   return (
     <View
@@ -197,28 +206,30 @@ export function GameFashionAvatar({
           transform: [{ scaleX: bodyScaleX }],
         }}
       >
-        {useHero ? (
+        {useHero && heroSource ? (
           <Image
-            key={`hero-${profile.persona}-${frame}-${facingBack ? 'back' : 'front'}-${resolved.heroFit?.scaleY ?? 1}`}
-            source={resolved.hero!}
+            key={`hero-${useVton ? 'vton' : 'fit'}-${profile.persona}-${frame}-${facingBack ? 'back' : 'front'}-${resolved.heroFit?.scaleY ?? 1}`}
+            source={heroSource}
             resizeMode="contain"
             style={{
               position: 'absolute',
               width,
               height,
-              transform: resolved.heroFit
-                ? [
-                    {
-                      translateX:
-                        resolved.heroFit.translateX * width * overlayFlip,
-                    },
-                    { translateY: resolved.heroFit.translateY * height },
-                    {
-                      scaleX: resolved.heroFit.scaleX * overlayFlip,
-                    },
-                    { scaleY: resolved.heroFit.scaleY },
-                  ]
-                : undefined,
+              // VTON כבר כולל גוף+בגד — בלי affine size על כל הדמות
+              transform:
+                !useVton && resolved.heroFit
+                  ? [
+                      {
+                        translateX:
+                          resolved.heroFit.translateX * width * overlayFlip,
+                      },
+                      { translateY: resolved.heroFit.translateY * height },
+                      {
+                        scaleX: resolved.heroFit.scaleX * overlayFlip,
+                      },
+                      { scaleY: resolved.heroFit.scaleY },
+                    ]
+                  : undefined,
             }}
           />
         ) : (
@@ -251,7 +262,7 @@ export function GameFashionAvatar({
               />
             ))
           : null}
-        {useHero && resolved.overlays.length > 0
+        {useHero && !useVton && resolved.overlays.length > 0
           ? resolved.overlays.map((ov, i) => (
               <Image
                 key={`acc-${ov.key}-${i}-${frame}`}

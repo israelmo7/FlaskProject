@@ -27,6 +27,12 @@ export const he = {
   saveLookDoneHint: '{n} פריטים נוספו לסל הקניות',
 
   dressOnAvatar: 'על האווטאר',
+  dressVtonPrecise: 'הלבשה מדויקת (VTON)',
+  dressVtonHint: 'POC · Replicate IDM-VTON — טי שירט / ג׳קט דנים',
+  dressVtonLoading: 'מריצים Virtual Try-On…',
+  dressVtonDoneLive: 'VTON חי · Replicate',
+  dressVtonDoneMock: 'VTON mock (אין API token) · לוק מקומי',
+  dressVtonFailed: 'הלבשה מדויקת נכשלה',
   addToCart: 'הוספה לסל',
   favorite: 'מועדפים',
   brandLabel: 'מותג',

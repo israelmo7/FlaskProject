@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SIZE_OPTIONS_BY_CATEGORY } from '@/constants/avatar';
 import type { ProductCard } from '@/data/catalog';
 import { he } from '@/i18n/he';
+import { isVtonPocGarment } from '@/services/vton';
 import { openNavigation } from '@/utils/contact';
 import { formatPriceILS } from '@/utils/stock';
 
@@ -21,6 +22,9 @@ type Props = {
   onClose: () => void;
   onDressAvatar: (product: ProductCard, size: string) => void;
   onAddToCart: (product: ProductCard, size: string) => void;
+  /** POC: Replicate VTON try-on for supported garments */
+  onVtonTryOn?: (product: ProductCard, size: string) => void;
+  vtonLoading?: boolean;
   preferredSize?: string;
 };
 
@@ -43,6 +47,8 @@ export function ProductDetailSheet({
   onClose,
   onDressAvatar,
   onAddToCart,
+  onVtonTryOn,
+  vtonLoading = false,
   preferredSize = 'M',
 }: Props) {
   const { height } = useWindowDimensions();
@@ -219,6 +225,30 @@ export function ProductDetailSheet({
                 </Text>
               </Pressable>
             </View>
+
+            {onVtonTryOn && isVtonPocGarment(product.id) ? (
+              <View className="mt-3">
+                <Pressable
+                  disabled={vtonLoading}
+                  onPress={() => {
+                    const size = selectedSizeRef.current;
+                    onVtonTryOn(product, size);
+                    onClose();
+                  }}
+                  className={`flex-row items-center justify-center rounded-2xl py-3.5 ${
+                    vtonLoading ? 'bg-[#9BB8B4]' : 'bg-teal'
+                  }`}
+                >
+                  <Ionicons name="sparkles-outline" size={18} color="#fff" />
+                  <Text className="mr-2 font-bodyBold text-sm text-white">
+                    {vtonLoading ? he.dressVtonLoading : he.dressVtonPrecise}
+                  </Text>
+                </Pressable>
+                <Text className="mt-1.5 text-center font-body text-[11px] text-ink-muted">
+                  {he.dressVtonHint}
+                </Text>
+              </View>
+            ) : null}
 
             <Pressable onPress={onClose} className="mt-4 items-center py-2">
               <Text className="font-bodyMedium text-sm text-ink-muted">
