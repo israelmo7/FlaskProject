@@ -11,6 +11,7 @@ import {
   slotLayoutFor,
   type GarmentTransform,
 } from '@/constants/garmentLayout';
+import { outfitPresentationMode } from '@/constants/outfitPresentation';
 
 export const PERSONA_BASE_IMAGES: Record<AvatarPersona, ImageSourcePropType> = {
   woman: require('../../assets/images/bases/woman.png'),
@@ -709,7 +710,35 @@ export function resolveOutfitLook(
     );
   }
 
-  if (topId === 'p-tshirt' && bottomId === 'p-jeans' && !outerId) {
+  const realBottom = bottomId && bottomId !== 'p-underwear' ? bottomId : null;
+
+  /** קומבו Fitted לפי מזהים (+ aliases) */
+  const comboFor = (
+    upperId: string | null,
+    lowerId: string | null,
+  ): ImageSourcePropType | null => {
+    if (!upperId || !lowerId) return null;
+    const u = CATALOG_ALIASES[upperId] ?? upperId;
+    const l = CATALOG_ALIASES[lowerId] ?? lowerId;
+    return (
+      FITTED_COMBOS[`${upperId}|${lowerId}`] ??
+      FITTED_COMBOS[`${u}|${l}`] ??
+      FITTED_COMBOS[`${upperId}|${l}`] ??
+      FITTED_COMBOS[`${u}|${lowerId}`] ??
+      null
+    );
+  };
+
+  const hasCombo = (upper: string, lower: string) =>
+    Boolean(comboFor(upper, lower));
+
+  // טי+ג׳ינס עם פריימי סיבוב (בלי מעיל) — לפני החלטת A1 הכללית
+  if (
+    !outerId &&
+    realBottom === 'p-jeans' &&
+    (topId === 'p-tshirt' ||
+      CATALOG_ALIASES[topId ?? ''] === 'p-tshirt')
+  ) {
     const frame = nearestTurnYaw(yaw);
     const hero =
       COMBO_TSHIRT_JEANS[frame] ??
@@ -718,43 +747,49 @@ export function resolveOutfitLook(
         : frame <= 135
           ? COMBO_TSHIRT_JEANS[90]
           : COMBO_TSHIRT_JEANS[180]) ??
-      null;
-    return withFittedHero(hero, true, layers.top);
+      comboFor(topId, realBottom);
+    if (hero) return withFittedHero(hero, true, layers.top);
   }
 
-  const comboKeys: string[] = [];
-  if (outerId && bottomId && bottomId !== 'p-underwear') {
-    comboKeys.push(`${outerId}|${bottomId}`);
+  // A1: קומבו לזוג / overlay כשיש כמה שכבות בלי קומבו מלא (כולל top+bottom+outer)
+  const mode = outfitPresentationMode(
+    { topId, bottomId, outerId, dressId },
+    hasCombo,
+  );
+
+  if (mode === 'overlay') {
+    return resolveOverlayOnlyStack(layers, heightCm, persona);
   }
-  if (topId && bottomId && bottomId !== 'p-underwear') {
-    comboKeys.push(`${topId}|${bottomId}`);
-  }
-  for (const key of comboKeys) {
-    const combo = FITTED_COMBOS[key];
-    if (combo) {
-      return withFittedHero(combo, false, layers.outer || layers.top);
+
+  if (mode === 'combo') {
+    const outerBottom = comboFor(outerId, realBottom);
+    if (outerBottom && !topId) {
+      return withFittedHero(outerBottom, false, layers.outer);
     }
+    const topBottom = comboFor(topId, realBottom);
+    if (topBottom && !outerId) {
+      return withFittedHero(topBottom, false, layers.top);
+    }
+    // הגנה — אם אין נכס בפועל, נפילת שכבות
+    return resolveOverlayOnlyStack(layers, heightCm, persona);
   }
 
-  // פריט דומיננטי יחיד / צירוף בלי קומבו — Fitted Look בלבד (בלי ערימת overlays)
-  const dominantId =
-    outerId ||
-    dressId ||
-    topId ||
-    (bottomId !== 'p-underwear' ? bottomId : null) ||
-    null;
-  const dominantPiece =
-    (dominantId === outerId && layers.outer) ||
-    (dominantId === dressId && layers.dress) ||
-    (dominantId === topId && layers.top) ||
-    (dominantId === bottomId && layers.bottom) ||
-    undefined;
-
-  if (dominantId) {
+  // פריט יחיד — Fitted Look
+  if (outerId) {
     return withFittedHero(
-      fittedLookForId(dominantId, female),
+      fittedLookForId(outerId, female),
       false,
-      dominantPiece || undefined,
+      layers.outer,
+    );
+  }
+  if (topId) {
+    return withFittedHero(fittedLookForId(topId, female), false, layers.top);
+  }
+  if (realBottom) {
+    return withFittedHero(
+      fittedLookForId(realBottom, female),
+      false,
+      layers.bottom,
     );
   }
 

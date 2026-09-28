@@ -97,6 +97,7 @@ import {
   wearPiece,
 } from '../src/constants/avatar';
 import { garmentHang, garmentFitTransform } from '../src/constants/garmentLayout';
+import { outfitPresentationMode } from '../src/constants/outfitPresentation';
 import type { OutfitPiece } from '../src/types';
 
 // Standard Fit — גובה/מידה לא משנים סקייל ויזואלי
@@ -120,8 +121,8 @@ assert(fitL.scaleX === fitS.scaleX && fitL.scaleY === fitS.scaleY, 'standard fit
 assert(fitL.translateY === fitS.translateY, 'standard fit: no hem shift by size');
 
 // Fitted Look key coverage — parse avatarAssets.ts (avoid require() of PNGs in Node)
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const CATALOG_IDS = [
   'p-tshirt',
@@ -162,7 +163,7 @@ const CATALOG_IDS = [
 ] as const;
 
 const avatarAssetsSrc = readFileSync(
-  join(__dirname, '../src/constants/avatarAssets.ts'),
+  join(process.cwd(), 'src/constants/avatarAssets.ts'),
   'utf8',
 );
 const manBlock = avatarAssetsSrc.slice(
@@ -223,6 +224,80 @@ outfit = wearPiece(outfit, shirtB);
 assert(outfit.top?.id === shirtB.id && outfit.bottom?.id === jeans.id, 'new shirt replaces old; jeans stay');
 outfit = wearPiece(outfit, jeans2);
 assert(outfit.bottom?.id === jeans2.id && outfit.top?.id === shirtB.id, 'new jeans replace old; shirt stays');
+
+const outer: OutfitPiece = {
+  id: 'p-bomber-M',
+  label: 'בומבר',
+  category: 'Outerwear',
+  subcategory: 'ג׳קט',
+  color: 'Black',
+  size: 'M',
+  slot: categoryToSlot('Outerwear'),
+};
+outfit = wearPiece(outfit, outer);
+assert(
+  Boolean(outfit.top && outfit.bottom && outfit.outer),
+  'A1 wearPiece: top+bottom+outer all stay',
+);
+
+// A1 presentation — בלי טעינת PNGs
+const comboKeys = new Set(['p-tshirt|p-jeans', 'p-bomber|p-jeans']);
+const hasCombo = (a: string, b: string) => comboKeys.has(`${a}|${b}`);
+assert(
+  outfitPresentationMode(
+    { topId: 'p-tshirt', bottomId: 'p-jeans', outerId: null, dressId: null },
+    hasCombo,
+  ) === 'combo',
+  'A1: top+bottom with combo → combo',
+);
+assert(
+  outfitPresentationMode(
+    {
+      topId: 'p-hoodie',
+      bottomId: 'p-jeans',
+      outerId: 'p-bomber',
+      dressId: null,
+    },
+    hasCombo,
+  ) === 'overlay',
+  'A1: top+bottom+outer → overlay (all visible)',
+);
+assert(
+  outfitPresentationMode(
+    {
+      topId: 'p-hoodie',
+      bottomId: 'p-jeans',
+      outerId: null,
+      dressId: null,
+    },
+    hasCombo,
+  ) === 'overlay',
+  'A1: top+bottom without combo → overlay',
+);
+assert(
+  outfitPresentationMode(
+    {
+      topId: null,
+      bottomId: 'p-jeans',
+      outerId: 'p-bomber',
+      dressId: null,
+    },
+    hasCombo,
+  ) === 'combo',
+  'A1: outer+bottom with combo (no top) → combo',
+);
+assert(
+  outfitPresentationMode(
+    {
+      topId: 'p-tshirt',
+      bottomId: 'p-underwear',
+      outerId: null,
+      dressId: null,
+    },
+    hasCombo,
+  ) === 'single',
+  'A1: top only (underwear bottom) → single',
+);
 
 const blackShirtIntent = extractIntent('חולצה שחורה עד 150');
 assert(blackShirtIntent.category === 'Shirts', 'chat intent category Shirts');

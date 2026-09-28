@@ -167,7 +167,7 @@ export function GameFashionAvatar({
       ? resolved.hero
       : null;
 
-  // אביזרים בלבד מעל Fitted Look (כובע) — בלי עיוות scale
+  // מעל Fitted Look / VTON: רק כובע (הלוק עצמו כולל את שאר הבגד)
   const accessoryOverlays =
     useFittedHero && !useVton
       ? resolved.overlays.filter((ov) => ov.slot === 'hat')
