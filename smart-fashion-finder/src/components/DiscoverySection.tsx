@@ -41,12 +41,7 @@ export function BrandCircles({ selectedId, onSelect }: BrandRowProps) {
                   justifyContent: 'center',
                   paddingHorizontal: 8,
                   borderWidth: active ? 2 : 1,
-                  borderColor: active ? '#E07A4F' : 'rgba(40,30,20,0.1)',
-                  shadowColor: '#1A1510',
-                  shadowOpacity: active ? 0.12 : 0.04,
-                  shadowRadius: 6,
-                  shadowOffset: { width: 0, height: 2 },
-                  elevation: active ? 3 : 1,
+                  borderColor: active ? '#E07A4F' : 'rgba(40,30,20,0.12)',
                 }}
               >
                 <Text
