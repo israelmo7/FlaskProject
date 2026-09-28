@@ -82,7 +82,13 @@ export default function HomeScreen() {
   }, [params.openProductId]);
 
   const focusPiece = useMemo(
-    () => layers.top || layers.bottom || layers.dress || layers.outer || layers.shoes,
+    () =>
+      layers.top ||
+      layers.bottom ||
+      layers.dress ||
+      layers.outer ||
+      layers.shoes ||
+      layers.hat,
     [layers],
   );
 
@@ -100,12 +106,14 @@ export default function HomeScreen() {
     setLayers((prev) => wearPiece(prev, full));
   };
 
-  const productToPiece = (product: ProductCard): OutfitPiece => {
-    const size = preferredSize || 'M';
+  const productToPiece = (
+    product: ProductCard,
+    sizeOverride?: string,
+  ): OutfitPiece => {
+    const size = sizeOverride || preferredSize || 'M';
     return {
-      id: product.layerId
-        ? `${product.layerId}-${size}`
-        : `home-${product.id}-${size}`,
+      // שומרים את מזהה הקטלוג ב־id כדי להתאים לוק מצויר
+      id: `${product.id}-${size}`,
       label: product.title,
       category: product.category,
       subcategory: product.subcategory,
@@ -121,13 +129,15 @@ export default function HomeScreen() {
     setDetailProduct(product);
   };
 
-  const onDressFromDetail = (product: ProductCard) => {
-    dressPiece(productToPiece(product));
+  const onDressFromDetail = (product: ProductCard, size: string) => {
+    updatePreferredSize(size);
+    dressPiece(productToPiece(product, size));
   };
 
-  const onAddToCartFromDetail = (product: ProductCard) => {
-    addPieceToCart(productToPiece(product));
-    Alert.alert(he.addedToCart, product.title);
+  const onAddToCartFromDetail = (product: ProductCard, size: string) => {
+    updatePreferredSize(size);
+    addPieceToCart(productToPiece(product, size));
+    Alert.alert(he.addedToCart, `${product.title} · ${size}`);
   };
 
   const onSearchSubmit = () => {
@@ -232,7 +242,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
+    <View className="flex-1 bg-[#FAF7F2]" style={{ paddingTop: insets.top }}>
       <SiteHeader
         query={query}
         onQueryChange={setQuery}

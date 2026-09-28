@@ -83,15 +83,38 @@ export function buildWidthScale(build: BodyBuild): number {
   }
 }
 
+/** גובה ייחוס אבסולוטי (ס״מ) — כל הדמויות על אותו סולם */
+export const ABS_REF_HEIGHT_CM = 165;
+
+/**
+ * סולם גובה הבובה לפי ס״מ אמיתיים.
+ * 1.70מ׳ מול 1.85מ׳ — הבדל סימטרי וברור בפרופורציות הדמות.
+ */
 export function heightScale(heightCm: number, _persona?: AvatarPersona): number {
-  // 140ס״מ ≈ 0.78 · 165 ≈ 1 · 190 ≈ 1.15
-  return Math.min(1.22, Math.max(0.72, heightCm / 165));
+  const raw = heightCm / ABS_REF_HEIGHT_CM;
+  // הגזמה קלה כדי שהבדלי גובה יהיו קריאים ב־UI
+  const eased = 1 + (raw - 1) * 1.18;
+  return Math.min(1.5, Math.max(0.55, eased));
+}
+
+/** המרת קלט גובה: 1.78 → 178, או 178 כמו שהוא */
+export function parseHeightInput(raw: string, persona: AvatarPersona): number | null {
+  const cleaned = raw.replace(',', '.').replace(/[^\d.]/g, '');
+  const n = Number(cleaned);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  const asCm = n > 0 && n < 3 ? Math.round(n * 100) : Math.round(n);
+  const range = HEIGHT_RANGE[persona];
+  return Math.min(range.max, Math.max(range.min, asCm));
+}
+
+export function formatHeightMeters(heightCm: number): string {
+  return `${(heightCm / 100).toFixed(2)} מ׳`;
 }
 
 /** כמה הבגד גדול/קטן ביחס לגובה הגוף */
 export function sizeRelativeToHeight(size: string, heightCm: number): number {
   const ideal =
-    heightCm < 155 ? 0 : heightCm < 168 ? 1 : heightCm < 178 ? 2 : heightCm < 188 ? 3 : 4;
+    heightCm < 140 ? 0 : heightCm < 155 ? 1 : heightCm < 168 ? 2 : heightCm < 178 ? 3 : heightCm < 188 ? 4 : 5;
   const map: Record<string, number> = {
     XS: 0,
     S: 1,
@@ -102,54 +125,109 @@ export function sizeRelativeToHeight(size: string, heightCm: number): number {
     '32': 2,
     '34': 3,
     '36': 4,
+    '36S': 2,
+    '37': 2,
+    '38': 2,
+    '39': 3,
+    '40': 3,
+    '41': 3,
+    '42': 4,
+    '43': 4,
   };
   const idx = map[size.toUpperCase()] ?? 2;
-  const delta = idx - ideal;
-  // S על 178ס״מ → שלילי → חולצה קטנה יותר
-  return Math.min(1.28, Math.max(0.72, 1 + delta * 0.1));
+  const delta = idx - Math.min(4, ideal);
+  // S על 178ס״מ → קטן יותר · L על 165 → גדול יותר
+  return Math.min(1.35, Math.max(0.68, 1 + delta * 0.12));
 }
 
+/** סולם מידה אבסולוטי — L גדול מ־S */
 export function sizeFitScale(size: string): number {
   const s = size.toUpperCase();
   if (s === 'XS' || s === '30') return 0.78;
-  if (s === 'S' || s === '32') return 0.88;
-  if (s === 'M' || s === '34') return 1;
-  if (s === 'L' || s === '36') return 1.12;
-  if (s === 'XL' || Number(s) >= 38) return 1.24;
+  if (s === 'S' || s === '32' || s === '36' || s === '37') return 0.88;
+  if (s === 'M' || s === '34' || s === '38' || s === '39') return 1;
+  if (s === 'L' || s === '40' || s === '41') return 1.14;
+  if (s === 'XL' || s === '42' || s === '43' || Number(s) >= 42) return 1.26;
   return 1;
+}
+
+/**
+ * התאמת בגד לבובה: מידת הפריט × התאמה לגובה.
+ * L על אותו גוף נראה גדול יותר מ־S.
+ */
+export function garmentFitOnBody(size: string | undefined, heightCm: number): number {
+  if (!size) return 1;
+  const bySize = sizeFitScale(size);
+  const byHeight = sizeRelativeToHeight(size, heightCm);
+  // ממוצע משוקלל — הבדל מידות בולט, עדיין יושב על הגוף
+  return Math.min(1.4, Math.max(0.65, bySize * 0.55 + byHeight * 0.45));
+}
+
+/**
+ * לוקים מלאים (גוף+בגד) כבויים — תמיד בסיס persona + שכבות בגד.
+ * כך הגוף לא קטן/גדל עם מידת הבגד, ורק הפריט משתנה.
+ */
+export function usesPaintedAdultLooks(_persona: AvatarPersona): boolean {
+  return false;
 }
 
 export function categoryToSlot(category: GarmentCategory): OutfitSlot {
   switch (category) {
     case 'Shirts':
-    case 'Underwear':
       return 'top';
     case 'Pants':
-    case 'Socks':
+    case 'Underwear':
       return 'bottom';
     case 'Outerwear':
-    case 'Hats':
       return 'outer';
+    case 'Hats':
+      return 'hat';
     case 'Dresses':
       return 'dress';
     case 'Shoes':
+    case 'Socks':
       return 'shoes';
   }
 }
 
-/** הוספת פריט לשכבות — נשארים כל שאר הפריטים */
+/**
+ * הוספת פריט לשכבות:
+ * - אותו סלוט מחליף (ג׳ינס→ג׳ינס, חולצה→חולצה)
+ * - סלוטים שונים נשארים יחד (מכנסיים + חולצה)
+ */
 export function wearPiece(layers: OutfitLayers, piece: OutfitPiece): OutfitLayers {
-  const next = { ...layers };
-  if (piece.slot === 'dress') {
-    // שמלה מחליפה עליון ותחתון ויזואלית, אבל לא מוחקת נעליים/עליונית
-    delete next.top;
-    delete next.bottom;
-    next.dress = piece;
-    return next;
+  const next: OutfitLayers = { ...layers };
+
+  // הלבשה תחתונה = חזרה לבסיס חשוף
+  if (piece.category === 'Underwear') {
+    return {
+      bottom: piece,
+      shoes: next.shoes,
+      hat: next.hat,
+    };
   }
+
+  if (piece.slot === 'dress') {
+    // שמלה מחליפה עליון+תחתון, לא נוגעת בנעליים/כובע/עליונית
+    const { top: _t, bottom: _b, ...rest } = next;
+    return { ...rest, dress: piece };
+  }
+
+  // חליפה מלאה — מחליפה עליון/תחתון/שמלה (לוק Perfect-Fit אחד)
+  if (piece.slot === 'outer' && piece.id.includes('p-suit')) {
+    return {
+      outer: piece,
+      shoes: next.shoes,
+      hat: next.hat,
+    };
+  }
+
+  // חולצה/מכנסיים — מסירים שמלה אם יש, אבל לא את הסלוט השני
   if (piece.slot === 'top' || piece.slot === 'bottom') {
     delete next.dress;
   }
+
+  // החלפת אותו סלוט בלבד (הקודם נעלם, האחרים נשארים)
   next[piece.slot] = piece;
   return next;
 }
@@ -161,7 +239,14 @@ export function removeSlot(layers: OutfitLayers, slot: OutfitSlot): OutfitLayers
 }
 
 export function outfitSummary(layers: OutfitLayers): string {
-  const parts = [layers.dress, layers.top, layers.bottom, layers.outer, layers.shoes]
+  const parts = [
+    layers.dress,
+    layers.top,
+    layers.bottom,
+    layers.outer,
+    layers.shoes,
+    layers.hat,
+  ]
     .filter(Boolean)
     .map((p) => `${p!.label} (${p!.size})`);
   return parts.length ? parts.join(' · ') : 'רק תחתונים';
@@ -193,47 +278,32 @@ export type WardrobeItem = {
   subcategory: string;
 };
 
+/** ארון סטודיו — כל פריטי הקטלוג שניתן להלביש (מזהה = id קטלוג) */
 export const WARDROBE_ITEMS: WardrobeItem[] = [
-  {
-    id: 'w-black-shirt',
-    label: 'חולצה שחורה',
-    category: 'Shirts',
-    color: 'Black',
-    subcategory: 'T-Shirt',
-  },
-  {
-    id: 'w-white-oxford',
-    label: 'אוקספורד לבן',
-    category: 'Shirts',
-    color: 'White',
-    subcategory: 'Oxford Shirt',
-  },
-  {
-    id: 'w-olive-cargo',
-    label: 'קרגו זית',
-    category: 'Pants',
-    color: 'Olive Green',
-    subcategory: 'Cargo Pants',
-  },
-  {
-    id: 'w-blue-jeans',
-    label: 'ג׳ינס כחול',
-    category: 'Pants',
-    color: 'Blue',
-    subcategory: 'Slim Fit Jeans',
-  },
-  {
-    id: 'w-denim-jacket',
-    label: 'ג׳קט ג׳ינס',
-    category: 'Outerwear',
-    color: 'Light Wash',
-    subcategory: 'Denim Jacket',
-  },
-  {
-    id: 'w-beige-dress',
-    label: 'שמלה בז׳',
-    category: 'Dresses',
-    color: 'Beige',
-    subcategory: 'Midi Dress',
-  },
+  { id: 'p-tshirt', label: 'טי שירט שחורה', category: 'Shirts', color: 'Black', subcategory: 'טי שירט' },
+  { id: 'p-hoodie', label: 'קפוצ׳ון', category: 'Shirts', color: 'Beige', subcategory: 'אוברסייז' },
+  { id: 'p-oxford', label: 'אוקספורד לבן', category: 'Shirts', color: 'White', subcategory: 'אוקספורד' },
+  { id: 'p-turtleneck', label: 'גולף', category: 'Shirts', color: 'Navy', subcategory: 'גולף' },
+  { id: 'p-polo', label: 'פולו זית', category: 'Shirts', color: 'Olive Green', subcategory: 'פולו' },
+  { id: 'p-linen', label: 'פשתן', category: 'Shirts', color: 'Beige', subcategory: 'פשתן' },
+  { id: 'p-jeans', label: 'ג׳ינס כחול', category: 'Pants', color: 'Blue', subcategory: 'ג׳ינס' },
+  { id: 'p-shorts', label: 'ג׳ינס קצר', category: 'Pants', color: 'Light Wash', subcategory: 'ג׳ינס קצר' },
+  { id: 'p-cargo', label: 'קרגו זית', category: 'Pants', color: 'Olive Green', subcategory: 'קרגו' },
+  { id: 'p-sport', label: 'מכנס ספורט', category: 'Pants', color: 'Navy', subcategory: 'מכנס ספורט' },
+  { id: 'p-chinos', label: 'צ׳ינו', category: 'Pants', color: 'Khaki', subcategory: 'צ׳ינו' },
+  { id: 'p-swim', label: 'בגד ים', category: 'Pants', color: 'Navy', subcategory: 'בגד ים' },
+  { id: 'p-denim-jkt', label: 'ג׳קט ג׳ינס', category: 'Outerwear', color: 'Light Wash', subcategory: 'ג׳קט ג׳ינס' },
+  { id: 'p-leather', label: 'ז׳קט עור', category: 'Outerwear', color: 'Brown', subcategory: 'ז׳קט עור' },
+  { id: 'p-bomber', label: 'בומבר שחור', category: 'Outerwear', color: 'Black', subcategory: 'בומבר' },
+  { id: 'p-dress', label: 'שמלה חומה', category: 'Dresses', color: 'Brown', subcategory: 'שמלה' },
+  { id: 'p-sneakers', label: 'סניקרס', category: 'Shoes', color: 'White', subcategory: 'סניקרס' },
+  { id: 'p-boots', label: 'מגפונים', category: 'Shoes', color: 'Brown', subcategory: 'מגפיים' },
+  { id: 'p-hat', label: 'כובע', category: 'Hats', color: 'Black', subcategory: 'כובע' },
+  { id: 'p-underwear', label: 'תחתון', category: 'Underwear', color: 'Charcoal', subcategory: 'הלבשה תחתונה' },
+  { id: 'p-socks', label: 'גרביים', category: 'Socks', color: 'White', subcategory: 'גרביים' },
+  { id: 'p-tshirt-white', label: 'טי לבנה', category: 'Shirts', color: 'White', subcategory: 'טי שירט' },
+  { id: 'p-jeans-black', label: 'ג׳ינס שחור', category: 'Pants', color: 'Black', subcategory: 'ג׳ינס' },
+  { id: 'p-hoodie-black', label: 'קפוצ׳ון שחור', category: 'Shirts', color: 'Black', subcategory: 'אוברסייז' },
+  { id: 'p-blazer', label: 'בלייזר', category: 'Outerwear', color: 'Navy', subcategory: 'בלייזר' },
+  { id: 'p-joggers', label: 'ג׳וגרס', category: 'Pants', color: 'Charcoal', subcategory: 'מכנס ספורט' },
 ];

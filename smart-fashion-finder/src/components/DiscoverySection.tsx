@@ -10,14 +10,17 @@ type BrandRowProps = {
   onSelect?: (brandId: string) => void;
 };
 
-/** שורת מותגים עגולה — בלי טקסט מתחת */
+/** שורת מותגים — כרטיסי לוגו מלבניים */
 export function BrandCircles({ selectedId, onSelect }: BrandRowProps) {
   return (
-    <View className="mt-5">
+    <View className="mt-4">
+      <Text className="mb-2 px-4 text-right font-bodyMedium text-[11px] text-ink-muted">
+        {he.brandsRow}
+      </Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerClassName="gap-3.5 px-4 pb-1"
+        contentContainerClassName="gap-2.5 px-4 pb-1"
       >
         {BRANDS.map((brand) => {
           const active = selectedId === brand.id;
@@ -29,19 +32,37 @@ export function BrandCircles({ selectedId, onSelect }: BrandRowProps) {
               className="items-center"
             >
               <View
-                className={`items-center justify-center rounded-full ${
-                  active ? 'border-2 border-[#E07A4F]' : 'border border-[#E8E4DE]'
-                }`}
                 style={{
-                  width: 64,
-                  height: 64,
+                  width: 92,
+                  height: 48,
+                  borderRadius: 10,
                   backgroundColor: brand.color,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingHorizontal: 8,
+                  borderWidth: active ? 2 : 1,
+                  borderColor: active ? '#E07A4F' : 'rgba(40,30,20,0.12)',
                 }}
               >
-                <Text className="font-bodyBold text-sm text-white">
-                  {brand.initials}
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    color: brand.ink,
+                    fontFamily: 'Fraunces_600SemiBold',
+                    fontSize: brand.wordmark.length > 6 ? 12 : 14,
+                    letterSpacing: brand.wordmark.length <= 4 ? 1.2 : 0.4,
+                    textAlign: 'center',
+                  }}
+                >
+                  {brand.wordmark}
                 </Text>
               </View>
+              <Text
+                className="mt-1 max-w-[92px] text-center font-body text-[9px] text-ink-muted"
+                numberOfLines={1}
+              >
+                {brand.name}
+              </Text>
             </Pressable>
           );
         })}
@@ -124,12 +145,22 @@ export function ProductGrid({
                   </View>
                 ) : null}
               </View>
-              <Text
-                className="px-2.5 py-2.5 text-center font-bodyMedium text-xs text-ink"
-                numberOfLines={2}
-              >
-                {product.title}
-              </Text>
+              <View className="px-2.5 py-2.5">
+                <Text
+                  className="text-center font-bodyMedium text-xs text-ink"
+                  numberOfLines={2}
+                >
+                  {product.title}
+                </Text>
+                {product.storeArea ? (
+                  <Text
+                    className="mt-1 text-center font-body text-[10px] text-ink-muted"
+                    numberOfLines={1}
+                  >
+                    {product.storeArea}
+                  </Text>
+                ) : null}
+              </View>
             </Pressable>
           ))
         )}

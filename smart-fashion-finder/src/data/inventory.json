@@ -463,6 +463,516 @@
           "close": "00:00"
         }
       ]
+    },
+    {
+      "id": "store-nike-batgalim",
+      "name": "Nike",
+      "brand": "Nike",
+      "logoColor": "#111111",
+      "mall": "בת גלים",
+      "address": "שדרות הנשיא 124",
+      "city": "חיפה",
+      "latitude": 32.8305,
+      "longitude": 34.9722,
+      "isBoutique": false,
+      "phone": "04-851-3300",
+      "whatsapp": "97248513300",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 5,
+          "open": "09:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
+    },
+    {
+      "id": "store-adidas-carmel",
+      "name": "Adidas",
+      "brand": "Adidas",
+      "logoColor": "#000000",
+      "mall": "מרכז הכרמל",
+      "address": "שדרות הנשיא 131",
+      "city": "חיפה",
+      "latitude": 32.8038,
+      "longitude": 34.9869,
+      "isBoutique": false,
+      "phone": "04-838-2200",
+      "whatsapp": "97248382200",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 5,
+          "open": "09:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
+    },
+    {
+      "id": "store-zara-german",
+      "name": "Zara",
+      "brand": "Zara",
+      "logoColor": "#1A1A1A",
+      "mall": "המושבה הגרמנית",
+      "address": "בן גוריון 18",
+      "city": "חיפה",
+      "latitude": 32.8199,
+      "longitude": 34.9901,
+      "isBoutique": false,
+      "phone": "04-855-4400",
+      "whatsapp": "97248554400",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 5,
+          "open": "09:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
+    },
+    {
+      "id": "store-castro-kiryat",
+      "name": "Castro",
+      "brand": "Castro",
+      "logoColor": "#C45C26",
+      "mall": "קריית חיים",
+      "address": "שדרות ההסתדרות 55",
+      "city": "חיפה",
+      "latitude": 32.8331,
+      "longitude": 35.0662,
+      "isBoutique": false,
+      "phone": "04-874-1100",
+      "whatsapp": "97248741100",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 5,
+          "open": "09:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
+    },
+    {
+      "id": "store-hm-technion",
+      "name": "H&M",
+      "brand": "H&M",
+      "logoColor": "#E50010",
+      "mall": "מרכז הטכניון",
+      "address": "דרך אבא חושי",
+      "city": "חיפה",
+      "latitude": 32.7775,
+      "longitude": 35.0216,
+      "isBoutique": false,
+      "phone": "04-829-3300",
+      "whatsapp": "97248293300",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 5,
+          "open": "09:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
+    },
+    {
+      "id": "store-footlocker-lev",
+      "name": "Foot Locker",
+      "brand": "Foot Locker",
+      "logoColor": "#E31837",
+      "mall": "לב המפרץ",
+      "address": "דרך עכו 105",
+      "city": "חיפה",
+      "latitude": 32.8102,
+      "longitude": 35.0511,
+      "isBoutique": false,
+      "phone": "04-841-7700",
+      "whatsapp": "97248417700",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 5,
+          "open": "09:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
+    },
+    {
+      "id": "store-victoria-carmel",
+      "name": "Victoria",
+      "brand": "Victoria",
+      "logoColor": "#8B4557",
+      "mall": "מרכז הכרמל",
+      "address": "שדרות הנשיא 99",
+      "city": "חיפה",
+      "latitude": 32.8051,
+      "longitude": 34.9882,
+      "isBoutique": true,
+      "phone": "04-836-5500",
+      "whatsapp": "97248365500",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 5,
+          "open": "09:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
+    },
+    {
+      "id": "store-rami-hadar",
+      "name": "רמי",
+      "brand": "רמי",
+      "logoColor": "#1E3A5F",
+      "mall": "הדר",
+      "address": "הרצל 42",
+      "city": "חיפה",
+      "latitude": 32.8078,
+      "longitude": 34.9989,
+      "isBoutique": true,
+      "phone": "04-866-2200",
+      "whatsapp": "97248662200",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 5,
+          "open": "09:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
+    },
+    {
+      "id": "store-eli-neve",
+      "name": "אלי וגדי",
+      "brand": "אלי וגדי",
+      "logoColor": "#2E5A3C",
+      "mall": "נווה שאנן",
+      "address": "טרומפלדור 27",
+      "city": "חיפה",
+      "latitude": 32.7859,
+      "longitude": 35.0168,
+      "isBoutique": true,
+      "phone": "04-822-1100",
+      "whatsapp": "97248221100",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 5,
+          "open": "09:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
+    },
+    {
+      "id": "store-golf-checkpost",
+      "name": "Golf & Co",
+      "brand": "Golf",
+      "logoColor": "#2C5F2D",
+      "mall": "קניון הצ׳קפוסט",
+      "address": "דרך חיפה 20",
+      "city": "חיפה",
+      "latitude": 32.7928,
+      "longitude": 35.0371,
+      "isBoutique": false,
+      "phone": "04-850-9900",
+      "whatsapp": "97248509900",
+      "hours": [
+        {
+          "day": 0,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 1,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 2,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 3,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 4,
+          "open": "10:00",
+          "close": "21:00"
+        },
+        {
+          "day": 5,
+          "open": "09:00",
+          "close": "14:00"
+        },
+        {
+          "day": 6,
+          "open": "00:00",
+          "close": "00:00"
+        }
+      ]
     }
   ],
   "inventory": [

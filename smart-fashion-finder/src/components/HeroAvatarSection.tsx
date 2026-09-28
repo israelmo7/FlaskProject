@@ -1,4 +1,5 @@
 import { Alert, Pressable, Text, View, useWindowDimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { DressableFigure } from '@/components/DressableFigure';
 import { he } from '@/i18n/he';
 import type { AvatarProfile, OutfitLayers, OutfitPiece } from '@/types';
@@ -11,7 +12,7 @@ type Props = {
   onSaveLook?: () => number;
 };
 
-/** גיבור בית — בובה גדולה משמאל + שמירת לוק / מצא לידך מימינה */
+/** גיבור בית — במה לבובה + פעולות */
 export function HeroAvatarSection({
   profile,
   layers,
@@ -33,7 +34,23 @@ export function HeroAvatarSection({
   };
 
   return (
-    <View className="mx-3 mt-3 rounded-2xl bg-[#FAF8F5] px-3 pb-4 pt-3">
+    <LinearGradient
+      colors={['#F7F1E8', '#EFE6DA', '#E8DFD2']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{
+        marginHorizontal: 12,
+        marginTop: 12,
+        borderRadius: 24,
+        paddingHorizontal: 14,
+        paddingTop: 14,
+        paddingBottom: 16,
+        overflow: 'hidden',
+      }}
+    >
+      <Text className="mb-2 text-right font-bodyMedium text-[11px] text-ink-muted">
+        {he.homeDressHint}
+      </Text>
       <View
         style={{
           flexDirection: 'row',
@@ -54,14 +71,14 @@ export function HeroAvatarSection({
           style={{
             flex: 1,
             marginLeft: 12,
-            marginBottom: 48,
+            marginBottom: 40,
             gap: 10,
             alignItems: 'flex-start',
           }}
         >
           <Pressable
             onPress={onSave}
-            className="rounded-2xl bg-ink px-6 py-3.5 shadow-sm"
+            className="rounded-2xl bg-ink px-6 py-3.5"
             style={{ minWidth: 148 }}
           >
             <Text className="text-center font-bodyBold text-[15px] text-white">
@@ -70,7 +87,7 @@ export function HeroAvatarSection({
           </Pressable>
           <Pressable
             onPress={onFindNearMe}
-            className="rounded-2xl bg-[#E07A4F] px-6 py-3.5 shadow-sm"
+            className="rounded-2xl bg-[#E07A4F] px-6 py-3.5"
             style={{ minWidth: 148 }}
           >
             <Text className="text-center font-bodyBold text-[15px] text-white">
@@ -79,6 +96,6 @@ export function HeroAvatarSection({
           </Pressable>
         </View>
       </View>
-    </View>
+    </LinearGradient>
   );
 }

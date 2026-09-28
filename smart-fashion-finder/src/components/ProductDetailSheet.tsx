@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
   Modal,
@@ -9,20 +9,34 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SIZE_OPTIONS_BY_CATEGORY } from '@/constants/avatar';
 import type { ProductCard } from '@/data/catalog';
 import { he } from '@/i18n/he';
+import { openNavigation } from '@/utils/contact';
 import { formatPriceILS } from '@/utils/stock';
 
 type Props = {
   product: ProductCard | null;
   visible: boolean;
   onClose: () => void;
-  onDressAvatar: (product: ProductCard) => void;
-  onAddToCart: (product: ProductCard) => void;
+  onDressAvatar: (product: ProductCard, size: string) => void;
+  onAddToCart: (product: ProductCard, size: string) => void;
   preferredSize?: string;
 };
 
-/** כרטיס פריט מלא — תמונה גדולה, מחיר, חנות, מותג, לב, הלבשה, סל */
+function pickInitialSize(
+  category: ProductCard['category'] | undefined,
+  preferredSize: string,
+): string {
+  const opts = category
+    ? SIZE_OPTIONS_BY_CATEGORY[category] ?? ['S', 'M', 'L']
+    : ['S', 'M', 'L'];
+  if (opts.includes(preferredSize)) return preferredSize;
+  if (opts.includes('M')) return 'M';
+  return opts[Math.floor(opts.length / 2)];
+}
+
+/** כרטיס פריט מלא — מידות, חנות, הלבשה לפי מידה */
 export function ProductDetailSheet({
   product,
   visible,
@@ -33,12 +47,42 @@ export function ProductDetailSheet({
 }: Props) {
   const { height } = useWindowDimensions();
   const [liked, setLiked] = useState(false);
+  const [selectedSize, setSelectedSize] = useState(preferredSize);
+  const selectedSizeRef = useRef(selectedSize);
+  selectedSizeRef.current = selectedSize;
+  const openedProductId = useRef<string | null>(null);
+
+  const sizeOptions = useMemo(() => {
+    if (!product) return ['S', 'M', 'L'];
+    return SIZE_OPTIONS_BY_CATEGORY[product.category] ?? ['S', 'M', 'L', 'XL'];
+  }, [product]);
+
+  // אתחול מידה רק בפתיחת מוצר חדש — לא לדרוס בחירה כש־preferredSize מתעדכן
+  useEffect(() => {
+    if (!visible || !product) return;
+    if (openedProductId.current === product.id) return;
+    openedProductId.current = product.id;
+    setLiked(false);
+    setSelectedSize(pickInitialSize(product.category, preferredSize));
+  }, [visible, product?.id, product?.category, preferredSize]);
 
   useEffect(() => {
-    setLiked(false);
-  }, [product?.id]);
+    if (!visible) openedProductId.current = null;
+  }, [visible]);
 
   if (!product) return null;
+
+  const canNavigate =
+    typeof product.latitude === 'number' && typeof product.longitude === 'number';
+
+  const onNavigate = () => {
+    if (!canNavigate) return;
+    openNavigation(
+      product.latitude!,
+      product.longitude!,
+      product.storeName || product.title,
+    );
+  };
 
   return (
     <Modal
@@ -89,20 +133,69 @@ export function ProductDetailSheet({
                   : '—'}
               </Text>
               <Text className="font-bodyMedium text-sm text-ink-muted">
-                {he.sizeLabel}: {preferredSize}
+                {he.sizeLabel}: {selectedSize}
               </Text>
             </View>
 
-            <View className="mt-4 gap-2 rounded-2xl bg-[#F7F4EF] px-4 py-3">
+            <Text className="mb-2 mt-4 text-right font-bodyMedium text-xs text-ink-muted">
+              {he.chooseSizeHint}
+            </Text>
+            <View className="flex-row flex-wrap justify-end">
+              {sizeOptions.map((size) => {
+                const active = selectedSize === size;
+                return (
+                  <Pressable
+                    key={size}
+                    onPress={() => setSelectedSize(size)}
+                    className={`mb-2 ml-2 min-w-[44px] items-center rounded-md px-3 py-2 ${
+                      active ? 'bg-teal' : 'bg-[#F3F0EB]'
+                    }`}
+                  >
+                    <Text
+                      className={`font-bodyBold text-sm ${
+                        active ? 'text-white' : 'text-ink'
+                      }`}
+                    >
+                      {size}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <View className="mt-2 gap-2 rounded-2xl bg-[#F7F4EF] px-4 py-3">
               <Row label={he.brandLabel} value={product.brand || '—'} />
               <Row label={he.storeLabel} value={product.storeName || '—'} />
+              <Row
+                label={he.storeLocationLabel}
+                value={product.storeArea || product.storeAddress || 'חיפה'}
+              />
+              <Row
+                label={he.addressLabel}
+                value={product.storeAddress || '—'}
+              />
               <Row label={he.category} value={product.subcategory} />
             </View>
 
-            <View className="mt-5 flex-row gap-3">
+            {canNavigate ? (
+              <Pressable
+                onPress={onNavigate}
+                className="mt-4 flex-row items-center justify-center rounded-2xl bg-[#E07A4F] py-3.5"
+                accessibilityRole="button"
+                accessibilityLabel={he.navigate}
+              >
+                <Ionicons name="navigate" size={18} color="#fff" />
+                <Text className="mr-2 font-bodyBold text-[15px] text-white">
+                  {he.navigate}
+                </Text>
+              </Pressable>
+            ) : null}
+
+            <View className="mt-3 flex-row gap-3">
               <Pressable
                 onPress={() => {
-                  onAddToCart(product);
+                  const size = selectedSizeRef.current;
+                  onAddToCart(product, size);
                   onClose();
                 }}
                 className="flex-1 flex-row items-center justify-center rounded-2xl border border-[#D9D3C9] bg-white py-3.5"
@@ -114,7 +207,8 @@ export function ProductDetailSheet({
               </Pressable>
               <Pressable
                 onPress={() => {
-                  onDressAvatar(product);
+                  const size = selectedSizeRef.current;
+                  onDressAvatar(product, size);
                   onClose();
                 }}
                 className="flex-1 flex-row items-center justify-center rounded-2xl bg-ink py-3.5"
@@ -140,8 +234,10 @@ export function ProductDetailSheet({
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <View className="flex-row items-center justify-between">
-      <Text className="font-bodyMedium text-sm text-ink">{value}</Text>
+    <View className="flex-row items-center justify-between gap-3">
+      <Text className="flex-1 text-left font-bodyMedium text-sm text-ink">
+        {value}
+      </Text>
       <Text className="font-body text-xs text-ink-muted">{label}</Text>
     </View>
   );

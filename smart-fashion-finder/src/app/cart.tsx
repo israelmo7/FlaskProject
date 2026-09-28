@@ -2,9 +2,12 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-nati
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { personaToGenderFilter } from '@/constants/avatar';
+import { catalogIdFromPieceId } from '@/constants/avatarAssets';
+import { productById } from '@/data/catalog';
 import { useSavedProfile } from '@/hooks/useSavedProfile';
 import { he } from '@/i18n/he';
 import type { CartItem, GarmentAnalysis } from '@/types';
+import { openNavigation } from '@/utils/contact';
 import { formatPriceILS } from '@/utils/stock';
 
 export default function CartScreen() {
@@ -21,6 +24,20 @@ export default function CartScreen() {
   const findNearMe = (piece: CartItem) => {
     const size = piece.size || preferredSize || 'M';
     updatePreferredSize(size);
+    const catalogId = catalogIdFromPieceId(piece.id);
+    const product = catalogId ? productById(catalogId) : undefined;
+    if (
+      product &&
+      typeof product.latitude === 'number' &&
+      typeof product.longitude === 'number'
+    ) {
+      openNavigation(
+        product.latitude,
+        product.longitude,
+        product.storeName || piece.label,
+      );
+      return;
+    }
     const analysis: GarmentAnalysis = {
       id: `cart-${piece.id}`,
       category: piece.category,
@@ -104,6 +121,17 @@ export default function CartScreen() {
                   <Text className="mt-0.5 font-body text-xs text-ink-muted">
                     {piece.subcategory}
                   </Text>
+                  {(() => {
+                    const pid = catalogIdFromPieceId(piece.id);
+                    const p = pid ? productById(pid) : undefined;
+                    if (!p?.storeName) return null;
+                    return (
+                      <Text className="mt-1 text-right font-body text-[11px] text-ink-soft">
+                        {p.storeName}
+                        {p.storeAddress ? `\n${p.storeAddress}` : ''}
+                      </Text>
+                    );
+                  })()}
                   <Text className="mt-2 font-bodyBold text-base text-teal">
                     {formatPriceILS(piece.price)}
                   </Text>

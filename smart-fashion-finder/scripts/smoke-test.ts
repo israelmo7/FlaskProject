@@ -88,16 +88,89 @@ import {
   sizeFitScale,
   sizeRelativeToHeight,
 } from '../src/constants/avatar';
-import { extractIntent } from '../src/services/fashionChatIntent';
+import { extractIntent, colorMatches } from '../src/services/fashionChatIntent';
 
-assert(heightScale(140) < heightScale(165), '140cm doll shorter than 165cm');
-assert(heightScale(190) > heightScale(165), '190cm doll taller than 165cm');
+import {
+  categoryToSlot,
+  garmentFitOnBody,
+  parseHeightInput,
+  wearPiece,
+} from '../src/constants/avatar';
+import { garmentHang, garmentFitTransform } from '../src/constants/garmentLayout';
+import type { OutfitPiece } from '../src/types';
+
+assert(heightScale(140, 'woman') < heightScale(165, 'woman'), '140cm doll shorter than 165cm');
+assert(heightScale(178, 'man') > heightScale(165, 'woman'), '1.78m man taller than 1.65m woman');
+assert(heightScale(190, 'man') > heightScale(178, 'man'), '190cm taller than 178cm');
 assert(sizeFitScale('S') < sizeFitScale('M'), 'S garment smaller than M');
 assert(sizeFitScale('L') > sizeFitScale('M'), 'L garment larger than M');
 assert(
   sizeRelativeToHeight('S', 178) < sizeRelativeToHeight('M', 178),
   'S on 178cm looks smaller than M',
 );
+assert(garmentFitOnBody('L', 165) > garmentFitOnBody('S', 165), 'L fits larger than S on body');
+assert(parseHeightInput('1.78', 'man') === 178, '1.78 meters parses to 178cm');
+assert(parseHeightInput('178', 'man') === 178, '178 cm parses as 178');
+
+const hangShortL = garmentHang('L', 140, 'top');
+const hangTallS = garmentHang('S', 178, 'top');
+assert(hangShortL.translateY > hangTallS.translateY, 'L on short body hangs lower');
+assert(hangShortL.scaleY > hangTallS.scaleY, 'L on short body is longer');
+
+const fitS = garmentFitTransform('S', 170, 'top', { bodyScale: 1, y: 0, x: 0 });
+const fitM = garmentFitTransform('M', 170, 'top', { bodyScale: 1, y: 0, x: 0 });
+const fitL = garmentFitTransform('L', 170, 'top', { bodyScale: 1, y: 0, x: 0 });
+assert(fitS.scaleY < fitM.scaleY, 'S top shorter than M');
+assert(fitL.scaleY > fitM.scaleY, 'L top longer than M');
+assert(fitS.scaleX < fitM.scaleX, 'S top narrower than M');
+assert(fitL.translateY > fitS.translateY, 'L hem hangs below S hem');
+const mShort = garmentFitTransform('M', 170, 'top', { bodyScale: 1, y: 0, x: 0 });
+const mTall = garmentFitTransform('M', 190, 'top', { bodyScale: 1, y: 0, x: 0 });
+assert(mShort.scaleY > mTall.scaleY, 'M on 170cm longer relative than M on 190cm');
+
+const shirtA: OutfitPiece = {
+  id: 'p-tshirt-M',
+  label: 'טי א',
+  category: 'Shirts',
+  subcategory: 'טי שירט',
+  color: 'Black',
+  size: 'M',
+  slot: categoryToSlot('Shirts'),
+};
+const shirtB: OutfitPiece = {
+  id: 'p-hoodie-L',
+  label: 'קפוצ׳ון',
+  category: 'Shirts',
+  subcategory: 'אוברסייז',
+  color: 'Beige',
+  size: 'L',
+  slot: categoryToSlot('Shirts'),
+};
+const jeans: OutfitPiece = {
+  id: 'p-jeans-M',
+  label: 'ג׳ינס',
+  category: 'Pants',
+  subcategory: 'ג׳ינס',
+  color: 'Blue',
+  size: 'M',
+  slot: categoryToSlot('Pants'),
+};
+const jeans2: OutfitPiece = {
+  id: 'p-jeans-black-M',
+  label: 'ג׳ינס שחור',
+  category: 'Pants',
+  subcategory: 'ג׳ינס',
+  color: 'Black',
+  size: 'M',
+  slot: categoryToSlot('Pants'),
+};
+let outfit = wearPiece({}, shirtA);
+outfit = wearPiece(outfit, jeans);
+assert(Boolean(outfit.top && outfit.bottom), 'shirt + jeans both stay');
+outfit = wearPiece(outfit, shirtB);
+assert(outfit.top?.id === shirtB.id && outfit.bottom?.id === jeans.id, 'new shirt replaces old; jeans stay');
+outfit = wearPiece(outfit, jeans2);
+assert(outfit.bottom?.id === jeans2.id && outfit.top?.id === shirtB.id, 'new jeans replace old; shirt stays');
 
 const blackShirtIntent = extractIntent('חולצה שחורה עד 150');
 assert(blackShirtIntent.category === 'Shirts', 'chat intent category Shirts');
@@ -107,6 +180,36 @@ assert(blackShirtIntent.maxPrice === 150, 'chat intent maxPrice 150');
 const jeansIntent = extractIntent('ג׳ינס כחול');
 assert(jeansIntent.category === 'Pants', 'chat intent jeans → Pants');
 assert(jeansIntent.color === 'Blue', 'chat intent jeans color Blue');
+
+assert(colorMatches('Black', 'Black'), 'exact black matches');
+assert(!colorMatches('Charcoal', 'Black'), 'charcoal is not black');
+assert(!colorMatches('Beige', 'Black'), 'beige is not black');
+assert(colorMatches('Blue', 'Blue'), 'exact blue matches');
+assert(!colorMatches('Light Wash', 'Blue'), 'light wash is not blue');
+
+// סימולציית match קשיח (בלי טעינת תמונות מהקטלוג)
+const demoCatalog = [
+  { id: 'p-tshirt', category: 'Shirts', color: 'Black', price: 89 },
+  { id: 'p-hoodie', category: 'Shirts', color: 'Beige', price: 179 },
+  { id: 'p-bomber', category: 'Outerwear', color: 'Black', price: 299 },
+  { id: 'p-jeans', category: 'Pants', color: 'Blue', price: 219 },
+  { id: 'p-shorts', category: 'Pants', color: 'Light Wash', price: 159 },
+];
+const hardMatch = demoCatalog.filter(
+  (p) =>
+    (!blackShirtIntent.category || p.category === blackShirtIntent.category) &&
+    (!blackShirtIntent.color || colorMatches(p.color, blackShirtIntent.color)) &&
+    (typeof blackShirtIntent.maxPrice !== 'number' ||
+      p.price <= blackShirtIntent.maxPrice),
+);
+assert(hardMatch.length === 1 && hardMatch[0].id === 'p-tshirt', 'hard match only black shirt');
+
+const jeansHard = demoCatalog.filter(
+  (p) =>
+    (!jeansIntent.category || p.category === jeansIntent.category) &&
+    (!jeansIntent.color || colorMatches(p.color, jeansIntent.color)),
+);
+assert(jeansHard.length === 1 && jeansHard[0].id === 'p-jeans', 'hard match only blue jeans');
 
 if (failed > 0) {
   console.error(`\n${failed} assertion(s) failed`);
