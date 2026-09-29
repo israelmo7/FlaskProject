@@ -150,8 +150,10 @@ assert(CANONICAL_ANCHORS.hips.y > CANONICAL_ANCHORS.shoulders.y, 'anchor: hips b
 const bottomBaked = overlayLayoutFor('man', 'bottom', 'baked');
 assert(bottomBaked.translateY < 0, 'anchor: bottoms shift up to cover boxers');
 assert(bottomBaked.scaleY > 1, 'anchor: bottoms slightly enlarged for waist cover');
-const outerCut = overlayLayoutFor('man', 'outer', 'cutout');
-assert(outerCut.translateY >= 0.07, 'anchor: outer cutout shifted down off face');
+const outerCut = overlayLayoutFor('man', 'outer', 'cutout', {
+  hasTopUnderOuter: true,
+});
+assert(outerCut.translateY >= 0.12, 'anchor: outer cutout shifted down off face');
 assert(outerCut.scaleY === 1, 'anchor: outer cutout no vertical scale (keeps neck clear)');
 const hatLayout = overlayLayoutFor('woman', 'hat', 'cutout');
 assert(hatLayout.anchor === 'head' && hatLayout.zIndex === SLOT_Z_INDEX.hat, 'anchor: woman hat → head');

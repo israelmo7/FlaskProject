@@ -24,7 +24,7 @@ export type OuterwearLayoutRules = {
 };
 
 /** מינימום הזזה למטה לכל עליונית — צוואר/פנים תמיד גלויים */
-export const OUTERWEAR_NECKLINE_MIN_Y = 0.02;
+export const OUTERWEAR_NECKLINE_MIN_Y = 0.03;
 
 /**
  * מורפולוגיה לפי דמות — כיסוי זרועות + בטיחות צוואר.
@@ -35,48 +35,48 @@ const OUTERWEAR_BY_PERSONA: Record<AvatarPersona, OuterwearLayoutRules> = {
     scaleX: 1.04,
     scaleY: 1.0,
     translateX: 0,
-    translateY: 0.028,
+    translateY: 0.04,
     preferOpenFrontCutout: true,
   },
   woman: {
     scaleX: 1.03,
     scaleY: 1.0,
     translateX: 0,
-    translateY: 0.03,
+    translateY: 0.042,
     preferOpenFrontCutout: true,
   },
   teenBoy: {
     scaleX: 1.06,
     scaleY: 1.0,
     translateX: 0,
-    translateY: 0.035,
+    translateY: 0.048,
     preferOpenFrontCutout: true,
   },
   teenGirl: {
     scaleX: 1.05,
     scaleY: 1.0,
     translateX: 0,
-    translateY: 0.032,
+    translateY: 0.045,
     preferOpenFrontCutout: true,
   },
   boy: {
     scaleX: 1.08,
     scaleY: 1.0,
     translateX: 0,
-    translateY: 0.04,
+    translateY: 0.055,
     preferOpenFrontCutout: true,
   },
   girl: {
     scaleX: 1.07,
     scaleY: 1.0,
     translateX: 0,
-    translateY: 0.038,
+    translateY: 0.052,
     preferOpenFrontCutout: true,
   },
 };
 
-/** cutout סגור (אטום במרכז) — צריך הזזה חזקה יותר מ־baked */
-const CUTOUT_EXTRA_Y = 0.055;
+/** cutout / open-front — נכסים מצוירים גבוה; הזזה חזקה יותר מ־baked */
+const CUTOUT_EXTRA_Y = 0.08;
 
 /**
  * חוקי עליונית גלובליים ל־persona + מצב נכס.
@@ -92,9 +92,9 @@ export function outerwearRulesFor(
   if (mode === 'cutout') {
     translateY += CUTOUT_EXTRA_Y;
   }
-  // מעל חולצה — עוד מעט למטה כדי לא לדרוס צווארון
+  // מעל חולצה — עוד למטה כדי לא לדרוס צווארון/פנים
   if (hasTopUnder) {
-    translateY += 0.01;
+    translateY += 0.02;
   }
 
   return {
