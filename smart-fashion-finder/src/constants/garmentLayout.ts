@@ -3,9 +3,10 @@ import {
   overlayLayoutFor,
   type GarmentFitMode,
   type OverlayAnchorLayout,
+  type OverlayLayoutOptions,
 } from '@/constants/overlayAnchors';
 
-export type { GarmentFitMode } from '@/constants/overlayAnchors';
+export type { GarmentFitMode, OverlayLayoutOptions } from '@/constants/overlayAnchors';
 
 /** @deprecated — השתמשו ב־OverlayAnchorLayout / overlayLayoutFor */
 export type SlotLayout = {
@@ -61,9 +62,10 @@ export function garmentFitTransform(
   layout: SlotLayout,
   persona: AvatarPersona = 'man',
   mode: GarmentFitMode = 'cutout',
+  options: OverlayLayoutOptions = {},
 ): GarmentTransform {
-  // מעדיפים את מערכת העוגנים המלאה; SlotLayout נשמר לתאימות
-  const anchored = overlayLayoutFor(persona, slot, mode);
+  // מעדיפים את מערכת העוגנים / Outerwear Alignment; SlotLayout לתאימות
+  const anchored = overlayLayoutFor(persona, slot, mode, options);
   return {
     scaleX: anchored.scaleX || layout.bodyScale,
     scaleY: anchored.scaleY || layout.bodyScale,

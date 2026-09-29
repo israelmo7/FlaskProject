@@ -104,6 +104,11 @@ import {
   SLOT_Z_INDEX,
   STANDARD_FIT,
 } from '../src/constants/overlayAnchors';
+import {
+  OUTERWEAR_NECKLINE_MIN_Y,
+  outerwearRulesFor,
+  shouldUseOpenFrontOuter,
+} from '../src/constants/outerwearAlignment';
 import { outfitPresentationMode } from '../src/constants/outfitPresentation';
 import type { OutfitPiece } from '../src/types';
 
@@ -145,11 +150,30 @@ assert(CANONICAL_ANCHORS.hips.y > CANONICAL_ANCHORS.shoulders.y, 'anchor: hips b
 const bottomBaked = overlayLayoutFor('man', 'bottom', 'baked');
 assert(bottomBaked.translateY < 0, 'anchor: bottoms shift up to cover boxers');
 assert(bottomBaked.scaleY > 1, 'anchor: bottoms slightly enlarged for waist cover');
-const outerCut = overlayLayoutFor('man', 'outer', 'cutout');
-assert(outerCut.translateY >= 0.07, 'anchor: outer cutout shifted down off face');
+const outerCut = overlayLayoutFor('man', 'outer', 'cutout', {
+  hasTopUnderOuter: true,
+});
+assert(outerCut.translateY >= 0.12, 'anchor: outer cutout shifted down off face');
 assert(outerCut.scaleY === 1, 'anchor: outer cutout no vertical scale (keeps neck clear)');
 const hatLayout = overlayLayoutFor('woman', 'hat', 'cutout');
 assert(hatLayout.anchor === 'head' && hatLayout.zIndex === SLOT_Z_INDEX.hat, 'anchor: woman hat → head');
+
+// Outerwear Alignment System — גלובלי לכל persona
+const personas = ['man', 'woman', 'teenBoy', 'teenGirl', 'boy', 'girl'] as const;
+for (const p of personas) {
+  const rules = outerwearRulesFor(p, 'baked', true);
+  assert(rules.translateY >= OUTERWEAR_NECKLINE_MIN_Y, `outerwear neckline ${p}`);
+  assert(rules.scaleX >= 1, `outerwear sleeve scaleX ${p}`);
+  assert(rules.preferOpenFrontCutout === true, `outerwear open-front when top under ${p}`);
+  const layout = overlayLayoutFor(p, 'outer', 'cutout', { hasTopUnderOuter: true });
+  assert(layout.translateY >= rules.translateY - 0.001, `outerwear layout uses rules ${p}`);
+}
+assert(shouldUseOpenFrontOuter('p-bomber', true), 'open-front bomber with top');
+assert(!shouldUseOpenFrontOuter('p-bomber', false), 'no open-front without top');
+assert(shouldUseOpenFrontOuter('p-coat', true), 'open-front coat alias');
+const boyOuter = outerwearRulesFor('boy', 'cutout', true);
+const manOuter = outerwearRulesFor('man', 'cutout', true);
+assert(boyOuter.scaleX >= manOuter.scaleX, 'kids outerwear wider sleeve coverage');
 
 // Fitted Look key coverage — parse avatarAssets.ts (avoid require() of PNGs in Node)
 import { readFileSync } from 'node:fs';

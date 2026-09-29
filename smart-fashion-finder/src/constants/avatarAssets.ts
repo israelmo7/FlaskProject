@@ -11,6 +11,7 @@ import {
   slotLayoutFor,
   type GarmentTransform,
 } from '@/constants/garmentLayout';
+import { shouldUseOpenFrontOuter } from '@/constants/outerwearAlignment';
 import { outfitPresentationMode } from '@/constants/outfitPresentation';
 
 export const PERSONA_BASE_IMAGES: Record<AvatarPersona, ImageSourcePropType> = {
@@ -312,6 +313,11 @@ export const GARMENT_LAYER_IMAGES: Record<string, ImageSourcePropType> = {
   'p-denim-jkt': require('../../assets/images/layers/cutouts/denim-jkt.png'),
   'p-leather': require('../../assets/images/layers/cutouts/leather.png'),
   'p-bomber': require('../../assets/images/layers/cutouts/bomber.png'),
+  // Open-front cutouts — מרכז חזה שקוף כשיש Top מתחת (Outerwear Alignment)
+  'p-bomber-open': require('../../assets/images/layers/cutouts/bomber-open.png'),
+  'p-denim-jkt-open': require('../../assets/images/layers/cutouts/denim-jkt-open.png'),
+  'p-leather-open': require('../../assets/images/layers/cutouts/leather-open.png'),
+  'p-hoodie-open': require('../../assets/images/layers/cutouts/hoodie-open.png'),
   'p-dress': require('../../assets/images/layers/cutouts/dress.png'),
   'p-skirt': require('../../assets/images/layers/cutouts/dress.png'),
   'p-sneakers': require('../../assets/images/layers/cutouts/sneakers.png'),
@@ -321,13 +327,16 @@ export const GARMENT_LAYER_IMAGES: Record<string, ImageSourcePropType> = {
   'p-cap': require('../../assets/images/layers/cutouts/hat.png'),
   'p-suit': require('../../assets/images/fit/turn/man_suit_0.png'),
   'p-blazer': require('../../assets/images/layers/cutouts/denim-jkt.png'),
+  'p-blazer-open': require('../../assets/images/layers/cutouts/denim-jkt-open.png'),
   'p-coat': require('../../assets/images/layers/cutouts/leather.png'),
+  'p-coat-open': require('../../assets/images/layers/cutouts/leather-open.png'),
   'p-joggers': require('../../assets/images/layers/cutouts/sport.png'),
   'p-cardigan': require('../../assets/images/layers/cutouts/turtleneck.png'),
   'p-tee-stripe': require('../../assets/images/layers/cutouts/polo.png'),
   'p-tshirt-white': require('../../assets/images/layers/cutouts/oxford.png'),
   'p-tshirt-navy': require('../../assets/images/layers/cutouts/tshirt.png'),
   'p-hoodie-black': require('../../assets/images/layers/cutouts/hoodie.png'),
+  'p-hoodie-black-open': require('../../assets/images/layers/cutouts/hoodie-open.png'),
   'p-jeans-black': require('../../assets/images/layers/cutouts/jeans.png'),
   'p-jeans-light': require('../../assets/images/layers/cutouts/jeans.png'),
 };
@@ -564,26 +573,44 @@ function isSocksPiece(piece: OutfitPiece | undefined): boolean {
   return piece.category === 'Socks' || id === 'p-socks';
 }
 
+function openFrontLayerForId(catalogId: string): ImageSourcePropType | null {
+  return (
+    layerImageForPieceId(`${catalogId}-open`) ??
+    layerImageForPieceId(catalogId.replace(/^p-/, '') + '-open')
+  );
+}
+
 function pushOverlayLayer(
   extras: ResolvedOverlay[],
   piece: OutfitPiece | undefined,
   heightCm: number,
   persona: AvatarPersona,
   skipIds?: string[],
-  /** A1: בערימת שכבות — cutouts נקיים כדי שלא ייאפו גופייה/מכנסיים מתוך נכס עליון */
-  preferCutout = false,
+  opts?: {
+    /** Outerwear מעל Top — cutout פתוח + חוקי יישור גלובליים */
+    hasTopUnderOuter?: boolean;
+  },
 ) {
   if (!piece || isUnderwearPiece(piece) || isSocksPiece(piece)) return;
   const id = pieceCatalogId(piece);
   if (!id || skipIds?.includes(id)) return;
-  // גבר: שכבה מצוירת על הגוף. אחרים / ערימה: בגד נקי בלי ידיים/עור אפויים.
+
+  const slot = piece.slot;
+  const hasTopUnder = Boolean(opts?.hasTopUnderOuter && slot === 'outer');
+  const useOpenFront = shouldUseOpenFrontOuter(id, hasTopUnder);
+
+  // Outerwear מעל חולצה: cutout פתוח (בלי גופייה אפויה) כדי שה־Top יישאר גלוי
+  const preferCutout = useOpenFront || (slot === 'outer' && hasTopUnder);
   const baked = preferCutout ? null : fittedOverlayForId(id, persona);
   const o =
-    baked ?? layerImageForPieceId(id) ?? layerImageForPieceId(piece.id);
+    (useOpenFront ? openFrontLayerForId(id) : null) ??
+    baked ??
+    layerImageForPieceId(id) ??
+    layerImageForPieceId(piece.id);
   if (!o) return;
-  const slot = piece.slot;
-  const mode = baked ? 'baked' : 'cutout';
-  // Standard Fit + Anchor Points — רשת 480×900 אחידה לכל הקטלוג
+
+  const mode = baked && !preferCutout ? 'baked' : 'cutout';
+  // Standard Fit + Anchor / Outerwear Alignment — רשת 480×900
   const layout = slotLayoutFor(persona, slot, mode);
   const fit = garmentFitTransform(
     undefined,
@@ -592,6 +619,7 @@ function pushOverlayLayer(
     layout,
     persona,
     mode,
+    { hasTopUnderOuter: hasTopUnder },
   );
   extras.push({
     src: o,
@@ -602,7 +630,7 @@ function pushOverlayLayer(
     zIndex: fit.zIndex,
     anchor: fit.anchor,
     slot,
-    key: `${id}-anch-${fit.anchor}-${slot}-${baked ? 'b' : 'c'}`,
+    key: `${id}-anch-${fit.anchor}-${slot}-${useOpenFront ? 'open' : baked ? 'b' : 'c'}`,
   });
 }
 
@@ -613,15 +641,16 @@ function resolveOverlayOnlyStack(
   persona: AvatarPersona,
 ): ResolvedOutfit {
   const overlays: ResolvedOverlay[] = [];
-  // Standard Fit baked overlays על רשת 480×900 (+ Anchor nudges).
-  // cutouts נשארים כ־fallback בלבד כשאין baked ל־persona.
+  const hasTopUnderOuter = Boolean(layers.top && layers.outer);
   // סדר ציור / zIndex: מכנסיים → שמלה → חולצה → עליונית → נעליים → כובע
   if (!isUnderwearPiece(layers.bottom)) {
     pushOverlayLayer(overlays, layers.bottom, heightCm, persona);
   }
   pushOverlayLayer(overlays, layers.dress, heightCm, persona);
   pushOverlayLayer(overlays, layers.top, heightCm, persona);
-  pushOverlayLayer(overlays, layers.outer, heightCm, persona);
+  pushOverlayLayer(overlays, layers.outer, heightCm, persona, undefined, {
+    hasTopUnderOuter,
+  });
   if (!isSocksPiece(layers.shoes)) {
     pushOverlayLayer(overlays, layers.shoes, heightCm, persona, ['p-socks']);
   }
