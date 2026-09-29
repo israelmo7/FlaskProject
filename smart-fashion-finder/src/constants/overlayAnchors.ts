@@ -87,25 +87,28 @@ const IDENTITY: Nudge = {
  * Tops/Outer: הזזה קלה למטה כדי לא לחתוך פנים/צוואר.
  */
 const SLOT_NUDGE_BAKED: Record<OutfitSlot, Nudge> = {
-  bottom: { scaleX: 1.03, scaleY: 1.06, translateX: 0, translateY: -0.05 },
+  // hips: למעלה + הגדלה קלה — קו מותניים מכסה בוקסר הבסיס
+  bottom: { scaleX: 1.02, scaleY: 1.04, translateX: 0, translateY: -0.055 },
+  // shoulders: הזזה עדינה למטה — צוואר/פנים פנויים
   top: { scaleX: 1, scaleY: 1, translateX: 0, translateY: 0.01 },
-  outer: { scaleX: 1, scaleY: 1, translateX: 0, translateY: 0.014 },
-  dress: { scaleX: 1.01, scaleY: 1.01, translateX: 0, translateY: 0.01 },
+  outer: { scaleX: 1, scaleY: 1, translateX: 0, translateY: 0.016 },
+  dress: { scaleX: 1, scaleY: 1.01, translateX: 0, translateY: 0.01 },
   shoes: { scaleX: 1, scaleY: 1, translateX: 0, translateY: 0.012 },
   hat: { scaleX: 1, scaleY: 1, translateX: 0, translateY: -0.014 },
 };
 
 /**
  * cutouts — נכסים לא תמיד על אותה רשת; תיקונים חזקים יותר.
- * Outer: למטה (לא מכסה פנים). Bottom: למעלה + scale (כיסוי בוקסר).
+ * Outer: רק הזזה למטה (בלי scale — scale ממרכז דוחף צווארון לפנים).
+ * Bottom: למעלה + scale מתון לכיסוי בוקסר.
  */
 const SLOT_NUDGE_CUTOUT: Record<OutfitSlot, Nudge> = {
-  bottom: { scaleX: 1.04, scaleY: 1.08, translateX: 0, translateY: -0.02 },
-  top: { scaleX: 1.02, scaleY: 1.02, translateX: 0, translateY: 0.02 },
-  outer: { scaleX: 1.01, scaleY: 1.01, translateX: 0, translateY: 0.07 },
-  dress: { scaleX: 1.02, scaleY: 1.02, translateX: 0, translateY: 0.02 },
-  shoes: { scaleX: 1.02, scaleY: 1.02, translateX: 0, translateY: 0.045 },
-  hat: { scaleX: 1.02, scaleY: 1.02, translateX: 0, translateY: -0.01 },
+  bottom: { scaleX: 1.03, scaleY: 1.05, translateX: 0, translateY: -0.03 },
+  top: { scaleX: 1, scaleY: 1, translateX: 0, translateY: 0.022 },
+  outer: { scaleX: 1, scaleY: 1, translateX: 0, translateY: 0.08 },
+  dress: { scaleX: 1, scaleY: 1, translateX: 0, translateY: 0.022 },
+  shoes: { scaleX: 1, scaleY: 1, translateX: 0, translateY: 0.05 },
+  hat: { scaleX: 1, scaleY: 1, translateX: 0, translateY: -0.012 },
 };
 
 /** התאמות עדינות לפי persona (יחסי גוף שונים) */
