@@ -520,12 +520,16 @@ export function frontFacingAmount(yaw: number): number {
 
 export type ResolvedOverlay = {
   src: ImageSourcePropType;
-  /** סקייל רוחב סופי (כולל bodyScale + מידה) */
+  /** סקייל רוחב — Anchor / Standard Fit */
   scaleX: number;
-  /** סקייל אורך סופי */
+  /** סקייל אורך — Anchor / Standard Fit */
   scaleY: number;
   translateY: number;
   translateX: number;
+  /** סדר שכבה: bottom < top < outer < shoes < hat */
+  zIndex: number;
+  /** נקודת עיגון: head | shoulders | hips | feet */
+  anchor: 'head' | 'shoulders' | 'hips' | 'feet';
   slot: OutfitSlot;
   key: string;
 };
@@ -578,17 +582,27 @@ function pushOverlayLayer(
     baked ?? layerImageForPieceId(id) ?? layerImageForPieceId(piece.id);
   if (!o) return;
   const slot = piece.slot;
-  // Standard Fit: יישור 1:1 לגוף — בלי scale לפי מידה/גובה
-  const layout = slotLayoutFor(persona, slot, baked ? 'baked' : 'cutout');
-  const fit = garmentFitTransform(undefined, heightCm, slot, layout);
+  const mode = baked ? 'baked' : 'cutout';
+  // Standard Fit + Anchor Points — רשת 480×900 אחידה לכל הקטלוג
+  const layout = slotLayoutFor(persona, slot, mode);
+  const fit = garmentFitTransform(
+    undefined,
+    heightCm,
+    slot,
+    layout,
+    persona,
+    mode,
+  );
   extras.push({
     src: o,
     scaleX: fit.scaleX,
     scaleY: fit.scaleY,
     translateY: fit.translateY,
     translateX: fit.translateX,
+    zIndex: fit.zIndex,
+    anchor: fit.anchor,
     slot,
-    key: `${id}-std-${slot}-${baked ? 'b' : 'c'}`,
+    key: `${id}-anch-${fit.anchor}-${slot}-${baked ? 'b' : 'c'}`,
   });
 }
 

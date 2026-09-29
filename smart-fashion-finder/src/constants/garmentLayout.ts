@@ -1,105 +1,47 @@
 import type { AvatarPersona, OutfitSlot } from '@/types';
+import {
+  overlayLayoutFor,
+  type GarmentFitMode,
+  type OverlayAnchorLayout,
+} from '@/constants/overlayAnchors';
 
-/** פריסת עוגן בסיסית על גוף הדמות (cutouts רשומים על 480×900) */
+export type { GarmentFitMode } from '@/constants/overlayAnchors';
+
+/** @deprecated — השתמשו ב־OverlayAnchorLayout / overlayLayoutFor */
 export type SlotLayout = {
-  /** סולם בסיס ביחס למסגרת הדמות — Standard Fit ≈ 1 */
   bodyScale: number;
-  /** הזזה אנכית בסיסית (חלק מגובה, חיובי = למטה) */
   y: number;
-  /** הזזה אופקית בסיסית */
   x: number;
 };
 
-export type GarmentFitMode = 'baked' | 'cutout';
-
-/** טרנספורם סופי של בגד על הגוף */
+/** טרנספורם סופי של בגד על הגוף (שברי קנבס Standard Fit) */
 export type GarmentTransform = {
   scaleX: number;
   scaleY: number;
   translateX: number;
   translateY: number;
+  zIndex: number;
+  anchor: OverlayAnchorLayout['anchor'];
 };
 
-/** Standard Fit — יישור אבסולוטי לכתפיים/גוף, בלי סקייל לפי מידה/גובה */
-const STANDARD: SlotLayout = { bodyScale: 1, y: 0, x: 0 };
-
-const MAN_BAKED: Record<OutfitSlot, SlotLayout> = {
-  top: STANDARD,
-  bottom: STANDARD,
-  outer: STANDARD,
-  dress: STANDARD,
-  shoes: STANDARD,
-  hat: { bodyScale: 1, y: -0.01, x: 0 },
-};
-
-const CUTOUT_BY_PERSONA: Record<
-  AvatarPersona,
-  Record<OutfitSlot, SlotLayout>
-> = {
-  man: {
-    top: STANDARD,
-    bottom: STANDARD,
-    // cutouts של עליונית מצוירים גבוה מדי — הזזה למטה כדי לא לכסות פנים
-    outer: { bodyScale: 1, y: 0.07, x: 0 },
-    dress: STANDARD,
-    shoes: STANDARD,
-    hat: { bodyScale: 1, y: -0.01, x: 0 },
-  },
-  woman: {
-    top: STANDARD,
-    bottom: STANDARD,
-    outer: STANDARD,
-    dress: STANDARD,
-    shoes: STANDARD,
-    hat: { bodyScale: 1, y: -0.01, x: 0 },
-  },
-  teenBoy: {
-    top: STANDARD,
-    bottom: STANDARD,
-    outer: STANDARD,
-    dress: STANDARD,
-    shoes: STANDARD,
-    hat: { bodyScale: 1, y: -0.01, x: 0 },
-  },
-  teenGirl: {
-    top: STANDARD,
-    bottom: STANDARD,
-    outer: STANDARD,
-    dress: STANDARD,
-    shoes: STANDARD,
-    hat: { bodyScale: 1, y: -0.01, x: 0 },
-  },
-  boy: {
-    top: STANDARD,
-    bottom: STANDARD,
-    outer: STANDARD,
-    dress: STANDARD,
-    shoes: STANDARD,
-    hat: { bodyScale: 1, y: -0.008, x: 0 },
-  },
-  girl: {
-    top: STANDARD,
-    bottom: STANDARD,
-    outer: STANDARD,
-    dress: STANDARD,
-    shoes: STANDARD,
-    hat: { bodyScale: 1, y: -0.008, x: 0 },
-  },
-};
-
+/**
+ * פריסת סלוט לפי מערכת Anchor Points (Standard Fit 480×900).
+ */
 export function slotLayoutFor(
   persona: AvatarPersona,
   slot: OutfitSlot,
   mode: GarmentFitMode = 'cutout',
 ): SlotLayout {
-  if (mode === 'baked' && persona === 'man') {
-    return MAN_BAKED[slot] ?? STANDARD;
-  }
-  return CUTOUT_BY_PERSONA[persona]?.[slot] ?? STANDARD;
+  const layout = overlayLayoutFor(persona, slot, mode);
+  return {
+    bodyScale: (layout.scaleX + layout.scaleY) / 2,
+    y: layout.translateY,
+    x: layout.translateX,
+  };
 }
 
 /**
- * @deprecated Standard Fit — תמיד 1 (מידה/גובה לא משפיעים על הוויזואל)
+ * @deprecated Standard Fit — מידה/גובה לא משפיעים על הוויזואל
  */
 export function garmentFitFactor(
   _size?: string,
@@ -109,19 +51,26 @@ export function garmentFitFactor(
 }
 
 /**
- * Standard Fit: יישור קבוע על הגוף — בלי scale/translate לפי XS–XL או גובה.
+ * Standard Fit + Anchor Points — יישור אחיד לכל הקטלוג.
+ * מידה / גובה לא משנים scale (זהות Standard Fit).
  */
 export function garmentFitTransform(
   _size: string | undefined,
   _heightCm: number,
-  _slot: OutfitSlot,
+  slot: OutfitSlot,
   layout: SlotLayout,
+  persona: AvatarPersona = 'man',
+  mode: GarmentFitMode = 'cutout',
 ): GarmentTransform {
+  // מעדיפים את מערכת העוגנים המלאה; SlotLayout נשמר לתאימות
+  const anchored = overlayLayoutFor(persona, slot, mode);
   return {
-    scaleX: layout.bodyScale,
-    scaleY: layout.bodyScale,
-    translateX: layout.x,
-    translateY: layout.y,
+    scaleX: anchored.scaleX || layout.bodyScale,
+    scaleY: anchored.scaleY || layout.bodyScale,
+    translateX: anchored.translateX,
+    translateY: anchored.translateY,
+    zIndex: anchored.zIndex,
+    anchor: anchored.anchor,
   };
 }
 
@@ -131,7 +80,11 @@ export function garmentHang(
   heightCm: number,
   slot: OutfitSlot,
 ): { translateY: number; scaleY: number } {
-  const t = garmentFitTransform(size, heightCm, slot, STANDARD);
+  const t = garmentFitTransform(size, heightCm, slot, {
+    bodyScale: 1,
+    y: 0,
+    x: 0,
+  });
   return { translateY: t.translateY, scaleY: t.scaleY };
 }
 
