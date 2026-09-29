@@ -613,22 +613,15 @@ function resolveOverlayOnlyStack(
   persona: AvatarPersona,
 ): ResolvedOutfit {
   const overlays: ResolvedOverlay[] = [];
-  // A1: כשיש עליון+עליונית — cutout לעליונית (בלי גופייה אפויה שמסתירה את החולצה)
-  const cutoutOuter = Boolean(layers.top && layers.outer);
-  // סדר ציור: מכנסיים → שמלה/חולצה → עליונית → נעליים → כובע
+  // Standard Fit baked overlays על רשת 480×900 (+ Anchor nudges).
+  // cutouts נשארים כ־fallback בלבד כשאין baked ל־persona.
+  // סדר ציור / zIndex: מכנסיים → שמלה → חולצה → עליונית → נעליים → כובע
   if (!isUnderwearPiece(layers.bottom)) {
     pushOverlayLayer(overlays, layers.bottom, heightCm, persona);
   }
   pushOverlayLayer(overlays, layers.dress, heightCm, persona);
   pushOverlayLayer(overlays, layers.top, heightCm, persona);
-  pushOverlayLayer(
-    overlays,
-    layers.outer,
-    heightCm,
-    persona,
-    undefined,
-    cutoutOuter,
-  );
+  pushOverlayLayer(overlays, layers.outer, heightCm, persona);
   if (!isSocksPiece(layers.shoes)) {
     pushOverlayLayer(overlays, layers.shoes, heightCm, persona, ['p-socks']);
   }
