@@ -1,5 +1,6 @@
 import '../../global.css';
 import { useEffect } from 'react';
+import { I18nManager, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -13,8 +14,18 @@ import {
   Fraunces_600SemiBold,
   Fraunces_700Bold,
 } from '@expo-google-fonts/fraunces';
+import { he } from '@/i18n/he';
+import { SavedProfileProvider } from '@/hooks/useSavedProfile';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
+
+// פיילוט ישראלי — ממשק מימין לשמאל
+I18nManager.allowRTL(true);
+try {
+  I18nManager.forceRTL(true);
+} catch {
+  // web / already set
+}
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -34,29 +45,52 @@ export default function RootLayout() {
   if (!loaded) return null;
 
   return (
-    <>
-      <StatusBar style="dark" />
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: '#F3EEE6' },
-          headerTintColor: '#12161C',
-          headerTitleStyle: {
-            fontFamily: 'Fraunces_600SemiBold',
-            fontSize: 18,
-          },
-          contentStyle: { backgroundColor: '#F3EEE6' },
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="analysis"
-          options={{ title: 'Garment Analysis', presentation: 'card' }}
-        />
-        <Stack.Screen
-          name="stores"
-          options={{ title: 'Nearby Stock', presentation: 'card' }}
-        />
-      </Stack>
-    </>
+    <SavedProfileProvider>
+      <View style={{ flex: 1, direction: 'rtl' }}>
+        <StatusBar style="dark" />
+        <Stack
+          screenOptions={{
+            headerStyle: { backgroundColor: '#F3EEE6' },
+            headerTintColor: '#12161C',
+            headerTitleStyle: {
+              fontFamily: 'Fraunces_600SemiBold',
+              fontSize: 18,
+            },
+            headerTitleAlign: 'center',
+            contentStyle: { backgroundColor: '#F3EEE6' },
+          }}
+        >
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="onboarding"
+            options={{ headerShown: false, presentation: 'card' }}
+          />
+          <Stack.Screen
+            name="analysis"
+            options={{ title: he.analysisTitle, presentation: 'card' }}
+          />
+          <Stack.Screen
+            name="stores"
+            options={{ title: he.storesTitle, presentation: 'card' }}
+          />
+          <Stack.Screen
+            name="cart"
+            options={{ title: he.cartTitle, presentation: 'card' }}
+          />
+          <Stack.Screen
+            name="area"
+            options={{ title: he.areaTitle, presentation: 'card' }}
+          />
+          <Stack.Screen
+            name="tag"
+            options={{ title: he.tagTitle, presentation: 'card' }}
+          />
+          <Stack.Screen
+            name="chat"
+            options={{ title: he.chatTitle, presentation: 'card' }}
+          />
+        </Stack>
+      </View>
+    </SavedProfileProvider>
   );
 }

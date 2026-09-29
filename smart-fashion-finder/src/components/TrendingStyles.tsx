@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from 'react-native';
 import inventoryData from '@/data/inventory.json';
+import { he } from '@/i18n/he';
 import type { RecentSearch, TrendingStyle } from '@/types';
 
 type RecentProps = {
@@ -25,23 +26,25 @@ export function RecentSearches({ onSelect }: RecentProps) {
 
   return (
     <View className="mt-8">
-      <Text className="mb-3 font-display text-xl text-ink">Recent searches</Text>
+      <Text className="mb-3 text-right font-display text-xl text-ink">
+        {he.recent}
+      </Text>
       {items.map((item) => (
         <Pressable
           key={item.id}
           onPress={() => onSelect(item)}
           className="mb-2 flex-row items-center justify-between border-b border-stone-dark py-3"
         >
-          <View>
+          <View
+            className="h-3 w-3 rounded-full"
+            style={{ backgroundColor: accentFor(item.color) }}
+          />
+          <View className="flex-1 items-end">
             <Text className="font-bodyMedium text-base text-ink">{item.label}</Text>
             <Text className="font-body text-xs text-ink-muted">
               {item.category} · {item.color}
             </Text>
           </View>
-          <View
-            className="h-3 w-3 rounded-full"
-            style={{ backgroundColor: accentFor(item.color) }}
-          />
         </Pressable>
       ))}
     </View>
@@ -53,7 +56,9 @@ export function TrendingStyles({ onSelect }: TrendingProps) {
 
   return (
     <View className="mb-10 mt-8">
-      <Text className="mb-3 font-display text-xl text-ink">Trending visual styles</Text>
+      <Text className="mb-3 text-right font-display text-xl text-ink">
+        {he.trending}
+      </Text>
       <View className="flex-row flex-wrap justify-between">
         {items.map((style) => (
           <Pressable
@@ -63,11 +68,15 @@ export function TrendingStyles({ onSelect }: TrendingProps) {
             style={{ backgroundColor: accentFor(style.color) }}
           >
             <View className="h-28 justify-end p-3">
-              <Text className="font-body text-xs uppercase tracking-wide text-white/80">
+              <Text className="text-right font-body text-xs text-white/80">
                 {style.tag}
               </Text>
-              <Text className="mt-1 font-display text-lg text-white">{style.title}</Text>
-              <Text className="font-body text-xs text-white/80">{style.category}</Text>
+              <Text className="mt-1 text-right font-display text-lg text-white">
+                {style.title}
+              </Text>
+              <Text className="text-right font-body text-xs text-white/80">
+                {style.category}
+              </Text>
             </View>
           </Pressable>
         ))}

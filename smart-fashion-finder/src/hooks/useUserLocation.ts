@@ -43,11 +43,11 @@ export function useUserLocation() {
 
         if (distanceToDemo > DEMO_RADIUS_KM) {
           setCoords(FALLBACK);
-          setLabel(`${inventoryData.userDefaultLocation.label} (demo)`);
+          setLabel(`${inventoryData.userDefaultLocation.label} (דמו)`);
           setPermissionDenied(false);
         } else {
           setCoords(live);
-          setLabel('Current location');
+          setLabel('המיקום הנוכחי');
           setPermissionDenied(false);
         }
       } catch {
