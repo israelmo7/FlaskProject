@@ -14,9 +14,32 @@ import {
   personaHasPaintedTurn,
   resolveOutfitLook,
   turnBaseForPersona,
+  type ResolvedOverlay,
 } from '@/constants/avatarAssets';
+import { SLOT_Z_INDEX } from '@/constants/overlayAnchors';
 import { he } from '@/i18n/he';
 import type { AvatarProfile, OutfitLayers } from '@/types';
+
+/** סגנון שכבת בגד — Anchor Points על רשת Standard Fit */
+function overlayLayerStyle(
+  ov: ResolvedOverlay,
+  width: number,
+  height: number,
+  flipX: number,
+) {
+  return {
+    position: 'absolute' as const,
+    width,
+    height,
+    zIndex: ov.zIndex ?? SLOT_Z_INDEX[ov.slot] ?? 0,
+    transform: [
+      { translateX: (ov.translateX || 0) * width },
+      { translateY: (ov.translateY || 0) * height },
+      { scaleX: (ov.scaleX || 1) * flipX },
+      { scaleY: ov.scaleY || 1 },
+    ],
+  };
+}
 
 type Props = {
   profile: AvatarProfile;
@@ -60,9 +83,9 @@ function hasOuterClothes(layers: OutfitLayers): boolean {
 }
 
 /**
- * דמות משחק — Standard / Fitted Look:
- * מעדיפים תמונת גוף+בגד מיושרת; בלי scale לפי מידה/גובה.
- * סיבוב 180° לפי פריימי persona.
+ * דמות משחק — Standard Fit + Anchor Points:
+ * Fitted Look כשקיים; אחרת בסיס + overlays על רשת 480×900
+ * (head / shoulders / hips / feet) עם zIndex אחיד לכל הקטלוג.
  */
 export function GameFashionAvatar({
   profile,
@@ -209,36 +232,31 @@ export function GameFashionAvatar({
           />
         )}
 
-        {/* שכבות בגד — Standard Fit + הזזת cutout (למשל עליונית) */}
+        {/* שכבות בגד — Anchor Points (hips→bottom, shoulders→top/outer, …) */}
         {clothed && !useFittedHero
-          ? resolved.overlays.map((ov, i) => (
-              <Image
-                key={`ov-${ov.key}-${i}-${frame}`}
-                source={ov.src}
-                resizeMode="contain"
-                style={{
-                  position: 'absolute',
-                  width,
-                  height,
-                  transform: [
-                    { translateX: (ov.translateX || 0) * width },
-                    { translateY: (ov.translateY || 0) * height },
-                    { scaleX: (ov.scaleX || 1) * overlayFlip },
-                    { scaleY: ov.scaleY || 1 },
-                  ],
-                }}
-              />
-            ))
+          ? [...resolved.overlays]
+              .sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0))
+              .map((ov, i) => (
+                <Image
+                  key={`ov-${ov.key}-${i}-${frame}`}
+                  source={ov.src}
+                  resizeMode="contain"
+                  style={overlayLayerStyle(ov, width, height, overlayFlip)}
+                />
+              ))
           : null}
 
-        {accessoryOverlays.map((ov, i) => (
-          <Image
-            key={`acc-${ov.key}-${i}-${frame}`}
-            source={ov.src}
-            resizeMode="contain"
-            style={{ position: 'absolute', width, height }}
-          />
-        ))}
+        {accessoryOverlays
+          .slice()
+          .sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0))
+          .map((ov, i) => (
+            <Image
+              key={`acc-${ov.key}-${i}-${frame}`}
+              source={ov.src}
+              resizeMode="contain"
+              style={overlayLayerStyle(ov, width, height, 1)}
+            />
+          ))}
       </View>
 
       {showHint ? (

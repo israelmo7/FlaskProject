@@ -97,6 +97,13 @@ import {
   wearPiece,
 } from '../src/constants/avatar';
 import { garmentHang, garmentFitTransform } from '../src/constants/garmentLayout';
+import {
+  CANONICAL_ANCHORS,
+  overlayLayoutFor,
+  SLOT_ANCHOR,
+  SLOT_Z_INDEX,
+  STANDARD_FIT,
+} from '../src/constants/overlayAnchors';
 import { outfitPresentationMode } from '../src/constants/outfitPresentation';
 import type { OutfitPiece } from '../src/types';
 
@@ -111,14 +118,38 @@ assert(parseHeightInput('178', 'man') === 178, '178 cm parses as 178');
 
 const hangL = garmentHang('L', 140, 'top');
 const hangS = garmentHang('S', 178, 'top');
-assert(hangL.scaleY === 1 && hangS.scaleY === 1, 'standard fit: hang scaleY is 1');
+assert(hangL.scaleY === hangS.scaleY, 'standard fit: hang scaleY ignores size');
 assert(hangL.translateY === hangS.translateY, 'standard fit: hang ignore size/height');
 
 const fitS = garmentFitTransform('S', 170, 'top', { bodyScale: 1, y: 0, x: 0 });
 const fitL = garmentFitTransform('L', 190, 'top', { bodyScale: 1, y: 0, x: 0 });
-assert(fitS.scaleX === 1 && fitS.scaleY === 1, 'standard fit: S identity');
 assert(fitL.scaleX === fitS.scaleX && fitL.scaleY === fitS.scaleY, 'standard fit: L == S visually');
 assert(fitL.translateY === fitS.translateY, 'standard fit: no hem shift by size');
+assert(fitS.zIndex === SLOT_Z_INDEX.top, 'anchor: top zIndex');
+assert(fitS.anchor === 'shoulders', 'anchor: top → shoulders');
+
+// Anchor Points — רשת 480×900 + מיפוי סלוטים
+assert(STANDARD_FIT.width === 480 && STANDARD_FIT.height === 900, 'standard fit canvas 480×900');
+assert(SLOT_ANCHOR.hat === 'head', 'anchor: hat → head');
+assert(SLOT_ANCHOR.top === 'shoulders' && SLOT_ANCHOR.outer === 'shoulders', 'anchor: tops/outer → shoulders');
+assert(SLOT_ANCHOR.bottom === 'hips', 'anchor: bottom → hips');
+assert(SLOT_ANCHOR.shoes === 'feet', 'anchor: shoes → feet');
+assert(
+  SLOT_Z_INDEX.bottom < SLOT_Z_INDEX.top &&
+    SLOT_Z_INDEX.top < SLOT_Z_INDEX.outer &&
+    SLOT_Z_INDEX.outer < SLOT_Z_INDEX.hat,
+  'anchor: zIndex bottom < top < outer < hat',
+);
+assert(CANONICAL_ANCHORS.hips.y > CANONICAL_ANCHORS.shoulders.y, 'anchor: hips below shoulders');
+
+const bottomBaked = overlayLayoutFor('man', 'bottom', 'baked');
+assert(bottomBaked.translateY < 0, 'anchor: bottoms shift up to cover boxers');
+assert(bottomBaked.scaleY > 1, 'anchor: bottoms slightly enlarged for waist cover');
+const outerCut = overlayLayoutFor('man', 'outer', 'cutout');
+assert(outerCut.translateY >= 0.07, 'anchor: outer cutout shifted down off face');
+assert(outerCut.scaleY === 1, 'anchor: outer cutout no vertical scale (keeps neck clear)');
+const hatLayout = overlayLayoutFor('woman', 'hat', 'cutout');
+assert(hatLayout.anchor === 'head' && hatLayout.zIndex === SLOT_Z_INDEX.hat, 'anchor: woman hat → head');
 
 // Fitted Look key coverage — parse avatarAssets.ts (avoid require() of PNGs in Node)
 import { readFileSync } from 'node:fs';
