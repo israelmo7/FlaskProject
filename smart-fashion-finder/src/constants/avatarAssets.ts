@@ -599,9 +599,8 @@ function pushOverlayLayer(
   const hasTopUnder = Boolean(opts?.hasTopUnderOuter && slot === 'outer');
   const useOpenFront = shouldUseOpenFrontOuter(id, hasTopUnder);
 
-  // Outerwear מעל חולצה: cutout פתוח (בלי גופייה אפויה) כדי שה־Top יישאר גלוי
-  const preferCutout = useOpenFront || (slot === 'outer' && hasTopUnder);
-  const baked = preferCutout ? null : fittedOverlayForId(id, persona);
+  // Fitted baked overlay קודם (מעיל יושב על הגוף). Open-front / cutout רק כשאין baked.
+  const baked = fittedOverlayForId(id, persona);
   const o =
     (useOpenFront ? openFrontLayerForId(id) : null) ??
     baked ??
@@ -609,7 +608,7 @@ function pushOverlayLayer(
     layerImageForPieceId(piece.id);
   if (!o) return;
 
-  const mode = baked && !preferCutout ? 'baked' : 'cutout';
+  const mode = baked && !useOpenFront ? 'baked' : 'cutout';
   // Standard Fit + Anchor / Outerwear Alignment — רשת 480×900
   const layout = slotLayoutFor(persona, slot, mode);
   const fit = garmentFitTransform(
@@ -809,26 +808,36 @@ export function resolveOutfitLook(
   }
 
   if (mode === 'combo') {
+    // מעיל+תחתון מצוירים יחד — גם כשיש חולצה (המעיל חייב לשבת על הגוף)
     const outerBottom = comboFor(outerId, realBottom);
-    if (outerBottom && !topId) {
+    if (outerBottom) {
       return withFittedHero(outerBottom, false, layers.outer);
     }
     const topBottom = comboFor(topId, realBottom);
     if (topBottom && !outerId) {
       return withFittedHero(topBottom, false, layers.top);
     }
-    // הגנה — אם אין נכס בפועל, נפילת שכבות
+    // הגנה — אם אין נכס בפועל, Fitted Look של המעיל / שכבות
+    if (outerId) {
+      return withFittedHero(
+        fittedLookForId(outerId, female),
+        false,
+        layers.outer,
+      );
+    }
     return resolveOverlayOnlyStack(layers, heightCm, persona);
   }
 
-  // פריט יחיד — Fitted Look
-  if (outerId) {
+  // עליונית — Fitted Look מצויר על הדמות (לא cutout צף)
+  if (mode === 'outer-priority' || outerId) {
     return withFittedHero(
-      fittedLookForId(outerId, female),
+      fittedLookForId(outerId!, female),
       false,
       layers.outer,
     );
   }
+
+  // פריט יחיד — Fitted Look
   if (topId) {
     return withFittedHero(fittedLookForId(topId, female), false, layers.top);
   }

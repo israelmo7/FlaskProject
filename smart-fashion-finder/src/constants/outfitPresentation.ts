@@ -1,9 +1,15 @@
 /**
- * החלטת הצגת לוק — לוגיקה טהורה לבדיקות (בלי require של תמונות).
- * A1: כמה שכבות בגד נשארות גלויות יחד (קומבו או overlay stack).
+ * החלטת הצגת לוק — Fitted Look / Combo קודם (בגד יושב על הגוף).
+ * Overlay stack רק כשאין נכס מצויר מתאים.
  */
 
-export type OutfitPresentationMode = 'empty' | 'dress' | 'combo' | 'overlay' | 'single';
+export type OutfitPresentationMode =
+  | 'empty'
+  | 'dress'
+  | 'combo'
+  | 'outer-priority'
+  | 'overlay'
+  | 'single';
 
 export type OutfitIds = {
   topId: string | null;
@@ -23,8 +29,11 @@ export function garmentSlotCount(ids: OutfitIds): number {
 }
 
 /**
- * איך להציג את הלוק כשיש/אין קומבו Fitted.
- * `hasCombo(upper, lower)` — האם קיים נכס קומבו לשניים.
+ * סדר עדיפות ויזואלית:
+ * 1) Fitted Combo (גוף+בגדים מצוירים יחד)
+ * 2) Outerwear Fitted Look — המעיל יושב על הדמות
+ * 3) Fitted Look לפריט יחיד
+ * 4) Overlay stack — רק כשאין ברירה
  */
 export function outfitPresentationMode(
   ids: OutfitIds,
@@ -37,14 +46,17 @@ export function outfitPresentationMode(
 
   if (!topId && !outerId && !bottom) return 'empty';
 
-  // A1: שלושה פריטים — תמיד שכבות כדי שכולם יישארו גלויים
-  if (outerId && topId && bottom) return 'overlay';
+  // מעיל+תחתון — קומבו מצויר (גם אם יש חולצה; המעיל חייב לשבת על הגוף)
+  if (outerId && bottom && hasCombo(outerId, bottom)) return 'combo';
 
-  if (outerId && bottom && !topId && hasCombo(outerId, bottom)) return 'combo';
-  if (topId && bottom && !outerId && hasCombo(topId, bottom)) return 'combo';
+  // עליונית בכל מצב — Fitted Look של המעיל על הדמות (לא cutout צף)
+  if (outerId) return 'outer-priority';
 
+  if (topId && bottom && hasCombo(topId, bottom)) return 'combo';
+
+  // שני פריטים בלי קומבו — שכבות baked
   if (garmentSlotCount(ids) >= 2) return 'overlay';
 
-  if (outerId || topId || bottom) return 'single';
+  if (topId || bottom) return 'single';
   return 'empty';
 }

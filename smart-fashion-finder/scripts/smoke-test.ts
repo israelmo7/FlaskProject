@@ -150,27 +150,34 @@ assert(CANONICAL_ANCHORS.hips.y > CANONICAL_ANCHORS.shoulders.y, 'anchor: hips b
 const bottomBaked = overlayLayoutFor('man', 'bottom', 'baked');
 assert(bottomBaked.translateY < 0, 'anchor: bottoms shift up to cover boxers');
 assert(bottomBaked.scaleY > 1, 'anchor: bottoms slightly enlarged for waist cover');
+const outerBaked = overlayLayoutFor('man', 'outer', 'baked', {
+  hasTopUnderOuter: true,
+});
+assert(outerBaked.translateY === 0, 'anchor: baked outer identity (Fitted Look on body)');
+assert(outerBaked.scaleX === 1 && outerBaked.scaleY === 1, 'anchor: baked outer no scale');
 const outerCut = overlayLayoutFor('man', 'outer', 'cutout', {
   hasTopUnderOuter: true,
 });
-assert(outerCut.translateY >= 0.12, 'anchor: outer cutout shifted down off face');
+assert(outerCut.translateY >= OUTERWEAR_NECKLINE_MIN_Y, 'anchor: outer cutout neckline safety');
 assert(outerCut.scaleY === 1, 'anchor: outer cutout no vertical scale (keeps neck clear)');
 const hatLayout = overlayLayoutFor('woman', 'hat', 'cutout');
 assert(hatLayout.anchor === 'head' && hatLayout.zIndex === SLOT_Z_INDEX.hat, 'anchor: woman hat → head');
 
-// Outerwear Alignment System — גלובלי לכל persona
+// Outerwear Alignment — baked = identity; open-front כבוי (Fitted Look עדיף)
 const personas = ['man', 'woman', 'teenBoy', 'teenGirl', 'boy', 'girl'] as const;
 for (const p of personas) {
-  const rules = outerwearRulesFor(p, 'baked', true);
-  assert(rules.translateY >= OUTERWEAR_NECKLINE_MIN_Y, `outerwear neckline ${p}`);
-  assert(rules.scaleX >= 1, `outerwear sleeve scaleX ${p}`);
-  assert(rules.preferOpenFrontCutout === true, `outerwear open-front when top under ${p}`);
+  const baked = outerwearRulesFor(p, 'baked', true);
+  assert(baked.translateY === 0, `outerwear baked identity Y ${p}`);
+  assert(baked.scaleX === 1 && baked.scaleY === 1, `outerwear baked identity scale ${p}`);
+  assert(baked.preferOpenFrontCutout === false, `outerwear no open-front ${p}`);
+  const cutout = outerwearRulesFor(p, 'cutout', true);
+  assert(cutout.translateY >= OUTERWEAR_NECKLINE_MIN_Y, `outerwear cutout neckline ${p}`);
   const layout = overlayLayoutFor(p, 'outer', 'cutout', { hasTopUnderOuter: true });
-  assert(layout.translateY >= rules.translateY - 0.001, `outerwear layout uses rules ${p}`);
+  assert(layout.translateY >= cutout.translateY - 0.001, `outerwear layout uses rules ${p}`);
 }
-assert(shouldUseOpenFrontOuter('p-bomber', true), 'open-front bomber with top');
-assert(!shouldUseOpenFrontOuter('p-bomber', false), 'no open-front without top');
-assert(shouldUseOpenFrontOuter('p-coat', true), 'open-front coat alias');
+assert(!shouldUseOpenFrontOuter('p-bomber', true), 'open-front disabled — Fitted Look');
+assert(!shouldUseOpenFrontOuter('p-bomber', false), 'open-front disabled without top');
+assert(!shouldUseOpenFrontOuter('p-coat', true), 'open-front coat disabled');
 const boyOuter = outerwearRulesFor('boy', 'cutout', true);
 const manOuter = outerwearRulesFor('man', 'cutout', true);
 assert(boyOuter.scaleX >= manOuter.scaleX, 'kids outerwear wider sleeve coverage');
@@ -295,7 +302,7 @@ assert(
   'A1 wearPiece: top+bottom+outer all stay',
 );
 
-// A1 presentation — בלי טעינת PNGs
+// Presentation — Fitted Look / Combo קודם כדי שהמעיל ישב על הגוף
 const comboKeys = new Set(['p-tshirt|p-jeans', 'p-bomber|p-jeans']);
 const hasCombo = (a: string, b: string) => comboKeys.has(`${a}|${b}`);
 assert(
@@ -314,8 +321,8 @@ assert(
       dressId: null,
     },
     hasCombo,
-  ) === 'overlay',
-  'A1: top+bottom+outer → overlay (all visible)',
+  ) === 'combo',
+  'A1: outer+bottom combo even with top → combo (jacket on body)',
 );
 assert(
   outfitPresentationMode(
@@ -340,6 +347,30 @@ assert(
     hasCombo,
   ) === 'combo',
   'A1: outer+bottom with combo (no top) → combo',
+);
+assert(
+  outfitPresentationMode(
+    {
+      topId: null,
+      bottomId: null,
+      outerId: 'p-bomber',
+      dressId: null,
+    },
+    hasCombo,
+  ) === 'outer-priority',
+  'A1: outer alone → outer-priority Fitted Look',
+);
+assert(
+  outfitPresentationMode(
+    {
+      topId: 'p-tshirt',
+      bottomId: 'p-cargo',
+      outerId: 'p-leather',
+      dressId: null,
+    },
+    hasCombo,
+  ) === 'outer-priority',
+  'A1: outer without combo → outer-priority (not floating cutout)',
 );
 assert(
   outfitPresentationMode(
