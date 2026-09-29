@@ -566,12 +566,14 @@ function pushOverlayLayer(
   heightCm: number,
   persona: AvatarPersona,
   skipIds?: string[],
+  /** A1: בערימת שכבות — cutouts נקיים כדי שלא ייאפו גופייה/מכנסיים מתוך נכס עליון */
+  preferCutout = false,
 ) {
   if (!piece || isUnderwearPiece(piece) || isSocksPiece(piece)) return;
   const id = pieceCatalogId(piece);
   if (!id || skipIds?.includes(id)) return;
-  // גבר: שכבה מצוירת על הגוף. אחרים: בגד נקי בלי ידיים/עור של גבר.
-  const baked = fittedOverlayForId(id, persona);
+  // גבר: שכבה מצוירת על הגוף. אחרים / ערימה: בגד נקי בלי ידיים/עור אפויים.
+  const baked = preferCutout ? null : fittedOverlayForId(id, persona);
   const o =
     baked ?? layerImageForPieceId(id) ?? layerImageForPieceId(piece.id);
   if (!o) return;
@@ -597,13 +599,22 @@ function resolveOverlayOnlyStack(
   persona: AvatarPersona,
 ): ResolvedOutfit {
   const overlays: ResolvedOverlay[] = [];
+  // A1: כשיש עליון+עליונית — cutout לעליונית (בלי גופייה אפויה שמסתירה את החולצה)
+  const cutoutOuter = Boolean(layers.top && layers.outer);
   // סדר ציור: מכנסיים → שמלה/חולצה → עליונית → נעליים → כובע
   if (!isUnderwearPiece(layers.bottom)) {
     pushOverlayLayer(overlays, layers.bottom, heightCm, persona);
   }
   pushOverlayLayer(overlays, layers.dress, heightCm, persona);
   pushOverlayLayer(overlays, layers.top, heightCm, persona);
-  pushOverlayLayer(overlays, layers.outer, heightCm, persona);
+  pushOverlayLayer(
+    overlays,
+    layers.outer,
+    heightCm,
+    persona,
+    undefined,
+    cutoutOuter,
+  );
   if (!isSocksPiece(layers.shoes)) {
     pushOverlayLayer(overlays, layers.shoes, heightCm, persona, ['p-socks']);
   }

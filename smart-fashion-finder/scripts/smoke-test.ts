@@ -299,6 +299,18 @@ assert(
   'A1: top only (underwear bottom) → single',
 );
 
+// Phase D search intent — שפה חופשית
+const buttonDown = extractIntent('חולצה לבנה מכופתרת');
+assert(buttonDown.category === 'Shirts', 'chat: מכופתרת → Shirts');
+assert(buttonDown.color === 'White', 'chat: מכופתרת → White');
+assert(
+  buttonDown.subcategoryHint === 'אוקספורד',
+  'chat: מכופתרת → hint אוקספורד',
+);
+const coatIntent = extractIntent('מעיל חורף שחור');
+assert(coatIntent.category === 'Outerwear', 'chat: מעיל → Outerwear');
+assert(coatIntent.color === 'Black', 'chat: מעיל → Black');
+
 const blackShirtIntent = extractIntent('חולצה שחורה עד 150');
 assert(blackShirtIntent.category === 'Shirts', 'chat intent category Shirts');
 assert(blackShirtIntent.color === 'Black', 'chat intent color Black');

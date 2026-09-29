@@ -209,7 +209,7 @@ export function GameFashionAvatar({
           />
         )}
 
-        {/* fallback לילדים/בלי Fitted Look — שכבות 1:1 בלי עיוות מידה */}
+        {/* שכבות בגד — Standard Fit + הזזת cutout (למשל עליונית) */}
         {clothed && !useFittedHero
           ? resolved.overlays.map((ov, i) => (
               <Image
@@ -220,8 +220,12 @@ export function GameFashionAvatar({
                   position: 'absolute',
                   width,
                   height,
-                  transform:
-                    overlayFlip === -1 ? [{ scaleX: -1 }] : undefined,
+                  transform: [
+                    { translateX: (ov.translateX || 0) * width },
+                    { translateY: (ov.translateY || 0) * height },
+                    { scaleX: (ov.scaleX || 1) * overlayFlip },
+                    { scaleY: ov.scaleY || 1 },
+                  ],
                 }}
               />
             ))

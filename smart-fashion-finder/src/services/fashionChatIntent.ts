@@ -12,16 +12,16 @@ export type ChatIntent = {
 };
 
 const COLOR_MAP: { keys: string[]; color: string }[] = [
-  { keys: ['שחור', 'black'], color: 'Black' },
-  { keys: ['לבן', 'white'], color: 'White' },
+  { keys: ['שחור', 'שחורה', 'black'], color: 'Black' },
+  { keys: ['לבן', 'לבנה', 'white'], color: 'White' },
   { keys: ['כחול כהה', 'נייבי', 'navy'], color: 'Navy' },
-  { keys: ['כחול', 'blue'], color: 'Blue' },
+  { keys: ['כחול', 'כחולה', 'blue'], color: 'Blue' },
   { keys: ['בז׳', 'בז', 'beige', 'קרם'], color: 'Beige' },
-  { keys: ['חום', 'brown'], color: 'Brown' },
+  { keys: ['חום', 'חומה', 'brown'], color: 'Brown' },
   { keys: ['זית', 'olive'], color: 'Olive Green' },
-  { keys: ['ירוק', 'green'], color: 'Olive Green' },
+  { keys: ['ירוק', 'ירוקה', 'green'], color: 'Olive Green' },
   { keys: ['חאקי', 'khaki'], color: 'Khaki' },
-  { keys: ['אפור', 'grey', 'gray', 'פחם', 'charcoal'], color: 'Charcoal' },
+  { keys: ['אפור', 'אפורה', 'grey', 'gray', 'פחם', 'charcoal'], color: 'Charcoal' },
 ];
 
 const CATEGORY_MAP: { keys: string[]; category: GarmentCategory }[] = [
@@ -73,6 +73,8 @@ const CATEGORY_MAP: { keys: string[]; category: GarmentCategory }[] = [
       'עור',
       'בומבר',
       'bomber',
+      'מעיל',
+      'coat',
     ],
     category: 'Outerwear',
   },
@@ -89,7 +91,7 @@ const CATEGORY_MAP: { keys: string[]; category: GarmentCategory }[] = [
 const SUB_HINTS: { keys: string[]; hint: string }[] = [
   { keys: ['טי שירט', 'טישירט', 'tshirt', 't-shirt'], hint: 'טי שירט' },
   { keys: ['קפוצ', 'hoodie'], hint: 'אוברסייז' },
-  { keys: ['אוקספורד', 'oxford'], hint: 'אוקספורד' },
+  { keys: ['אוקספורד', 'oxford', 'מכופתר', 'מכופתרת'], hint: 'אוקספורד' },
   { keys: ['גולף', 'turtleneck'], hint: 'גולף' },
   { keys: ['פולו', 'polo'], hint: 'פולו' },
   { keys: ['פשתן', 'linen'], hint: 'פשתן' },

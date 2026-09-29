@@ -39,7 +39,8 @@ const CUTOUT_BY_PERSONA: Record<
   man: {
     top: STANDARD,
     bottom: STANDARD,
-    outer: STANDARD,
+    // cutouts של עליונית מצוירים גבוה מדי — הזזה למטה כדי לא לכסות פנים
+    outer: { bodyScale: 1, y: 0.07, x: 0 },
     dress: STANDARD,
     shoes: STANDARD,
     hat: { bodyScale: 1, y: -0.01, x: 0 },
