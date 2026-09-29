@@ -8,7 +8,8 @@
 |---|--------|--------|
 | **A1** | לוק מלא (עליון+תחתון+עליונית) | כשלובשים כמה שכבות בגד — כולן נשארות גלויות יחד (קומבו Fitted כשקיים לכל השכבות, אחרת בסיס + overlays). לא מסתירים פריט בגלל "דומיננטי יחיד". |
 | **A1b** | Anchor Points (Head→Toe) | רשת עוגנים אחידה על Standard Fit 480×900 ב־`overlayAnchors.ts` + `GameFashionAvatar`: `head` (כובע), `shoulders` (top/outer/dress), `hips` (bottoms — כיסוי בוקסר), `feet` (הנעלה). zIndex: bottom < top < outer < shoes < hat. |
-| **A2** | בסיס בתחתונים בלבד | בסיס הדמות (ו־Fitted Looks) בלי נעליים/בגדים אפויים שלא מהשכבות הפעילות. |
+| **A1c** | Outerwear Alignment | חוקים גלובליים ב־`outerwearAlignment.ts` לכל עליונית ולכל persona: Neckline Safety, כיסוי שרוולים (scaleX), Open-Front cutout כשיש Top מתחת (`*-open.png`). |
+| **A2** | בסיס נקי / יחף | בסיסי כל הדמויות בלי הנעלה אפויה ובלי בוקסר אפוי על המותניים — הלבשה רק דרך overlays. |
 | **A3** | הסרת UI גובה/משקל מההלבשה | Standard Fit קבוע — בלי שליטה ויזואלית בגובה/משקל על הבגד. |
 
 ## Phase B — נכסים וקטלוג

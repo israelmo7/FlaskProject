@@ -1,4 +1,5 @@
 import type { AvatarPersona, OutfitSlot } from '@/types';
+import { outerwearRulesFor } from '@/constants/outerwearAlignment';
 
 /**
  * Standard Fit overlay canvas — PR #14.
@@ -150,16 +151,40 @@ const PERSONA_Y_BIAS: Record<AvatarPersona, Partial<Record<OutfitSlot, number>>>
 
 export type GarmentFitMode = 'baked' | 'cutout';
 
+export type OverlayLayoutOptions = {
+  /** יש חולצה מתחת לעליונית — מפעיל Open-Front + Neckline Safety */
+  hasTopUnderOuter?: boolean;
+};
+
 /**
  * מחזיר layout מלא לסלוט — עוגן + scale/translate + zIndex.
- * זה מקור האמת היחיד ליישור overlays בכל הקטלוג.
+ * Outerwear: חוקים גלובליים מ־outerwearAlignment (כל persona / כל מעיל).
  */
 export function overlayLayoutFor(
   persona: AvatarPersona,
   slot: OutfitSlot,
   mode: GarmentFitMode = 'cutout',
+  options: OverlayLayoutOptions = {},
 ): OverlayAnchorLayout {
   const anchor = SLOT_ANCHOR[slot];
+
+  // —— Outerwear Alignment System (גלובלי לפי קטגוריה) ——
+  if (slot === 'outer') {
+    const rules = outerwearRulesFor(
+      persona,
+      mode,
+      Boolean(options.hasTopUnderOuter),
+    );
+    return {
+      anchor,
+      scaleX: rules.scaleX,
+      scaleY: rules.scaleY,
+      translateX: rules.translateX,
+      translateY: rules.translateY,
+      zIndex: SLOT_Z_INDEX.outer,
+    };
+  }
+
   const base = mode === 'baked' ? SLOT_NUDGE_BAKED[slot] : SLOT_NUDGE_CUTOUT[slot];
   const nudge = base ?? IDENTITY;
   const yBias = PERSONA_Y_BIAS[persona]?.[slot] ?? 0;
