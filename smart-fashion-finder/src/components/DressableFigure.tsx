@@ -4,10 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   PERSONA_OPTIONS,
-  buildWidthScale,
   formatHeightMeters,
   garmentColorHex,
-  heightScale,
 } from '@/constants/avatar';
 import { catalogIdFromPieceId } from '@/constants/avatarAssets';
 import { AvatarExpandModal } from '@/components/AvatarExpandModal';
@@ -32,7 +30,8 @@ function isVisibleWorn(piece: OutfitPiece): boolean {
 }
 
 /**
- * אווטאר — כפתור שקוף להגדלה + סיבוב 180°.
+ * אווטאר Standard Fit — גודל מסגרת קבוע (בלי heightScale/buildWidthScale).
+ * Fitted Look מוצג דרך GameFashionAvatar.
  */
 export function DressableFigure({
   profile,
@@ -43,15 +42,11 @@ export function DressableFigure({
   vtonHeroUri = null,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
-  const wScale = buildWidthScale(profile.build);
-  const hScale = heightScale(profile.heightCm, profile.persona);
   const personaLabel =
     PERSONA_OPTIONS.find((p) => p.id === profile.persona)?.label ?? '';
 
-  const baseW = compact ? 172 : 208;
-  const baseH = compact ? 310 : 372;
-  const dollW = baseW * Math.min(1.22, Math.max(0.78, wScale));
-  const dollH = Math.round(baseH * hScale);
+  const dollW = compact ? 172 : 208;
+  const dollH = compact ? 310 : 372;
 
   const worn = [
     layers.dress,
@@ -93,7 +88,7 @@ export function DressableFigure({
             }}
           >
             <GameFashionAvatar
-              key={`avatar-${profile.persona}-${profile.heightCm}-${profile.build}-${vtonHeroUri ? 'vton' : 'fit'}`}
+              key={`avatar-${profile.persona}-${vtonHeroUri ? 'vton' : 'fit'}`}
               profile={profile}
               layers={layers}
               width={dollW}
@@ -102,7 +97,6 @@ export function DressableFigure({
             />
           </LinearGradient>
 
-          {/* כפתור שקוף על הדמות — הגדלת מסך + סיבוב */}
           <Pressable
             onPress={() => setExpanded(true)}
             accessibilityLabel={he.expandAvatar}
@@ -121,7 +115,11 @@ export function DressableFigure({
               borderColor: 'rgba(255,255,255,0.55)',
             }}
           >
-            <Ionicons name="expand-outline" size={18} color="rgba(20,18,16,0.75)" />
+            <Ionicons
+              name="expand-outline"
+              size={18}
+              color="rgba(20,18,16,0.75)"
+            />
           </Pressable>
         </View>
       </View>

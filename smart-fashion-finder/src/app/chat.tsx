@@ -96,9 +96,12 @@ export default function ChatScreen() {
 
       <FlatList
         ref={listRef}
+        className="flex-1"
+        style={{ flex: 1 }}
         data={messages}
         keyExtractor={(m) => m.id}
-        contentContainerClassName="px-4 py-4 pb-6"
+        contentContainerClassName="grow px-4 py-4 pb-6"
+        contentContainerStyle={{ flexGrow: 1 }}
         onContentSizeChange={scrollToEnd}
         renderItem={({ item }) => <Bubble message={item} onProduct={onProductPress} />}
         ListFooterComponent={

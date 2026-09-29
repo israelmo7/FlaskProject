@@ -8,10 +8,10 @@ import type {
 import { usesPaintedAdultLooks } from '@/constants/avatar';
 import {
   garmentFitTransform,
-  garmentVisualScale,
   slotLayoutFor,
   type GarmentTransform,
 } from '@/constants/garmentLayout';
+import { outfitPresentationMode } from '@/constants/outfitPresentation';
 
 export const PERSONA_BASE_IMAGES: Record<AvatarPersona, ImageSourcePropType> = {
   woman: require('../../assets/images/bases/woman.png'),
@@ -76,7 +76,22 @@ function pickTurnFrame(
   return table[180] ?? table[90] ?? table[0] ?? fallback;
 }
 
-/** לוקים מלאים — בגד לבוש על הדמות (חזית) */
+/**
+ * Fitted Looks — גבר (חזית).
+ *
+ * קובץ זה: `src/constants/avatarAssets.ts`
+ *
+ * ## איך מוסיפים PNG חדש אחרי העלאה ל־assets
+ * 1. שמרו קובץ ב־`assets/images/fit/man/<id>.png` (480×900, גוף+בגד)
+ * 2. הוסיפו שורה כאן, למשל:
+ *    `'p-tshirt-white': require('../../assets/images/fit/man/p-tshirt-white.png'),`
+ * 3. אם היה alias ב־`CATALOG_ALIASES` לאותו id — מחקו את ה־alias
+ *    כדי שהלוק החדש ייטען במקום ה־placeholder.
+ *
+ * ## Placeholders בינתיים (בלי PNG חדש)
+ * וריאנטים כמו `p-tshirt-white` ממופים ב־`CATALOG_ALIASES` ללוק קיים
+ * (למשל `p-tshirt`). אין צורך בשורה נפרדת כאן עד שיש asset ייעודי.
+ */
 export const FITTED_LOOKS_MAN: Record<string, ImageSourcePropType> = {
   'p-tshirt': require('../../assets/images/fit/man/p-tshirt.png'),
   'p-hoodie': require('../../assets/images/fit/man/p-hoodie.png'),
@@ -93,17 +108,75 @@ export const FITTED_LOOKS_MAN: Record<string, ImageSourcePropType> = {
   'p-denim-jkt': require('../../assets/images/fit/man/p-denim-jkt.png'),
   'p-leather': require('../../assets/images/fit/man/p-leather.png'),
   'p-bomber': require('../../assets/images/fit/man/p-bomber.png'),
+  // placeholder — עד שיהיה fit/man/p-suit.png ייעודי
+  'p-suit': require('../../assets/images/fit/turn/man_suit_0.png'),
   'p-sneakers': require('../../assets/images/fit/man/p-sneakers.png'),
   'p-boots': require('../../assets/images/fit/man/p-boots.png'),
   'p-hat': require('../../assets/images/fit/man/p-hat.png'),
-  // תחתון = בסיס הדמות (ללא בגדים עליונים)
   'p-underwear': require('../../assets/images/bases/turn/man_0.png'),
-  // גרביים — על בסיס הדמות (נראים עם הנעליים הקיימות)
   'p-socks': require('../../assets/images/bases/turn/man_0.png'),
+  // ——— aliases as explicit placeholders (same files; safe direct lookup) ———
+  'p-tshirt-white': require('../../assets/images/fit/man/p-oxford.png'),
+  'p-tshirt-navy': require('../../assets/images/fit/man/p-tshirt.png'),
+  'p-hoodie-black': require('../../assets/images/fit/man/p-hoodie.png'),
+  'p-tee-stripe': require('../../assets/images/fit/man/p-polo.png'),
+  'p-cardigan': require('../../assets/images/fit/man/p-turtleneck.png'),
+  'p-jeans-black': require('../../assets/images/fit/man/p-jeans.png'),
+  'p-jeans-light': require('../../assets/images/fit/man/p-jeans.png'),
+  'p-joggers': require('../../assets/images/fit/man/p-sport.png'),
+  'p-blazer': require('../../assets/images/fit/man/p-denim-jkt.png'),
+  'p-coat': require('../../assets/images/fit/man/p-leather.png'),
+  'p-skirt': require('../../assets/images/fit/woman/p-dress.png'),
+  'p-cap': require('../../assets/images/fit/man/p-hat.png'),
+  'p-sandals': require('../../assets/images/fit/man/p-sneakers.png'),
 };
 
+/**
+ * Fitted Looks — אישה.
+ *
+ * ייעודיים: dress / suit / linen. השאר = placeholders מנכסים קיימים
+ * (כולל לוקים של גבר כגיבוי זמני) עד שיועלו PNG של אישה.
+ *
+ * הוספת PNG ייעודי:
+ * `'p-tshirt': require('../../assets/images/fit/woman/p-tshirt.png'),`
+ */
 export const FITTED_LOOKS_WOMAN: Record<string, ImageSourcePropType> = {
   'p-dress': require('../../assets/images/fit/woman/p-dress.png'),
+  'p-skirt': require('../../assets/images/fit/woman/p-dress.png'),
+  'p-suit': require('../../assets/images/fit/turn/woman_suit_0.png'),
+  'p-linen': require('../../assets/images/fit/turn/woman_linen_jeans_0.png'),
+  // placeholders — reused existing assets (no new PNGs)
+  'p-tshirt': require('../../assets/images/fit/man/p-tshirt.png'),
+  'p-tshirt-white': require('../../assets/images/fit/man/p-oxford.png'),
+  'p-tshirt-navy': require('../../assets/images/fit/man/p-tshirt.png'),
+  'p-hoodie': require('../../assets/images/fit/man/p-hoodie.png'),
+  'p-hoodie-black': require('../../assets/images/fit/man/p-hoodie.png'),
+  'p-oxford': require('../../assets/images/fit/man/p-oxford.png'),
+  'p-turtleneck': require('../../assets/images/fit/man/p-turtleneck.png'),
+  'p-cardigan': require('../../assets/images/fit/man/p-turtleneck.png'),
+  'p-polo': require('../../assets/images/fit/man/p-polo.png'),
+  'p-tee-stripe': require('../../assets/images/fit/man/p-polo.png'),
+  'p-jeans': require('../../assets/images/fit/man/p-jeans.png'),
+  'p-jeans-black': require('../../assets/images/fit/man/p-jeans.png'),
+  'p-jeans-light': require('../../assets/images/fit/man/p-jeans.png'),
+  'p-shorts': require('../../assets/images/fit/man/p-shorts.png'),
+  'p-cargo': require('../../assets/images/fit/man/p-cargo.png'),
+  'p-sport': require('../../assets/images/fit/man/p-sport.png'),
+  'p-joggers': require('../../assets/images/fit/man/p-sport.png'),
+  'p-chinos': require('../../assets/images/fit/man/p-chinos.png'),
+  'p-swim': require('../../assets/images/fit/man/p-swim.png'),
+  'p-denim-jkt': require('../../assets/images/fit/man/p-denim-jkt.png'),
+  'p-blazer': require('../../assets/images/fit/man/p-denim-jkt.png'),
+  'p-leather': require('../../assets/images/fit/man/p-leather.png'),
+  'p-coat': require('../../assets/images/fit/man/p-leather.png'),
+  'p-bomber': require('../../assets/images/fit/man/p-bomber.png'),
+  'p-sneakers': require('../../assets/images/fit/man/p-sneakers.png'),
+  'p-sandals': require('../../assets/images/fit/man/p-sneakers.png'),
+  'p-boots': require('../../assets/images/fit/man/p-boots.png'),
+  'p-hat': require('../../assets/images/fit/man/p-hat.png'),
+  'p-cap': require('../../assets/images/fit/man/p-hat.png'),
+  'p-underwear': require('../../assets/images/bases/turn/woman_0.png'),
+  'p-socks': require('../../assets/images/bases/turn/woman_0.png'),
 };
 
 /** קומבואים מצוירים — מפתח topId|bottomId או outerId|bottomId */
@@ -270,7 +343,11 @@ export function layerImageForPieceId(pieceId: string): ImageSourcePropType | nul
   return null;
 }
 
-/** מזהי קטלוג חדשים → לוק/שכבה קיימת */
+/**
+ * Aliases / placeholders — מזהה קטלוג → מפתח ב־FITTED_LOOKS_* הקיים.
+ * בלי PNG חדש: וריאנט צבע/סגנון מצביע ללוק הקרוב ביותר שכבר יש.
+ * כשמעלים PNG ייעודי — מוסיפים ל־FITTED_LOOKS_* ומוחקים מכאן.
+ */
 const CATALOG_ALIASES: Record<string, string> = {
   'p-tshirt-white': 'p-tshirt',
   'p-tshirt-navy': 'p-tshirt',
@@ -393,12 +470,35 @@ export function turnBaseForPersona(
   }
 }
 
+/**
+ * מחזיר Fitted Look לפי מזהה קטלוג.
+ * פותר aliases, לא זורק — מחזיר null רק אם אין שום placeholder.
+ */
 export function fittedLookForId(
   catalogId: string,
   female: boolean,
 ): ImageSourcePropType | null {
-  if (female && FITTED_LOOKS_WOMAN[catalogId]) return FITTED_LOOKS_WOMAN[catalogId];
-  return FITTED_LOOKS_MAN[catalogId] ?? FITTED_LOOKS_WOMAN[catalogId] ?? null;
+  try {
+    const aliased = CATALOG_ALIASES[catalogId] ?? catalogId;
+    if (female) {
+      return (
+        FITTED_LOOKS_WOMAN[catalogId] ??
+        FITTED_LOOKS_WOMAN[aliased] ??
+        FITTED_LOOKS_MAN[catalogId] ??
+        FITTED_LOOKS_MAN[aliased] ??
+        null
+      );
+    }
+    return (
+      FITTED_LOOKS_MAN[catalogId] ??
+      FITTED_LOOKS_MAN[aliased] ??
+      FITTED_LOOKS_WOMAN[catalogId] ??
+      FITTED_LOOKS_WOMAN[aliased] ??
+      null
+    );
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -448,40 +548,6 @@ function pieceCatalogId(
   return piece ? catalogIdFromPieceId(piece.id) : null;
 }
 
-function fitFor(piece: OutfitPiece | undefined, heightCm: number): number {
-  return garmentVisualScale(piece?.size, heightCm);
-}
-
-function heroFitFor(
-  piece: OutfitPiece | undefined,
-  heightCm: number,
-  _persona: AvatarPersona,
-): GarmentTransform | null {
-  if (!piece) return null;
-  // Perfect-Fit = גוף+בגד בתמונה אחת — לא מצמצמים את כל הדמות.
-  // רק אורך/שוליים עדינים לפי מידה (דעיכה 35%).
-  const slot =
-    piece.slot === 'dress'
-      ? 'dress'
-      : piece.slot === 'bottom'
-        ? 'outer'
-        : piece.slot === 'top'
-          ? 'top'
-          : 'outer';
-  const raw = garmentFitTransform(piece.size, heightCm, slot, {
-    bodyScale: 1,
-    y: 0,
-    x: 0,
-  });
-  const damp = (v: number) => 1 + (v - 1) * 0.35;
-  return {
-    scaleX: Math.min(1.1, Math.max(0.95, damp(raw.scaleX))),
-    scaleY: Math.min(1.14, Math.max(0.92, damp(raw.scaleY))),
-    translateX: raw.translateX * 0.35,
-    translateY: raw.translateY * 0.35,
-  };
-}
-
 function isUnderwearPiece(piece: OutfitPiece | undefined): boolean {
   if (!piece) return false;
   const id = catalogIdFromPieceId(piece.id);
@@ -500,18 +566,21 @@ function pushOverlayLayer(
   heightCm: number,
   persona: AvatarPersona,
   skipIds?: string[],
+  /** A1: בערימת שכבות — cutouts נקיים כדי שלא ייאפו גופייה/מכנסיים מתוך נכס עליון */
+  preferCutout = false,
 ) {
   if (!piece || isUnderwearPiece(piece) || isSocksPiece(piece)) return;
   const id = pieceCatalogId(piece);
   if (!id || skipIds?.includes(id)) return;
-  // גבר: שכבה מצוירת על הגוף. אחרים: בגד נקי בלי ידיים/עור של גבר.
-  const baked = fittedOverlayForId(id, persona);
+  // גבר: שכבה מצוירת על הגוף. אחרים / ערימה: בגד נקי בלי ידיים/עור אפויים.
+  const baked = preferCutout ? null : fittedOverlayForId(id, persona);
   const o =
     baked ?? layerImageForPieceId(id) ?? layerImageForPieceId(piece.id);
   if (!o) return;
   const slot = piece.slot;
+  // Standard Fit: יישור 1:1 לגוף — בלי scale לפי מידה/גובה
   const layout = slotLayoutFor(persona, slot, baked ? 'baked' : 'cutout');
-  const fit = garmentFitTransform(piece.size, heightCm, slot, layout);
+  const fit = garmentFitTransform(undefined, heightCm, slot, layout);
   extras.push({
     src: o,
     scaleX: fit.scaleX,
@@ -519,7 +588,7 @@ function pushOverlayLayer(
     translateY: fit.translateY,
     translateX: fit.translateX,
     slot,
-    key: `${id}-${piece.size ?? 'M'}-${slot}-${baked ? 'b' : 'c'}`,
+    key: `${id}-std-${slot}-${baked ? 'b' : 'c'}`,
   });
 }
 
@@ -530,23 +599,30 @@ function resolveOverlayOnlyStack(
   persona: AvatarPersona,
 ): ResolvedOutfit {
   const overlays: ResolvedOverlay[] = [];
+  // A1: כשיש עליון+עליונית — cutout לעליונית (בלי גופייה אפויה שמסתירה את החולצה)
+  const cutoutOuter = Boolean(layers.top && layers.outer);
   // סדר ציור: מכנסיים → שמלה/חולצה → עליונית → נעליים → כובע
   if (!isUnderwearPiece(layers.bottom)) {
     pushOverlayLayer(overlays, layers.bottom, heightCm, persona);
   }
   pushOverlayLayer(overlays, layers.dress, heightCm, persona);
   pushOverlayLayer(overlays, layers.top, heightCm, persona);
-  pushOverlayLayer(overlays, layers.outer, heightCm, persona);
+  pushOverlayLayer(
+    overlays,
+    layers.outer,
+    heightCm,
+    persona,
+    undefined,
+    cutoutOuter,
+  );
   if (!isSocksPiece(layers.shoes)) {
     pushOverlayLayer(overlays, layers.shoes, heightCm, persona, ['p-socks']);
   }
   pushOverlayLayer(overlays, layers.hat, heightCm, persona);
-  const dominant =
-    layers.outer || layers.dress || layers.top || layers.bottom || layers.shoes;
   return {
     hero: null,
     heroTracksYaw: false,
-    heroScale: fitFor(dominant, heightCm),
+    heroScale: 1,
     heroFit: null,
     overlays,
     overlayOnly: true,
@@ -570,13 +646,11 @@ export function resolveOutfitLook(
     const extras: ResolvedOverlay[] = [];
     // הלוק המלא כולל נעליים; רק כובע כשכבה נוספת
     pushOverlayLayer(extras, layers.hat, heightCm, persona);
-    const dominant =
-      layers.outer || layers.dress || layers.top || layers.bottom;
     return {
       hero: turnHero,
       heroTracksYaw: true,
-      heroScale: fitFor(dominant, heightCm),
-      heroFit: heroFitFor(dominant, heightCm, persona),
+      heroScale: 1,
+      heroFit: null,
       overlays: extras,
       overlayOnly: false,
     };
@@ -608,15 +682,13 @@ export function resolveOutfitLook(
     };
   }
 
-  const withAccessories = (
+  /** Fitted Look בלבד — כובע אופציונלי; אם אין hero → overlay stack בטוח */
+  const withFittedHero = (
     hero: ImageSourcePropType | null,
     heroTracksYaw: boolean,
-    heroPiece: OutfitPiece | undefined,
-    baseExtras: ResolvedOverlay[] = [],
+    _heroPiece: OutfitPiece | undefined,
   ): ResolvedOutfit => {
-    const extras = [...baseExtras];
-    pushOverlayLayer(extras, layers.shoes, heightCm, persona, ['p-socks']);
-    pushOverlayLayer(extras, layers.hat, heightCm, persona);
+    const extras: ResolvedOverlay[] = [];
     const safeHero: ImageSourcePropType | null =
       hero ??
       (outerId ? fittedLookForId(outerId, female) : null) ??
@@ -626,32 +698,58 @@ export function resolveOutfitLook(
         : null) ??
       (dressId ? fittedLookForId(dressId, female) : null) ??
       null;
-    const dominant =
-      heroPiece ||
-      layers.outer ||
-      layers.dress ||
-      layers.top ||
-      layers.bottom ||
-      layers.shoes;
+    if (!safeHero) {
+      // Fallback — לא קורסים; בסיס persona + שכבות cutout 1:1
+      return resolveOverlayOnlyStack(layers, heightCm, persona);
+    }
+    pushOverlayLayer(extras, layers.hat, heightCm, persona);
     return {
       hero: safeHero,
       heroTracksYaw,
-      heroScale: fitFor(dominant, heightCm),
-      heroFit: safeHero ? heroFitFor(dominant, heightCm, persona) : null,
+      heroScale: 1,
+      heroFit: null,
       overlays: extras,
-      overlayOnly: !safeHero,
+      overlayOnly: false,
     };
   };
 
   if (dressId) {
-    return withAccessories(
+    return withFittedHero(
       fittedLookForId(dressId, female),
       false,
       layers.dress,
     );
   }
 
-  if (topId === 'p-tshirt' && bottomId === 'p-jeans' && !outerId) {
+  const realBottom = bottomId && bottomId !== 'p-underwear' ? bottomId : null;
+
+  /** קומבו Fitted לפי מזהים (+ aliases) */
+  const comboFor = (
+    upperId: string | null,
+    lowerId: string | null,
+  ): ImageSourcePropType | null => {
+    if (!upperId || !lowerId) return null;
+    const u = CATALOG_ALIASES[upperId] ?? upperId;
+    const l = CATALOG_ALIASES[lowerId] ?? lowerId;
+    return (
+      FITTED_COMBOS[`${upperId}|${lowerId}`] ??
+      FITTED_COMBOS[`${u}|${l}`] ??
+      FITTED_COMBOS[`${upperId}|${l}`] ??
+      FITTED_COMBOS[`${u}|${lowerId}`] ??
+      null
+    );
+  };
+
+  const hasCombo = (upper: string, lower: string) =>
+    Boolean(comboFor(upper, lower));
+
+  // טי+ג׳ינס עם פריימי סיבוב (בלי מעיל) — לפני החלטת A1 הכללית
+  if (
+    !outerId &&
+    realBottom === 'p-jeans' &&
+    (topId === 'p-tshirt' ||
+      CATALOG_ALIASES[topId ?? ''] === 'p-tshirt')
+  ) {
     const frame = nearestTurnYaw(yaw);
     const hero =
       COMBO_TSHIRT_JEANS[frame] ??
@@ -660,82 +758,70 @@ export function resolveOutfitLook(
         : frame <= 135
           ? COMBO_TSHIRT_JEANS[90]
           : COMBO_TSHIRT_JEANS[180]) ??
-      null;
-    return withAccessories(hero, true, layers.top);
+      comboFor(topId, realBottom);
+    if (hero) return withFittedHero(hero, true, layers.top);
   }
 
-  const comboKeys: string[] = [];
-  if (outerId && bottomId && bottomId !== 'p-underwear') {
-    comboKeys.push(`${outerId}|${bottomId}`);
+  // A1: קומבו לזוג / overlay כשיש כמה שכבות בלי קומבו מלא (כולל top+bottom+outer)
+  const mode = outfitPresentationMode(
+    { topId, bottomId, outerId, dressId },
+    hasCombo,
+  );
+
+  if (mode === 'overlay') {
+    return resolveOverlayOnlyStack(layers, heightCm, persona);
   }
-  if (topId && bottomId && bottomId !== 'p-underwear') {
-    comboKeys.push(`${topId}|${bottomId}`);
-  }
-  for (const key of comboKeys) {
-    const combo = FITTED_COMBOS[key];
-    if (combo) {
-      const extras: ResolvedOverlay[] = [];
-      if (outerId && topId && key === `${topId}|${bottomId}`) {
-        pushOverlayLayer(extras, layers.outer, heightCm, persona);
-      }
-      return withAccessories(
-        combo,
-        false,
-        layers.outer || layers.top,
-        extras,
-      );
+
+  if (mode === 'combo') {
+    const outerBottom = comboFor(outerId, realBottom);
+    if (outerBottom && !topId) {
+      return withFittedHero(outerBottom, false, layers.outer);
     }
+    const topBottom = comboFor(topId, realBottom);
+    if (topBottom && !outerId) {
+      return withFittedHero(topBottom, false, layers.top);
+    }
+    // הגנה — אם אין נכס בפועל, נפילת שכבות
+    return resolveOverlayOnlyStack(layers, heightCm, persona);
   }
 
-  const mains = [outerId, topId, bottomId]
-    .filter((id) => id && id !== 'p-underwear') as string[];
-  if (mains.length === 1) {
-    const piece =
-      (outerId === mains[0] && layers.outer) ||
-      (topId === mains[0] && layers.top) ||
-      (bottomId === mains[0] && layers.bottom) ||
-      undefined;
-    return withAccessories(
-      fittedLookForId(mains[0], female),
+  // פריט יחיד — Fitted Look
+  if (outerId) {
+    return withFittedHero(
+      fittedLookForId(outerId, female),
       false,
-      piece || undefined,
+      layers.outer,
     );
   }
-  if (mains.length === 0 && (layers.shoes || layers.hat)) {
+  if (topId) {
+    return withFittedHero(fittedLookForId(topId, female), false, layers.top);
+  }
+  if (realBottom) {
+    return withFittedHero(
+      fittedLookForId(realBottom, female),
+      false,
+      layers.bottom,
+    );
+  }
+
+  if (layers.shoes || layers.hat) {
     const piece = isSocksPiece(layers.shoes)
       ? layers.hat
       : layers.shoes || layers.hat;
     const heroId = pieceCatalogId(piece);
-    return withAccessories(
+    return withFittedHero(
       heroId ? fittedLookForId(heroId, female) : null,
       false,
       piece,
     );
   }
 
-  const overlays: ResolvedOverlay[] = [];
-  let hero: ImageSourcePropType | null = null;
-  let heroPiece: OutfitPiece | undefined;
-
-  if (outerId && bottomId && bottomId !== 'p-underwear') {
-    hero = fittedLookForId(bottomId, female);
-    heroPiece = layers.bottom;
-    pushOverlayLayer(overlays, layers.outer, heightCm, persona);
-  } else if (outerId && topId) {
-    hero = fittedLookForId(topId, female);
-    heroPiece = layers.top;
-    pushOverlayLayer(overlays, layers.outer, heightCm, persona);
-  } else if (outerId) {
-    hero = fittedLookForId(outerId, female);
-    heroPiece = layers.outer;
-  } else if (bottomId && bottomId !== 'p-underwear') {
-    hero = fittedLookForId(bottomId, female);
-    heroPiece = layers.bottom;
-    pushOverlayLayer(overlays, layers.top, heightCm, persona);
-  } else if (topId) {
-    hero = fittedLookForId(topId, female);
-    heroPiece = layers.top;
-  }
-
-  return withAccessories(hero, false, heroPiece, overlays);
+  return {
+    hero: null,
+    heroTracksYaw: false,
+    heroScale: 1,
+    heroFit: null,
+    overlays: [],
+    overlayOnly: true,
+  };
 }

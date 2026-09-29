@@ -97,36 +97,89 @@ import {
   wearPiece,
 } from '../src/constants/avatar';
 import { garmentHang, garmentFitTransform } from '../src/constants/garmentLayout';
+import { outfitPresentationMode } from '../src/constants/outfitPresentation';
 import type { OutfitPiece } from '../src/types';
 
-assert(heightScale(140, 'woman') < heightScale(165, 'woman'), '140cm doll shorter than 165cm');
-assert(heightScale(178, 'man') > heightScale(165, 'woman'), '1.78m man taller than 1.65m woman');
-assert(heightScale(190, 'man') > heightScale(178, 'man'), '190cm taller than 178cm');
-assert(sizeFitScale('S') < sizeFitScale('M'), 'S garment smaller than M');
-assert(sizeFitScale('L') > sizeFitScale('M'), 'L garment larger than M');
-assert(
-  sizeRelativeToHeight('S', 178) < sizeRelativeToHeight('M', 178),
-  'S on 178cm looks smaller than M',
-);
-assert(garmentFitOnBody('L', 165) > garmentFitOnBody('S', 165), 'L fits larger than S on body');
+// Standard Fit — גובה/מידה לא משנים סקייל ויזואלי
+assert(heightScale(140, 'woman') === 1, 'standard fit: heightScale always 1');
+assert(heightScale(190, 'man') === 1, 'standard fit: tall heightScale still 1');
+assert(sizeFitScale('S') === 1 && sizeFitScale('XL') === 1, 'standard fit: sizeFitScale always 1');
+assert(sizeRelativeToHeight('S', 178) === 1, 'standard fit: sizeRelativeToHeight always 1');
+assert(garmentFitOnBody('L', 165) === 1, 'standard fit: garmentFitOnBody always 1');
 assert(parseHeightInput('1.78', 'man') === 178, '1.78 meters parses to 178cm');
 assert(parseHeightInput('178', 'man') === 178, '178 cm parses as 178');
 
-const hangShortL = garmentHang('L', 140, 'top');
-const hangTallS = garmentHang('S', 178, 'top');
-assert(hangShortL.translateY > hangTallS.translateY, 'L on short body hangs lower');
-assert(hangShortL.scaleY > hangTallS.scaleY, 'L on short body is longer');
+const hangL = garmentHang('L', 140, 'top');
+const hangS = garmentHang('S', 178, 'top');
+assert(hangL.scaleY === 1 && hangS.scaleY === 1, 'standard fit: hang scaleY is 1');
+assert(hangL.translateY === hangS.translateY, 'standard fit: hang ignore size/height');
 
 const fitS = garmentFitTransform('S', 170, 'top', { bodyScale: 1, y: 0, x: 0 });
-const fitM = garmentFitTransform('M', 170, 'top', { bodyScale: 1, y: 0, x: 0 });
-const fitL = garmentFitTransform('L', 170, 'top', { bodyScale: 1, y: 0, x: 0 });
-assert(fitS.scaleY < fitM.scaleY, 'S top shorter than M');
-assert(fitL.scaleY > fitM.scaleY, 'L top longer than M');
-assert(fitS.scaleX < fitM.scaleX, 'S top narrower than M');
-assert(fitL.translateY > fitS.translateY, 'L hem hangs below S hem');
-const mShort = garmentFitTransform('M', 170, 'top', { bodyScale: 1, y: 0, x: 0 });
-const mTall = garmentFitTransform('M', 190, 'top', { bodyScale: 1, y: 0, x: 0 });
-assert(mShort.scaleY > mTall.scaleY, 'M on 170cm longer relative than M on 190cm');
+const fitL = garmentFitTransform('L', 190, 'top', { bodyScale: 1, y: 0, x: 0 });
+assert(fitS.scaleX === 1 && fitS.scaleY === 1, 'standard fit: S identity');
+assert(fitL.scaleX === fitS.scaleX && fitL.scaleY === fitS.scaleY, 'standard fit: L == S visually');
+assert(fitL.translateY === fitS.translateY, 'standard fit: no hem shift by size');
+
+// Fitted Look key coverage — parse avatarAssets.ts (avoid require() of PNGs in Node)
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const CATALOG_IDS = [
+  'p-tshirt',
+  'p-hoodie',
+  'p-oxford',
+  'p-turtleneck',
+  'p-polo',
+  'p-linen',
+  'p-jeans',
+  'p-shorts',
+  'p-cargo',
+  'p-sport',
+  'p-chinos',
+  'p-swim',
+  'p-denim-jkt',
+  'p-leather',
+  'p-bomber',
+  'p-dress',
+  'p-sneakers',
+  'p-boots',
+  'p-hat',
+  'p-underwear',
+  'p-socks',
+  'p-tshirt-white',
+  'p-tshirt-navy',
+  'p-hoodie-black',
+  'p-tee-stripe',
+  'p-cardigan',
+  'p-jeans-black',
+  'p-jeans-light',
+  'p-joggers',
+  'p-suit',
+  'p-blazer',
+  'p-coat',
+  'p-skirt',
+  'p-cap',
+  'p-sandals',
+] as const;
+
+const avatarAssetsSrc = readFileSync(
+  join(process.cwd(), 'src/constants/avatarAssets.ts'),
+  'utf8',
+);
+const manBlock = avatarAssetsSrc.slice(
+  avatarAssetsSrc.indexOf('export const FITTED_LOOKS_MAN'),
+  avatarAssetsSrc.indexOf('export const FITTED_LOOKS_WOMAN'),
+);
+const womanBlock = avatarAssetsSrc.slice(
+  avatarAssetsSrc.indexOf('export const FITTED_LOOKS_WOMAN'),
+  avatarAssetsSrc.indexOf('export const FITTED_COMBOS'),
+);
+for (const id of CATALOG_IDS) {
+  const inMan = manBlock.includes(`'${id}'`);
+  const inWoman = womanBlock.includes(`'${id}'`);
+  assert(inMan || inWoman, `Fitted Look key/placeholder for ${id}`);
+  assert(inWoman, `woman Fitted Look key/placeholder for ${id}`);
+}
 
 const shirtA: OutfitPiece = {
   id: 'p-tshirt-M',
@@ -171,6 +224,92 @@ outfit = wearPiece(outfit, shirtB);
 assert(outfit.top?.id === shirtB.id && outfit.bottom?.id === jeans.id, 'new shirt replaces old; jeans stay');
 outfit = wearPiece(outfit, jeans2);
 assert(outfit.bottom?.id === jeans2.id && outfit.top?.id === shirtB.id, 'new jeans replace old; shirt stays');
+
+const outer: OutfitPiece = {
+  id: 'p-bomber-M',
+  label: 'בומבר',
+  category: 'Outerwear',
+  subcategory: 'ג׳קט',
+  color: 'Black',
+  size: 'M',
+  slot: categoryToSlot('Outerwear'),
+};
+outfit = wearPiece(outfit, outer);
+assert(
+  Boolean(outfit.top && outfit.bottom && outfit.outer),
+  'A1 wearPiece: top+bottom+outer all stay',
+);
+
+// A1 presentation — בלי טעינת PNGs
+const comboKeys = new Set(['p-tshirt|p-jeans', 'p-bomber|p-jeans']);
+const hasCombo = (a: string, b: string) => comboKeys.has(`${a}|${b}`);
+assert(
+  outfitPresentationMode(
+    { topId: 'p-tshirt', bottomId: 'p-jeans', outerId: null, dressId: null },
+    hasCombo,
+  ) === 'combo',
+  'A1: top+bottom with combo → combo',
+);
+assert(
+  outfitPresentationMode(
+    {
+      topId: 'p-hoodie',
+      bottomId: 'p-jeans',
+      outerId: 'p-bomber',
+      dressId: null,
+    },
+    hasCombo,
+  ) === 'overlay',
+  'A1: top+bottom+outer → overlay (all visible)',
+);
+assert(
+  outfitPresentationMode(
+    {
+      topId: 'p-hoodie',
+      bottomId: 'p-jeans',
+      outerId: null,
+      dressId: null,
+    },
+    hasCombo,
+  ) === 'overlay',
+  'A1: top+bottom without combo → overlay',
+);
+assert(
+  outfitPresentationMode(
+    {
+      topId: null,
+      bottomId: 'p-jeans',
+      outerId: 'p-bomber',
+      dressId: null,
+    },
+    hasCombo,
+  ) === 'combo',
+  'A1: outer+bottom with combo (no top) → combo',
+);
+assert(
+  outfitPresentationMode(
+    {
+      topId: 'p-tshirt',
+      bottomId: 'p-underwear',
+      outerId: null,
+      dressId: null,
+    },
+    hasCombo,
+  ) === 'single',
+  'A1: top only (underwear bottom) → single',
+);
+
+// Phase D search intent — שפה חופשית
+const buttonDown = extractIntent('חולצה לבנה מכופתרת');
+assert(buttonDown.category === 'Shirts', 'chat: מכופתרת → Shirts');
+assert(buttonDown.color === 'White', 'chat: מכופתרת → White');
+assert(
+  buttonDown.subcategoryHint === 'אוקספורד',
+  'chat: מכופתרת → hint אוקספורד',
+);
+const coatIntent = extractIntent('מעיל חורף שחור');
+assert(coatIntent.category === 'Outerwear', 'chat: מעיל → Outerwear');
+assert(coatIntent.color === 'Black', 'chat: מעיל → Black');
 
 const blackShirtIntent = extractIntent('חולצה שחורה עד 150');
 assert(blackShirtIntent.category === 'Shirts', 'chat intent category Shirts');

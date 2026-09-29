@@ -7,10 +7,7 @@ import {
   type GestureResponderEvent,
   type PanResponderGestureState,
 } from 'react-native';
-import {
-  buildWidthScale,
-  isFemalePersona,
-} from '@/constants/avatar';
+import { isFemalePersona } from '@/constants/avatar';
 import {
   catalogIdFromPieceId,
   nearestTurnYaw,
@@ -30,24 +27,18 @@ type Props = {
   onYawChange?: (yaw: number) => void;
   enablePan?: boolean;
   showHint?: boolean;
-  /** תוצאת VTON (URL) — מחליפה את ה־hero המצויר */
+  /** תוצאת VTON (URL) — מחליפה את ה־Fitted Look */
   vtonHeroUri?: string | null;
 };
 
 function layersKey(layers: OutfitLayers): string {
   return [
     layers.top?.id,
-    layers.top?.size,
     layers.bottom?.id,
-    layers.bottom?.size,
     layers.outer?.id,
-    layers.outer?.size,
     layers.dress?.id,
-    layers.dress?.size,
     layers.shoes?.id,
-    layers.shoes?.size,
     layers.hat?.id,
-    layers.hat?.size,
   ].join('|');
 }
 
@@ -69,10 +60,9 @@ function hasOuterClothes(layers: OutfitLayers): boolean {
 }
 
 /**
- * דמות משחק — סיבוב 180° לכל persona:
- * - גבר/אישה: פריימי גב אמיתיים
- * - ילדה/ילד/נער: PNG מראה מוכן + היפוך שכבות בגד
- * גוף קבוע, מידה רק על הבגד.
+ * דמות משחק — Standard / Fitted Look:
+ * מעדיפים תמונת גוף+בגד מיושרת; בלי scale לפי מידה/גובה.
+ * סיבוב 180° לפי פריימי persona.
  */
 export function GameFashionAvatar({
   profile,
@@ -86,7 +76,6 @@ export function GameFashionAvatar({
   vtonHeroUri = null,
 }: Props) {
   const female = isFemalePersona(profile.persona);
-  const wScale = buildWidthScale(profile.build);
   const paintedTurn = personaHasPaintedTurn(profile.persona);
   const controlled = typeof controlledYaw === 'number';
 
@@ -144,7 +133,6 @@ export function GameFashionAvatar({
         },
         onPanResponderRelease: () => {
           if (!enablePan) return;
-          // נצמד לפריים הקרוב: 0 / 45 / 90 / 135 / 180
           applyYaw(nearestTurnYaw(yawRef.current));
         },
       }),
@@ -163,21 +151,27 @@ export function GameFashionAvatar({
     [layers, yaw, female, profile.heightCm, profile.persona],
   );
 
-  const bodyScaleX = Math.min(1.18, Math.max(0.82, wScale));
   const facingBack = yaw > 90;
   const frame = nearestTurnYaw(yaw);
   const mirrorOverlays = facingBack && !paintedTurn;
   const baseSrc = turnBaseForPersona(profile.persona, yaw);
   const viewLabel = facingBack ? he.backViewHint : '';
   const overlayFlip = mirrorOverlays ? -1 : 1;
-  // VTON / Perfect-Fit: גוף+בגד כתמונה אחת (גודל גוף קבוע)
+
   const useVton = Boolean(vtonHeroUri);
-  const useHero = useVton || Boolean(resolved.hero && !resolved.overlayOnly);
+  const useFittedHero =
+    useVton || Boolean(resolved.hero && !resolved.overlayOnly);
   const heroSource = useVton
     ? { uri: vtonHeroUri! }
     : resolved.hero
       ? resolved.hero
       : null;
+
+  // מעל Fitted Look / VTON: רק כובע (הלוק עצמו כולל את שאר הבגד)
+  const accessoryOverlays =
+    useFittedHero && !useVton
+      ? resolved.overlays.filter((ov) => ov.slot === 'hat')
+      : [];
 
   return (
     <View
@@ -198,52 +192,28 @@ export function GameFashionAvatar({
         }}
       />
 
-      <View
-        collapsable={false}
-        style={{
-          width,
-          height,
-          transform: [{ scaleX: bodyScaleX }],
-        }}
-      >
-        {useHero && heroSource ? (
+      <View collapsable={false} style={{ width, height }}>
+        {useFittedHero && heroSource ? (
           <Image
-            key={`hero-${useVton ? 'vton' : 'fit'}-${profile.persona}-${frame}-${facingBack ? 'back' : 'front'}-${resolved.heroFit?.scaleY ?? 1}`}
+            key={`hero-${useVton ? 'vton' : 'fit'}-${profile.persona}-${frame}`}
             source={heroSource}
             resizeMode="contain"
-            style={{
-              position: 'absolute',
-              width,
-              height,
-              // VTON כבר כולל גוף+בגד — בלי affine size על כל הדמות
-              transform:
-                !useVton && resolved.heroFit
-                  ? [
-                      {
-                        translateX:
-                          resolved.heroFit.translateX * width * overlayFlip,
-                      },
-                      { translateY: resolved.heroFit.translateY * height },
-                      {
-                        scaleX: resolved.heroFit.scaleX * overlayFlip,
-                      },
-                      { scaleY: resolved.heroFit.scaleY },
-                    ]
-                  : undefined,
-            }}
+            style={{ position: 'absolute', width, height }}
           />
         ) : (
           <Image
-            key={`base-${profile.persona}-${frame}-${facingBack ? 'back' : 'front'}`}
+            key={`base-${profile.persona}-${frame}`}
             source={baseSrc}
             resizeMode="contain"
             style={{ position: 'absolute', width, height }}
           />
         )}
-        {clothed && !useHero
+
+        {/* שכבות בגד — Standard Fit + הזזת cutout (למשל עליונית) */}
+        {clothed && !useFittedHero
           ? resolved.overlays.map((ov, i) => (
               <Image
-                key={`ov-${ov.key}-${i}-${frame}-${facingBack ? 'back' : 'front'}`}
+                key={`ov-${ov.key}-${i}-${frame}`}
                 source={ov.src}
                 resizeMode="contain"
                 style={{
@@ -251,39 +221,24 @@ export function GameFashionAvatar({
                   width,
                   height,
                   transform: [
-                    {
-                      translateX: ov.translateX * width * overlayFlip,
-                    },
-                    { translateY: ov.translateY * height },
-                    { scaleX: ov.scaleX * overlayFlip },
-                    { scaleY: ov.scaleY },
+                    { translateX: (ov.translateX || 0) * width },
+                    { translateY: (ov.translateY || 0) * height },
+                    { scaleX: (ov.scaleX || 1) * overlayFlip },
+                    { scaleY: ov.scaleY || 1 },
                   ],
                 }}
               />
             ))
           : null}
-        {useHero && !useVton && resolved.overlays.length > 0
-          ? resolved.overlays.map((ov, i) => (
-              <Image
-                key={`acc-${ov.key}-${i}-${frame}`}
-                source={ov.src}
-                resizeMode="contain"
-                style={{
-                  position: 'absolute',
-                  width,
-                  height,
-                  transform: [
-                    {
-                      translateX: ov.translateX * width * overlayFlip,
-                    },
-                    { translateY: ov.translateY * height },
-                    { scaleX: ov.scaleX * overlayFlip },
-                    { scaleY: ov.scaleY },
-                  ],
-                }}
-              />
-            ))
-          : null}
+
+        {accessoryOverlays.map((ov, i) => (
+          <Image
+            key={`acc-${ov.key}-${i}-${frame}`}
+            source={ov.src}
+            resizeMode="contain"
+            style={{ position: 'absolute', width, height }}
+          />
+        ))}
       </View>
 
       {showHint ? (

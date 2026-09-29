@@ -43,9 +43,9 @@ export const he = {
   productDetails: 'פרטי הפריט',
 
   chat: 'צ׳אט AI',
-  chatTitle: 'סטייליסט AI',
-  chatSubtitle: 'תארו מה אתם מחפשים — נמצא אופציות לידכם',
-  chatPlaceholder: 'למשל: חולצה שחורה עד 150…',
+  chatTitle: 'עוזר קניות AI',
+  chatSubtitle: 'חפשו בקטלוג בשפה חופשית — נציג פריטים מתאימים',
+  chatPlaceholder: 'למשל: חולצה לבנה מכופתרת, מעיל חורף…',
   chatSend: 'שליחה',
 
   areaTitle: 'בחירת אזור',
@@ -66,7 +66,7 @@ export const he = {
   changeAvatarPersonaHint: 'בחרו דמות חדשה — הבגדים על האווטאר נשמרים.',
   saveProfileChanges: 'שמירת שינויים',
   profileUpdated: 'הפרופיל עודכן',
-  chooseSizeHint: 'בחרו מידה — L גדול יותר מ־S על הבובה',
+  chooseSizeHint: 'בחרו מידה למלאי בחנות (התצוגה על הבובה ב־Standard Fit)',
   heightOnDoll: 'גובה הבובה',
   brandsRow: 'מותגים',
   nakedBaseHint: 'הבובה מתחילה בלי בגדים — הלבישו פריט מהקטלוג',

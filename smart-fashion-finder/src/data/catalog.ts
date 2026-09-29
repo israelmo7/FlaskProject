@@ -417,7 +417,7 @@ export const PRODUCTS: ProductCard[] = [
     price: 399,
     image: require('../../assets/images/product-leather.png'),
     category: 'Outerwear',
-    color: 'Charcoal',
+    color: 'Black',
     subcategory: 'מעיל',
     brand: 'Mango',
     ...storeFields('store-hm-lev'),
