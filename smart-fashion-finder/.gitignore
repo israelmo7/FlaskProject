@@ -45,3 +45,4 @@ server/node_modules/
 /ios
 /android
 *.bak-*
+assets/images/_build_tmp/
