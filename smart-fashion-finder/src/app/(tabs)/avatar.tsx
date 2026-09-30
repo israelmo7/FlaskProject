@@ -5,7 +5,6 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -18,9 +17,8 @@ import {
   WARDROBE_ITEMS,
   WEIGHT_RANGE,
   categoryToSlot,
-  formatHeightMeters,
+  normalizeAdultPersona,
   outfitSummary,
-  parseHeightInput,
   personaToGenderFilter,
   removeSlot,
   wearPiece,
@@ -49,7 +47,6 @@ export default function AvatarScreen() {
     saveAll,
   } = useSavedProfile();
 
-  const [heightText, setHeightText] = useState(String(profile.heightCm));
   const [selectedItem, setSelectedItem] = useState<WardrobeItem | null>(
     WARDROBE_ITEMS[0],
   );
@@ -57,10 +54,9 @@ export default function AvatarScreen() {
 
   useEffect(() => {
     if (ready) {
-      setHeightText(String(profile.heightCm));
       setSelectedSize(preferredSize || 'M');
     }
-  }, [ready, profile.heightCm, preferredSize]);
+  }, [ready, preferredSize]);
 
   const sizeOptions = useMemo(() => {
     if (!selectedItem) return ['S', 'M', 'L', 'XL'];
@@ -68,13 +64,12 @@ export default function AvatarScreen() {
   }, [selectedItem]);
 
   const setPersona = (persona: AvatarPersona) => {
-    const range = HEIGHT_RANGE[persona];
-    const weight = WEIGHT_RANGE[persona];
+    const nextPersona = normalizeAdultPersona(persona);
     const next: AvatarProfile = {
       ...profile,
-      persona,
-      heightCm: range.default,
-      weightKg: weight.default,
+      persona: nextPersona,
+      heightCm: HEIGHT_RANGE[nextPersona].default,
+      weightKg: WEIGHT_RANGE[nextPersona].default,
     };
     // דמות חדשה תמיד בלי בגדים — רק בסיס
     saveAll({
@@ -82,14 +77,6 @@ export default function AvatarScreen() {
       preferredSize: selectedSize || preferredSize,
       layers: {},
     });
-    setHeightText(String(range.default));
-  };
-
-  const applyHeight = (raw: string) => {
-    setHeightText(raw.replace(/[^\d.,]/g, ''));
-    const parsed = parseHeightInput(raw, profile.persona);
-    if (parsed === null) return;
-    updateProfile({ ...profile, heightCm: parsed });
   };
 
   const setLayers = (updater: (prev: OutfitLayers) => OutfitLayers) => {
@@ -214,21 +201,6 @@ export default function AvatarScreen() {
             );
           })}
         </View>
-      </View>
-
-      <Text className="mb-2 mt-4 text-right font-bodyMedium text-xs text-ink-muted">
-        {he.heightLabel} · {formatHeightMeters(profile.heightCm)}
-      </Text>
-      <View className="flex-row items-center justify-end">
-        <Text className="ml-2 font-body text-sm text-ink-muted">ס״מ / מ׳</Text>
-        <TextInput
-          value={heightText}
-          onChangeText={applyHeight}
-          onBlur={() => setHeightText(String(profile.heightCm))}
-          keyboardType="decimal-pad"
-          className="w-28 rounded-xl bg-stone-light px-3 py-2.5 text-center font-bodyBold text-base text-ink"
-          maxLength={5}
-        />
       </View>
 
       <Text className="mb-2 mt-4 text-right font-bodyMedium text-xs text-ink-muted">

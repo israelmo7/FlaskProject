@@ -9,7 +9,12 @@ import {
   type ReactNode,
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DEFAULT_AVATAR_PROFILE } from '@/constants/avatar';
+import {
+  DEFAULT_AVATAR_PROFILE,
+  HEIGHT_RANGE,
+  WEIGHT_RANGE,
+  normalizeAdultPersona,
+} from '@/constants/avatar';
 import { DEFAULT_AREA_ID } from '@/constants/areas';
 import { PRODUCTS } from '@/data/catalog';
 import type { AvatarProfile, CartItem, OutfitLayers, OutfitPiece } from '@/types';
@@ -47,10 +52,19 @@ for (const p of PRODUCTS) {
 }
 
 function normalizeProfile(partial?: Partial<AvatarProfile>): AvatarProfile {
+  const persona = normalizeAdultPersona(partial?.persona);
+  const defaults = {
+    heightCm: HEIGHT_RANGE[persona].default,
+    weightKg: WEIGHT_RANGE[persona].default,
+  };
   return {
     ...DEFAULT_AVATAR_PROFILE,
     ...partial,
-    weightKg: partial?.weightKg ?? DEFAULT_AVATAR_PROFILE.weightKg,
+    persona,
+    // גובה/משקל נשמרים כברירת מחדל שקטה — בלי UI
+    heightCm: defaults.heightCm,
+    weightKg: defaults.weightKg,
+    build: partial?.build ?? DEFAULT_AVATAR_PROFILE.build,
   };
 }
 

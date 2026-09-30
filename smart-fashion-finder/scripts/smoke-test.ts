@@ -91,8 +91,10 @@ import {
 import { extractIntent, colorMatches } from '../src/services/fashionChatIntent';
 
 import {
+  PERSONA_OPTIONS,
   categoryToSlot,
   garmentFitOnBody,
+  normalizeAdultPersona,
   parseHeightInput,
   wearPiece,
 } from '../src/constants/avatar';
@@ -120,6 +122,17 @@ assert(sizeRelativeToHeight('S', 178) === 1, 'standard fit: sizeRelativeToHeight
 assert(garmentFitOnBody('L', 165) === 1, 'standard fit: garmentFitOnBody always 1');
 assert(parseHeightInput('1.78', 'man') === 178, '1.78 meters parses to 178cm');
 assert(parseHeightInput('178', 'man') === 178, '178 cm parses as 178');
+
+// Adult personas only — ילד/נער מוסתרים מה־UI
+assert(PERSONA_OPTIONS.length === 2, 'persona options: man + woman only');
+assert(
+  PERSONA_OPTIONS.every((p) => p.id === 'man' || p.id === 'woman'),
+  'persona options ids are adult-only',
+);
+assert(normalizeAdultPersona('boy') === 'man', 'legacy boy → man');
+assert(normalizeAdultPersona('teenGirl') === 'woman', 'legacy teenGirl → woman');
+assert(normalizeAdultPersona('girl') === 'woman', 'legacy girl → woman');
+assert(normalizeAdultPersona('man') === 'man', 'man stays man');
 
 const hangL = garmentHang('L', 140, 'top');
 const hangS = garmentHang('S', 178, 'top');

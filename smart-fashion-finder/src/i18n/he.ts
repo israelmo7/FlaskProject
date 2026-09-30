@@ -52,7 +52,7 @@ export const he = {
   areaHint: 'בחרו איפה לחפש מלאי בפיילוט חיפה.',
 
   onboardingTitle: 'יצירת פרופיל',
-  onboardingHint: 'בחרו דמות, גובה ומשקל — ואז נכנסים לבית.',
+  onboardingHint: 'בחרו דמות — גבר או אישה — ואז נכנסים לבית.',
   onboardingPersona: 'מי הדמות?',
   onboardingHeight: 'גובה (ס״מ)',
   onboardingWeight: 'משקל (ק״ג)',
@@ -61,9 +61,9 @@ export const he = {
   kgUnit: 'ק״ג',
   homeDressHint: 'הלבישו את הבובה ממוצר או מצילום, ואז מצאו מלאי לידכם.',
   editProfile: 'עריכת פרופיל',
-  editProfileHint: 'כאן אפשר תמיד לשנות את דמות האווטאר, הגובה והמשקל.',
+  editProfileHint: 'כאן אפשר תמיד לשנות בין דמות גבר לאישה.',
   changeAvatarPersona: 'שינוי דמות האווטאר',
-  changeAvatarPersonaHint: 'בחרו דמות חדשה — הבגדים על האווטאר נשמרים.',
+  changeAvatarPersonaHint: 'גבר או אישה — בחירה חדשה מאפסת את הבגדים על הבובה.',
   saveProfileChanges: 'שמירת שינויים',
   profileUpdated: 'הפרופיל עודכן',
   chooseSizeHint: 'בחרו מידה למלאי בחנות (התצוגה על הבובה ב־Standard Fit)',
@@ -195,7 +195,7 @@ export const he = {
 
   avatarTitle: 'סטודיו בובה',
   avatarHint:
-    'בחרו דמות, גובה ומבנה גוף. הבובה מתחילה בתחתונים — כל בגד שתבחרו נשאר עליה בשכבות.',
+    'בחרו גבר או אישה ומבנה גוף. הבובה מתחילה בתחתונים — כל בגד שתבחרו נשאר עליה בשכבות.',
   bodyType: 'מבנה גוף',
   slim: 'רזה',
   regular: 'ממוצע',

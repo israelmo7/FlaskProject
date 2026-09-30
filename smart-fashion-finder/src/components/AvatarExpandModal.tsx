@@ -10,7 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GameFashionAvatar } from '@/components/GameFashionAvatar';
-import { PERSONA_OPTIONS, formatHeightMeters } from '@/constants/avatar';
+import { PERSONA_OPTIONS } from '@/constants/avatar';
 import { he } from '@/i18n/he';
 import type { AvatarProfile, OutfitLayers } from '@/types';
 
@@ -73,7 +73,6 @@ export function AvatarExpandModal({
               {personaLabel}
             </Text>
             <Text className="font-body text-xs text-white/60">
-              {formatHeightMeters(profile.heightCm)} ·{' '}
               {isBack ? he.backViewHint : he.frontViewHint}
             </Text>
           </View>
