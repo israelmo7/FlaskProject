@@ -2,11 +2,7 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  PERSONA_OPTIONS,
-  formatHeightMeters,
-  garmentColorHex,
-} from '@/constants/avatar';
+import { PERSONA_OPTIONS, garmentColorHex } from '@/constants/avatar';
 import { catalogIdFromPieceId } from '@/constants/avatarAssets';
 import { AvatarExpandModal } from '@/components/AvatarExpandModal';
 import { GameFashionAvatar } from '@/components/GameFashionAvatar';
@@ -69,8 +65,7 @@ export function DressableFigure({
               : 'font-display text-sm text-ink'
           }`}
         >
-          {personaLabel} · {formatHeightMeters(profile.heightCm)}
-          {!hideMeta ? ` (${profile.heightCm} ס״מ)` : ''}
+          {personaLabel}
         </Text>
 
         <View style={{ width: dollW, height: dollH, alignSelf: 'flex-start' }}>

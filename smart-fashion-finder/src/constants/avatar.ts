@@ -9,14 +9,24 @@ import type {
   OutfitSlot,
 } from '@/types';
 
+/** בחירת דמות באפליקציה — רק בוגרים */
 export const PERSONA_OPTIONS: { id: AvatarPersona; label: string }[] = [
-  { id: 'boy', label: 'ילד' },
-  { id: 'girl', label: 'ילדה' },
-  { id: 'teenBoy', label: 'נער' },
-  { id: 'teenGirl', label: 'נערה' },
   { id: 'man', label: 'גבר' },
   { id: 'woman', label: 'אישה' },
 ];
+
+/** ילד/נער ישנים בפרופיל → מיפוי לגבר/אישה */
+export function normalizeAdultPersona(
+  persona: AvatarPersona | string | undefined,
+): AvatarPersona {
+  if (persona === 'woman' || persona === 'girl' || persona === 'teenGirl') {
+    return 'woman';
+  }
+  if (persona === 'man' || persona === 'boy' || persona === 'teenBoy') {
+    return 'man';
+  }
+  return 'woman';
+}
 
 /** ניסוח עדין למבנה גוף */
 export const BUILD_OPTIONS: { id: BodyBuild; label: string; hint: string }[] = [

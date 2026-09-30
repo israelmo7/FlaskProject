@@ -5,22 +5,19 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { router } from 'expo-router';
 import { DressableFigure } from '@/components/DressableFigure';
 import {
-  BUILD_OPTIONS,
   HEIGHT_RANGE,
   PERSONA_OPTIONS,
   SIZE_OPTIONS_BY_CATEGORY,
   WARDROBE_ITEMS,
   WEIGHT_RANGE,
   categoryToSlot,
-  formatHeightMeters,
+  normalizeAdultPersona,
   outfitSummary,
-  parseHeightInput,
   personaToGenderFilter,
   removeSlot,
   wearPiece,
@@ -31,7 +28,6 @@ import { he } from '@/i18n/he';
 import type {
   AvatarPersona,
   AvatarProfile,
-  BodyBuild,
   GarmentAnalysis,
   OutfitLayers,
   OutfitPiece,
@@ -43,13 +39,11 @@ export default function AvatarScreen() {
     profile,
     preferredSize,
     layers,
-    updateProfile,
     updatePreferredSize,
     updateLayers,
     saveAll,
   } = useSavedProfile();
 
-  const [heightText, setHeightText] = useState(String(profile.heightCm));
   const [selectedItem, setSelectedItem] = useState<WardrobeItem | null>(
     WARDROBE_ITEMS[0],
   );
@@ -57,10 +51,9 @@ export default function AvatarScreen() {
 
   useEffect(() => {
     if (ready) {
-      setHeightText(String(profile.heightCm));
       setSelectedSize(preferredSize || 'M');
     }
-  }, [ready, profile.heightCm, preferredSize]);
+  }, [ready, preferredSize]);
 
   const sizeOptions = useMemo(() => {
     if (!selectedItem) return ['S', 'M', 'L', 'XL'];
@@ -68,13 +61,12 @@ export default function AvatarScreen() {
   }, [selectedItem]);
 
   const setPersona = (persona: AvatarPersona) => {
-    const range = HEIGHT_RANGE[persona];
-    const weight = WEIGHT_RANGE[persona];
+    const nextPersona = normalizeAdultPersona(persona);
     const next: AvatarProfile = {
       ...profile,
-      persona,
-      heightCm: range.default,
-      weightKg: weight.default,
+      persona: nextPersona,
+      heightCm: HEIGHT_RANGE[nextPersona].default,
+      weightKg: WEIGHT_RANGE[nextPersona].default,
     };
     // דמות חדשה תמיד בלי בגדים — רק בסיס
     saveAll({
@@ -82,14 +74,6 @@ export default function AvatarScreen() {
       preferredSize: selectedSize || preferredSize,
       layers: {},
     });
-    setHeightText(String(range.default));
-  };
-
-  const applyHeight = (raw: string) => {
-    setHeightText(raw.replace(/[^\d.,]/g, ''));
-    const parsed = parseHeightInput(raw, profile.persona);
-    if (parsed === null) return;
-    updateProfile({ ...profile, heightCm: parsed });
   };
 
   const setLayers = (updater: (prev: OutfitLayers) => OutfitLayers) => {
@@ -118,7 +102,7 @@ export default function AvatarScreen() {
   const saveProfile = () => {
     saveAll({ profile, preferredSize: selectedSize || preferredSize, layers });
     updatePreferredSize(selectedSize || preferredSize);
-    Alert.alert(he.profileSaved, `${he.myPreferredSize}: ${selectedSize || preferredSize}`);
+    Alert.alert(he.profileSaved);
   };
 
   const findNearMe = () => {
@@ -214,85 +198,6 @@ export default function AvatarScreen() {
             );
           })}
         </View>
-      </View>
-
-      <Text className="mb-2 mt-4 text-right font-bodyMedium text-xs text-ink-muted">
-        {he.heightLabel} · {formatHeightMeters(profile.heightCm)}
-      </Text>
-      <View className="flex-row items-center justify-end">
-        <Text className="ml-2 font-body text-sm text-ink-muted">ס״מ / מ׳</Text>
-        <TextInput
-          value={heightText}
-          onChangeText={applyHeight}
-          onBlur={() => setHeightText(String(profile.heightCm))}
-          keyboardType="decimal-pad"
-          className="w-28 rounded-xl bg-stone-light px-3 py-2.5 text-center font-bodyBold text-base text-ink"
-          maxLength={5}
-        />
-      </View>
-
-      <Text className="mb-2 mt-4 text-right font-bodyMedium text-xs text-ink-muted">
-        {he.buildLabel}
-      </Text>
-      <View className="flex-row flex-wrap justify-end">
-        {BUILD_OPTIONS.map((opt) => {
-          const active = profile.build === opt.id;
-          return (
-            <Pressable
-              key={opt.id}
-              onPress={() =>
-                updateProfile({ ...profile, build: opt.id as BodyBuild })
-              }
-              className={`mb-2 ml-2 rounded-xl px-3 py-2 ${
-                active ? 'bg-ink' : 'bg-stone-dark'
-              }`}
-            >
-              <Text
-                className={`text-right font-bodyBold text-sm ${
-                  active ? 'text-stone-light' : 'text-ink'
-                }`}
-              >
-                {opt.label}
-              </Text>
-              <Text
-                className={`text-right font-body text-[10px] ${
-                  active ? 'text-stone-dark' : 'text-ink-muted'
-                }`}
-              >
-                {opt.hint}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      <Text className="mb-2 mt-4 text-right font-bodyMedium text-xs text-ink-muted">
-        {he.myPreferredSize}
-      </Text>
-      <View className="flex-row flex-wrap justify-end">
-        {['XS', 'S', 'M', 'L', 'XL'].map((size) => {
-          const active = preferredSize === size;
-          return (
-            <Pressable
-              key={size}
-              onPress={() => {
-                updatePreferredSize(size);
-                setSelectedSize(size);
-              }}
-              className={`mb-2 ml-2 min-w-[44px] items-center rounded-md px-3 py-2 ${
-                active ? 'bg-teal' : 'bg-stone-dark'
-              }`}
-            >
-              <Text
-                className={`font-bodyBold text-sm ${
-                  active ? 'text-stone-light' : 'text-ink-soft'
-                }`}
-              >
-                {size}
-              </Text>
-            </Pressable>
-          );
-        })}
       </View>
 
       <View className="mt-5">
