@@ -83,8 +83,39 @@ export function rankCatalogMatches(attrs, { minCount = 3, limit = 8 } = {}) {
   return picks;
 }
 
-/** Deterministic mock attributes from image payload size / hint */
-export function mockAttributesFromImage(imageBase64 = '', hint = {}) {
+/** Deterministic mock attributes from image payload size / hint / filename */
+export function mockAttributesFromImage(
+  imageBase64 = '',
+  hint = {},
+  imageUri = '',
+) {
+  const uriHint = String(imageUri || '').toLowerCase();
+  const uriMapped =
+    uriHint.includes('bomber')
+      ? { category: 'Outerwear', color: 'Black', subcategory: 'בומבר' }
+      : uriHint.includes('denim') || uriHint.includes('jean')
+        ? uriHint.includes('jkt') || uriHint.includes('jacket')
+          ? { category: 'Outerwear', color: 'Light Wash', subcategory: 'ג׳קט ג׳ינס' }
+          : { category: 'Pants', color: 'Blue', subcategory: 'ג׳ינס' }
+        : uriHint.includes('cargo')
+          ? { category: 'Pants', color: 'Olive Green', subcategory: 'קרגו' }
+          : uriHint.includes('oxford') || uriHint.includes('white-shirt')
+            ? { category: 'Shirts', color: 'White', subcategory: 'אוקספורד' }
+            : uriHint.includes('tshirt') || uriHint.includes('t-shirt')
+              ? { category: 'Shirts', color: 'Black', subcategory: 'טי שירט' }
+              : uriHint.includes('hoodie')
+                ? { category: 'Shirts', color: 'Beige', subcategory: 'אוברסייז' }
+                : uriHint.includes('leather')
+                  ? { category: 'Outerwear', color: 'Brown', subcategory: 'ז׳קט עור' }
+                  : null;
+
+  const effectiveHint = {
+    ...uriMapped,
+    ...hint,
+    category: hint.category || uriMapped?.category,
+    color: hint.color || uriMapped?.color,
+  };
+
   const seeds = [
     {
       category: 'Pants',
@@ -154,13 +185,22 @@ export function mockAttributesFromImage(imageBase64 = '', hint = {}) {
     },
   ];
 
-  if (hint.category) {
-    const hit = seeds.find((s) => s.category === hint.category);
+  if (effectiveHint.category) {
+    const hit =
+      seeds.find(
+        (s) =>
+          s.category === effectiveHint.category &&
+          (!effectiveHint.subcategory ||
+            s.subcategory === effectiveHint.subcategory ||
+            norm(s.subcategory).includes(norm(effectiveHint.subcategory))),
+      ) || seeds.find((s) => s.category === effectiveHint.category);
     if (hit) {
       return {
         ...hit,
-        color: hint.color || hit.color,
-        gender: hint.gender || hit.gender,
+        subcategory: effectiveHint.subcategory || hit.subcategory,
+        color: effectiveHint.color || hit.color,
+        gender: effectiveHint.gender || hit.gender,
+        confidence: 0.92,
       };
     }
   }

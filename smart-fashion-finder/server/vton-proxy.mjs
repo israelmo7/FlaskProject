@@ -162,11 +162,11 @@ app.post('/api/vision/analyze', async (req, res) => {
         mode = 'live';
       } catch (err) {
         console.warn('[vision] live failed, mock fallback:', err?.message);
-        attrs = mockAttributesFromImage(imageBase64, hint);
+        attrs = mockAttributesFromImage(imageBase64, hint, imageUri);
         mode = 'mock';
       }
     } else {
-      attrs = mockAttributesFromImage(imageBase64, hint);
+      attrs = mockAttributesFromImage(imageBase64, hint, imageUri);
     }
 
     const analysis = buildAnalysis(attrs, { imageUri, source });
