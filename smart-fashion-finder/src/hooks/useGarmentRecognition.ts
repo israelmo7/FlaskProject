@@ -64,9 +64,9 @@ function pickMockByHint(
 }
 
 /**
- * Garment recognition entry points.
- * Photo/camera currently route to manual tagging (`/tag`).
- * Swap `analyzeImage` for Google Cloud Vision / OpenAI Vision when keys exist.
+ * Garment recognition entry points (camera / gallery).
+ * Zero-click flow: home → /analysis (pending) → vision proxy → similar products.
+ * `analyzeImage` kept for history/demo hints; live path uses `requestVisionAnalyze`.
  */
 export function useGarmentRecognition() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -134,6 +134,7 @@ export function useGarmentRecognition() {
 
   return {
     isAnalyzing,
+    setIsAnalyzing,
     error,
     analyzeImage,
     pickFromLibrary,

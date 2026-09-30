@@ -1,0 +1,36 @@
+/**
+ * Lightweight catalog metadata for vision matching (no RN image requires).
+ * Keep in sync with src/data/catalog.ts product ids / attributes.
+ */
+export const CATALOG_LITE = [
+  { id: 'p-tshirt', title: 'טי שירט שחורה', category: 'Shirts', color: 'Black', subcategory: 'טי שירט', brand: 'Zara', price: 89, fit: 'Regular' },
+  { id: 'p-hoodie', title: 'קפוצ׳ון אוברסייז', category: 'Shirts', color: 'Beige', subcategory: 'אוברסייז', brand: 'Castro', price: 179, fit: 'Oversized' },
+  { id: 'p-oxford', title: 'אוקספורד לבן', category: 'Shirts', color: 'White', subcategory: 'אוקספורד', brand: 'H&M', price: 149, fit: 'Classic Regular' },
+  { id: 'p-turtleneck', title: 'חולצת גולף', category: 'Shirts', color: 'Navy', subcategory: 'גולף', brand: 'Mango', price: 129, fit: 'Slim' },
+  { id: 'p-polo', title: 'פולו זית', category: 'Shirts', color: 'Olive Green', subcategory: 'פולו', brand: 'Zara', price: 119, fit: 'Regular' },
+  { id: 'p-linen', title: 'חולצת פשתן', category: 'Shirts', color: 'Beige', subcategory: 'פשתן', brand: 'Renuar', price: 159, fit: 'Relaxed' },
+  { id: 'p-jeans', title: 'ג׳ינס כחול', category: 'Pants', color: 'Blue', subcategory: 'ג׳ינס', brand: 'Zara', price: 199, fit: 'Slim' },
+  { id: 'p-shorts', title: 'ג׳ינס קצר', category: 'Pants', color: 'Light Wash', subcategory: 'ג׳ינס קצר', brand: 'Pull&Bear', price: 129, fit: 'Regular' },
+  { id: 'p-cargo', title: 'קרגו זית', category: 'Pants', color: 'Olive Green', subcategory: 'קרגו', brand: 'Castro', price: 189, fit: 'Relaxed Utility' },
+  { id: 'p-sport', title: 'מכנס ספורט', category: 'Pants', color: 'Navy', subcategory: 'מכנס ספורט', brand: 'Nike', price: 149, fit: 'Athletic' },
+  { id: 'p-chinos', title: 'צ׳ינו חאקי', category: 'Pants', color: 'Khaki', subcategory: 'צ׳ינו', brand: 'H&M', price: 159, fit: 'Regular' },
+  { id: 'p-swim', title: 'בגד ים', category: 'Pants', color: 'Navy', subcategory: 'בגד ים', brand: 'Fox', price: 99, fit: 'Regular' },
+  { id: 'p-denim-jkt', title: 'ג׳קט ג׳ינס', category: 'Outerwear', color: 'Light Wash', subcategory: 'ג׳קט ג׳ינס', brand: 'Zara', price: 279, fit: 'Oversized' },
+  { id: 'p-leather', title: 'ז׳קט עור', category: 'Outerwear', color: 'Brown', subcategory: 'ז׳קט עור', brand: 'Atelier', price: 350, fit: 'Regular' },
+  { id: 'p-bomber', title: 'בומבר שחור', category: 'Outerwear', color: 'Black', subcategory: 'בומבר', brand: 'Zara', price: 299, fit: 'Regular' },
+  { id: 'p-dress', title: 'שמלה חומה', category: 'Dresses', color: 'Brown', subcategory: 'שמלה', brand: 'Victoria', price: 199, fit: 'Midi' },
+  { id: 'p-sneakers', title: 'סניקרס לבנות', category: 'Shoes', color: 'White', subcategory: 'סניקרס', brand: 'Adidas', price: 329, fit: 'Regular' },
+  { id: 'p-boots', title: 'מגפוני עור', category: 'Shoes', color: 'Brown', subcategory: 'מגפיים', brand: 'Zara', price: 349, fit: 'Regular' },
+  { id: 'p-hat', title: 'כובע שחור', category: 'Hats', color: 'Black', subcategory: 'כובע', brand: 'H&M', price: 79, fit: 'Regular' },
+  { id: 'p-tshirt-white', title: 'טי שירט לבנה', category: 'Shirts', color: 'White', subcategory: 'טי שירט', brand: 'H&M', price: 79, fit: 'Regular' },
+  { id: 'p-tshirt-navy', title: 'טי שירט נייבי', category: 'Shirts', color: 'Navy', subcategory: 'טי שירט', brand: 'Zara', price: 89, fit: 'Regular' },
+  { id: 'p-hoodie-black', title: 'קפוצ׳ון שחור', category: 'Shirts', color: 'Black', subcategory: 'אוברסייז', brand: 'Castro', price: 189, fit: 'Oversized' },
+  { id: 'p-jeans-black', title: 'ג׳ינס שחור', category: 'Pants', color: 'Black', subcategory: 'ג׳ינס', brand: 'Zara', price: 199, fit: 'Slim' },
+  { id: 'p-jeans-light', title: 'ג׳ינס בהיר', category: 'Pants', color: 'Light Wash', subcategory: 'ג׳ינס', brand: 'Pull&Bear', price: 179, fit: 'Relaxed' },
+  { id: 'p-joggers', title: 'ג׳וגרס אפור', category: 'Pants', color: 'Charcoal', subcategory: 'מכנס ספורט', brand: 'Nike', price: 159, fit: 'Athletic' },
+  { id: 'p-blazer', title: 'בלייזר כחול', category: 'Outerwear', color: 'Navy', subcategory: 'בלייזר', brand: 'Mango', price: 399, fit: 'Tailored' },
+  { id: 'p-coat', title: 'מעיל חורף', category: 'Outerwear', color: 'Black', subcategory: 'מעיל', brand: 'Zara', price: 499, fit: 'Oversized' },
+  { id: 'p-skirt', title: 'חצאית מידי', category: 'Dresses', color: 'Black', subcategory: 'חצאית', brand: 'H&M', price: 149, fit: 'Midi' },
+  { id: 'p-cap', title: 'כובע מצחייה', category: 'Hats', color: 'Navy', subcategory: 'כובע מצחייה', brand: 'Nike', price: 89, fit: 'Regular' },
+  { id: 'p-sandals', title: 'סנדלים', category: 'Shoes', color: 'Beige', subcategory: 'סנדלים', brand: 'Zara', price: 159, fit: 'Regular' },
+];
