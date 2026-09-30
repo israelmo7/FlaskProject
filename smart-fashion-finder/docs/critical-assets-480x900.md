@@ -7,7 +7,7 @@ Canvas: **480×900 PNG RGBA**. Anchors (px): head y≈49 · shoulders y≈157 ·
 ### A2 Bases (clean / barefoot)
 | File | Status |
 |------|--------|
-| `bases/man.png` + `turn/man_*.png` | **Restored** undamaged barefoot base (tank + boxers). Tan-block A2 damage reverted. Shirtless/boxers-only needs artist paint. |
+| `bases/man.png` + `turn/man_*.png` | **A2 done** — shirtless + boxers + barefoot (480×900 RGBA). Fit via `scripts/fit-man-shirtless-bases.py`. |
 | `bases/woman.png` + turn | Barefoot + bra/underwear (clean enough for try-on) |
 | Kids/teens | Legacy assets remain; UI personas are man/woman only |
 
