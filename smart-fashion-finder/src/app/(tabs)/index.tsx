@@ -54,7 +54,8 @@ export default function HomeScreen() {
     saveLookToCart,
     addPieceToCart,
   } = useSavedProfile();
-  const { pickFromLibrary, snapWithCamera, isAnalyzing } = useGarmentRecognition();
+  const { pickFromLibrary, snapWithCamera, isAnalyzing, setIsAnalyzing } =
+    useGarmentRecognition();
 
   useEffect(() => {
     if (ready && !onboardingComplete) {
@@ -183,19 +184,28 @@ export default function HomeScreen() {
     // לא מאפסים קטגוריה אם כבר נבחרה מהתפריט — רק מעדכנים טקסט חיפוש
   };
 
-  const goToTag = async (source: 'upload' | 'camera') => {
+  /** Zero-click: camera/gallery → analysis results (no /tag) */
+  const goToVisualSearch = async (source: 'upload' | 'camera') => {
     if (isAnalyzing) return;
-    const uri =
-      source === 'camera' ? await snapWithCamera() : await pickFromLibrary();
-    if (!uri) return;
-    router.push({
-      pathname: '/tag',
-      params: {
-        imageUri: uri,
-        source,
-        preferredSize: preferredSize || 'M',
-      },
-    });
+    setIsAnalyzing(true);
+    try {
+      const uri =
+        source === 'camera' ? await snapWithCamera() : await pickFromLibrary();
+      if (!uri) return;
+      router.push({
+        pathname: '/analysis',
+        params: {
+          imageUri: uri,
+          source,
+          pending: '1',
+          preferredSize: preferredSize || 'M',
+          distanceKm: String(DEFAULT_FILTERS.distanceKm),
+          gender: personaToGenderFilter(profile.persona),
+        },
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const onVoiceSearch = () => {
@@ -288,8 +298,8 @@ export default function HomeScreen() {
         onProfile={openProfile}
         onArea={() => router.push('/area')}
         onMenu={() => setMenuOpen(true)}
-        onCamera={() => void goToTag('camera')}
-        onGallery={() => void goToTag('upload')}
+        onCamera={() => void goToVisualSearch('camera')}
+        onGallery={() => void goToVisualSearch('upload')}
         onChat={() => router.push('/chat')}
         areaLabel={areaLabelForId(areaId)}
         cartCount={cart.length}

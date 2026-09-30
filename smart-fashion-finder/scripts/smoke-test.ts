@@ -398,6 +398,41 @@ assert(
   'A1: top only (underwear bottom) → single',
 );
 
+// Vision catalog ranking (server module — zero-click visual search)
+import {
+  mockAttributesFromImage,
+  rankCatalogMatches,
+  scoreProduct,
+} from '../server/vision-match.mjs';
+
+const visionAttrs = mockAttributesFromImage('abc123bomber', {
+  category: 'Outerwear',
+  color: 'Black',
+});
+assert(visionAttrs.category === 'Outerwear', 'vision mock hint → Outerwear');
+const visionMatches = rankCatalogMatches(visionAttrs, { minCount: 3, limit: 8 });
+assert(visionMatches.length >= 3, `vision matches >=3, got ${visionMatches.length}`);
+assert(
+  visionMatches.every((m, i, arr) => i === 0 || arr[i - 1].score >= m.score),
+  'vision matches sorted by score desc',
+);
+const bomberRow = visionMatches.find((m) => m.productId === 'p-bomber');
+assert(Boolean(bomberRow), 'vision ranks p-bomber for black outerwear');
+assert(
+  scoreProduct(
+    {
+      id: 'p-bomber',
+      title: 'בומבר',
+      category: 'Outerwear',
+      color: 'Black',
+      subcategory: 'בומבר',
+      fit: 'Regular',
+    },
+    visionAttrs,
+  ) >= 0.7,
+  'bomber scores high vs black outerwear attrs',
+);
+
 // Phase D search intent — שפה חופשית
 const buttonDown = extractIntent('חולצה לבנה מכופתרת');
 assert(buttonDown.category === 'Shirts', 'chat: מכופתרת → Shirts');
