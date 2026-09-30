@@ -7,14 +7,11 @@ Canvas: **480×900 PNG RGBA**. Anchors (px): head y≈49 · shoulders y≈157 ·
 ### A2 Bases (clean / barefoot)
 | File | Status |
 |------|--------|
-| `bases/man.png` + `turn/man_*.png` | Boxers/shoes cleaned (front waist skin-filled on outerwear pass) |
-| `bases/woman.png` + turn | Light cleanup |
-| `bases/teenBoy.png` + turn | Cleaned |
-| `bases/teenGirl.png` + turn | Light cleanup |
-| `bases/boy.png` + turn | Boxers cleaned; shoes partial |
-| `bases/girl.png` + turn | Light cleanup |
+| `bases/man.png` + `turn/man_*.png` | **Restored** undamaged barefoot base (tank + boxers). Tan-block A2 damage reverted. Shirtless/boxers-only needs artist paint. |
+| `bases/woman.png` + turn | Barefoot + bra/underwear (clean enough for try-on) |
+| Kids/teens | Legacy assets remain; UI personas are man/woman only |
 
-Artist pass still recommended: remove baked tank tops and any residual artifacts for a true nude-waist base.
+Experimental tank strip: `scripts/clean-man-base-boxers.py` (do not ship result without visual QA).
 
 ### Open-Front Outerwear (aligned to shoulders ≈150px)
 | File | Catalog IDs |

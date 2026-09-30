@@ -36,7 +36,7 @@ export default function AnalysisScreen() {
     preferredSize?: string;
   }>();
 
-  const { preferredSize, layers, updateLayers, updatePreferredSize } =
+  const { preferredSize, layers, saveAll, updatePreferredSize } =
     useSavedProfile();
 
   const initialAnalysis = useMemo(() => {
@@ -101,6 +101,7 @@ export default function AnalysisScreen() {
     };
   }, [params.pending, params.imageUri, params.source]);
 
+  /** Try-on: write piece into outfit store → open Avatar Studio */
   const dressMatch = (match: VisualProductMatch) => {
     const product = PRODUCTS.find((p) => p.id === match.productId);
     if (!product) return;
@@ -116,8 +117,12 @@ export default function AnalysisScreen() {
       price: product.price,
     };
     updatePreferredSize(size);
-    updateLayers((prev) => wearPiece(prev, piece));
-    router.replace('/(tabs)');
+    const nextLayers = wearPiece(layers, piece);
+    saveAll({
+      layers: nextLayers,
+      preferredSize: size,
+    });
+    router.replace('/avatar');
   };
 
   const goStores = () => {
@@ -226,12 +231,14 @@ export default function AnalysisScreen() {
                 {he.matchScore.replace('{n}', String(pct))}
               </Text>
             </View>
-            <View className="gap-2">
+            <View className="max-w-[118px] gap-2">
               <Pressable
                 onPress={() => dressMatch(match)}
-                className="rounded-lg bg-ink px-3 py-2"
+                className="items-center rounded-lg bg-ink px-2.5 py-2"
+                accessibilityRole="button"
+                accessibilityLabel={he.tryOnShort}
               >
-                <Text className="font-bodyBold text-[11px] text-stone-light">
+                <Text className="text-center font-bodyBold text-[10px] text-stone-light">
                   {he.tryOnShort}
                 </Text>
               </Pressable>
@@ -252,9 +259,11 @@ export default function AnalysisScreen() {
                     },
                   });
                 }}
-                className="rounded-lg bg-coral px-3 py-2"
+                className="items-center rounded-lg bg-coral px-2.5 py-2"
+                accessibilityRole="button"
+                accessibilityLabel={he.storeShort}
               >
-                <Text className="font-bodyBold text-[11px] text-white">
+                <Text className="text-center font-bodyBold text-[10px] text-white">
                   {he.storeShort}
                 </Text>
               </Pressable>
