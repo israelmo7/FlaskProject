@@ -72,9 +72,11 @@ def create_app(test_config=None):
         app.extensions['rooms_c'] = rooms_c
         app.extensions['keys_c'] = keys_c
         app.extensions['guests_c'] = guests_c
-        from srcs.rooms.routes import start_guest_cleaner
 
+
+        from srcs.rooms.routes import start_guest_cleaner
         start_guest_cleaner(app)
+    
     else:
         app.extensions['mysql'] = None
         app.extensions['rooms_c'] = None
@@ -84,59 +86,5 @@ def create_app(test_config=None):
     @app.route('/', methods=['GET'])
     def gindex():
         return render_template("gindex.html")
-
-    @app.route('/<value>', methods=['POST'])
-    def join_room(value):
-        ret = jsonify(success=False)
-        if app.config.get('SKIP_MYSQL'):
-            return ret
-
-        mysql_ext = app.extensions['mysql']
-
-        if isinstance(value, str) and 0 < len(value) < 15:
-            with mysql_ext.connection.cursor() as cur:
-                cur.execute(
-                    "SELECT id FROM keys_t WHERE sessions LIKE %s",
-                    (f'%{value}%',),
-                )
-                ans = cur.fetchall()
-
-                if len(ans) == 1:
-                    cur.execute("SELECT * FROM guests WHERE pocket = %s", (value,))
-                    ans = cur.fetchall()
-                    if len(ans) == 0:
-                        cur.execute(
-                            "INSERT INTO guests (pocket) VALUES (%s)",
-                            (value,),
-                        )
-                        mysql_ext.connection.commit()
-                    ret = redirect(f'/room/{ADMIN_ROOM_PATH}')
-
-        return ret
-
-    @app.route('/admin/', methods=['GET'])
-    @app.route('/admin', methods=['GET'])
-    def admin_shortcut():
-        """Optional shortcut — adminPanel is still a normal /room/… room."""
-        return redirect(f'/room/{ADMIN_ROOM_PATH}')
-
-    if os.environ.get("FLASK_ENABLE_TEST_ROUTE") == "1":
-
-        @app.route('/test/<parm>')
-        def tests(parm):
-            ret = jsonify(success=True)
-            mysql_ext = app.extensions['mysql']
-            try:
-                parm_int = int(parm, 10)
-            except ValueError:
-                return jsonify(success=False)
-
-            with mysql_ext.connection.cursor() as cur:
-                cur.execute(
-                    "UPDATE keys_t SET sessions = %s WHERE id = %s",
-                    (parm_int, 999),
-                )
-                mysql_ext.connection.commit()
-            return ret
 
     return app

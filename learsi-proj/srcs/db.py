@@ -112,6 +112,7 @@ class Rooms_c(Database):
                 f"SELECT id FROM rooms WHERE paths LIKE %s",
                 (f'%.{value}.%',),
             )
+            print(f"[GET-ROOM]: value={value} rows={_cur.fetchall()}")
             return _cur.fetchall()
 
     def get_chat_messages(self, rid):

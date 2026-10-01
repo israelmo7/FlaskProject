@@ -68,7 +68,7 @@ def room_type_for(room_id):
 def has_right_key(room_id, guest_id):
     """Return key id if guest may enter this room, else None."""
     room_info = rooms_c.get_doors(room_id)
-    print(f"[HAS-RIGHT-KEY]: room_id={room_id} room_info={room_info}")
+    print(f"[HAS-RIGHT-KEY]: room_id={room_id} room_info={room_info}, guest_id={guest_id}")
     if not room_info or not room_info[0][0]:
         return None
 
@@ -114,12 +114,13 @@ def enter_room(value):
     """Same door for every room → one React shell (Chat / AdminPanel / …)."""
     gid = session.get('id')
     rid = path_room_to_id(value)
-
+    
     fdebug("gid", gid, "ENTER-ROOM")
     fdebug("rid", rid, "ENTER-ROOM")
 
     if not gid or rid is None:
         print("[ENTER-ROOM]: Couldnt find SessionID\n")
+        print(f"[ENTER-ROOM]: gid={gid} rid={rid} path={value}\n")
         return redirect('/room/')
 
     gid = gid[:8]
