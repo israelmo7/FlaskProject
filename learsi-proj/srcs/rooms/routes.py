@@ -96,7 +96,7 @@ def render_room_shell(room_path, room_type, gid):
 
 
 def _admit_guest(room_path, room_id, gid):
-    """Shared enter logic: key check, guest row, builtin key grant, React shell."""
+    """Shared enter logic: key check, guest row, React shell."""
     rtype = room_type_for(room_id)
     kid = has_right_key(room_id, gid)
     if kid is None:
@@ -104,7 +104,6 @@ def _admit_guest(room_path, room_id, gid):
 
     if not guests_c.get_guest(gid):
         guests_c.add_guest(gid, kid)
-
 
     return render_room_shell(room_path, rtype, gid)
 

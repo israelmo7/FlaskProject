@@ -5,7 +5,7 @@ function readRoomPath() {
   const fromDom = document.getElementById('root')?.dataset?.roomPath
   if (fromDom) return fromDom
   const q = new URLSearchParams(window.location.search).get('room')
-  return q || '1'
+  return q || 'lobby'
 }
 
 async function fetchMessages(roomPath) {

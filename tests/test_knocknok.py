@@ -28,10 +28,10 @@ def test_gindex_renders(client):
     assert b'/data/' in response.data
 
 
-def test_admin_route_redirects_to_admin_room(client):
+def test_admin_shortcut_gone(client):
+    """admin_bp removed; /admin is not a Flask route anymore."""
     response = client.get('/admin/')
-    assert response.status_code in (301, 302)
-    assert '/room/adminPanel' in response.headers.get('Location', '')
+    assert response.status_code == 404
 
 
 @pytest.mark.parametrize(
@@ -75,7 +75,9 @@ def test_data_root_flushes_buffer(client, app):
 
     response = client.get('/data/')
     assert response.status_code == 200
-    assert len(response.get_data(as_text=True)) == 1
+    body = response.get_data(as_text=True)
+    assert len(body) == 1
+    assert response.headers.get('Content-Type', '').startswith('text/plain')
 
     with client.session_transaction() as sess:
         assert sess['mvars']['buffer']['input'] == ''
@@ -188,6 +190,33 @@ def test_get_room_reads_rooms_doors():
     assert result == [('1.2.',)]
     assert 'FROM rooms' in cursor.query
     assert cursor.params == (1,)
+
+
+def test_get_room_returns_rows_once():
+    """Regression: debug print must not consume cursor before return."""
+
+    class ConsumingCursor(FakeCursor):
+        def fetchall(self):
+            rows = list(self.results)
+            self.results = []
+            return rows
+
+    cursor = ConsumingCursor(results=[(1,)])
+    app = Flask(__name__)
+    rooms = Rooms_c(app, FakeMySQL(cursor))
+
+    result = rooms.get_room('lobby')
+
+    assert result == [(1,)]
+    assert 'FROM rooms' in cursor.query
+    assert cursor.params == ('%.lobby.%',)
+
+
+def test_knock_without_db_does_not_crash(client):
+    """SKIP_MYSQL leaves keys_c as 0; knock must redirect, not 500."""
+    response = client.get('/data/a', follow_redirects=False)
+    assert response.status_code in (301, 302)
+    assert '/data/' in response.headers.get('Location', '')
 
 
 def test_set_chat_messages_appends_plain_text():

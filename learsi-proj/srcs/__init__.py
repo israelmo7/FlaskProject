@@ -7,7 +7,7 @@ from flask import Flask, jsonify, redirect, render_template, request
 
 from srcs.core.routes import core_bp, init_db_c
 from srcs.db import get_package
-from srcs.rooms.routes import ADMIN_ROOM_PATH, init_db_r, rooms_bp
+from srcs.rooms.routes import init_db_r, rooms_bp
 from srcs.api.routes import api_bp, init_db_a
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,15 @@ def _load_json_config(app):
     app.config['MYSQL_DB'] = data_conf['db']['NAME']
     app.config["SESSION_PERMANENT"] = data_conf['ses']['PERMANENT']
     app.config["SESSION_TYPE"] = data_conf['ses']['TYPE']
-    app.config['SESSION_COOKIE_PATH'] = data_conf['ses']['PATH']
+    # Cookie must cover /data, /room, /api — never a narrow path.
+    cookie_path = data_conf['ses'].get('PATH') or '/'
+    if cookie_path != '/':
+        logger.warning(
+            "SESSION_COOKIE_PATH=%r is not '/'; forcing '/' so knock/rooms share the session",
+            cookie_path,
+        )
+        cookie_path = '/'
+    app.config['SESSION_COOKIE_PATH'] = cookie_path
     app.config['CHAT_CAPACITY'] = data_conf['chat']['CAPACITY']
     app.config['SESSION_LENGTH'] = data_conf['ses']['LENGTH']
     app.config['SESSION_TIMEOUT'] = data_conf['ses']['TIMEOUT']

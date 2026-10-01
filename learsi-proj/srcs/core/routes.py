@@ -37,67 +37,88 @@ def should_reset_knock_buffer(mvars):
     return False
 
 
+def _challenge_response(letter):
+    """One-character knock challenge as plain text."""
+    return letter, 200, {'Content-Type': 'text/plain; charset=utf-8'}
+
+
+def _keys_ready():
+    """False when MySQL/init_db_c did not wire keys_c (still the int 0 stub)."""
+    return keys_c != 0 and keys_c is not None
+
+
 @core_bp.route('/', methods=['GET'])
 def display_signes():
     # Knock redirect sets this flag so /data/ returns the challenge without flushing.
     if session.pop(SHOW_CHALLENGE_FLAG, False):
         if session.get('mvars') and session['mvars']['buffer']['output']:
             session['mvars']['buffer']['used'] = 1
-            return session['mvars']['buffer']['output'][-1]
-        return rand_str(1)
+            return _challenge_response(session['mvars']['buffer']['output'][-1])
+        return _challenge_response(rand_str(1))
 
     # Manual visit to /data/ — flush knock buffer only (keep guest session id).
     init_session()
-    return rand_str(1)
+    return _challenge_response(rand_str(1))
 
 
 @core_bp.route('/<tav>', methods=['GET'])
 def knock_knock(tav):
-    if is_valid_knock_letter(tav):
-        if should_reset_knock_buffer(session.get('mvars')):
-            session['mvars'] = {
-                'user': {'id': "", 'seq': "", 'used': 1},
-                'buffer': {'input': "", 'output': "", 'used': 1},
-            }
-
-        session['mvars']['buffer']['input'] += tav
-        session['mvars']['buffer']['output'] += rand_str(1)[0]
-        session['mvars']['buffer']['used'] = 0
-
-        similar_ans = keys_c.find_key(session['mvars']['buffer']['input'])
-        fdebug("similar_ans", similar_ans, "KNOCKx2")
-        fdebug(
-            "session['mvars']['buffer']['input']",
-            session['mvars']['buffer']['input'],
-            "KNOCKx2",
-        )
-
-        if similar_ans:
-            kid = keys_c.find_key(session['mvars']['buffer']['input'], equal=True)
-            fdebug("kid", kid, "KNOCKx2")
-
-            if len(kid) > 0 and kid[0] in similar_ans:
-                # Reuse existing guest token if already authenticated.
-                if not session.get('id'):
-                    session['id'] = rand_str(13)
-                
-                session['mvars']['user']['id'] = kid[0][0] #key id
-                session['mvars']['user']['seq'] = session['mvars']['buffer']['output'] # code
-                session['mvars']['user']['used'] = 0
-
-        session[SHOW_CHALLENGE_FLAG] = True
+    if not is_valid_knock_letter(tav):
+        init_session()
         return redirect("/data/")
 
-    init_session()
+    if not _keys_ready():
+        print("[KNOCK] keys_c not ready (DB missing?)")
+        init_session()
+        return redirect("/data/")
+
+    if should_reset_knock_buffer(session.get('mvars')):
+        session['mvars'] = {
+            'user': {'id': "", 'seq': "", 'used': 1},
+            'buffer': {'input': "", 'output': "", 'used': 1},
+        }
+
+    session['mvars']['buffer']['input'] += tav
+    session['mvars']['buffer']['output'] += rand_str(1)[0]
+    session['mvars']['buffer']['used'] = 0
+
+    similar_ans = keys_c.find_key(session['mvars']['buffer']['input'])
+    fdebug("similar_ans", similar_ans, "KNOCKx2")
+    fdebug(
+        "session['mvars']['buffer']['input']",
+        session['mvars']['buffer']['input'],
+        "KNOCKx2",
+    )
+
+    if similar_ans:
+        kid = keys_c.find_key(session['mvars']['buffer']['input'], equal=True)
+        fdebug("kid", kid, "KNOCKx2")
+
+        if len(kid) > 0 and kid[0] in similar_ans:
+            # Reuse existing guest token if already authenticated.
+            if not session.get('id'):
+                session['id'] = rand_str(13)
+
+            session['mvars']['user']['id'] = kid[0][0]  # key id
+            session['mvars']['user']['seq'] = session['mvars']['buffer']['output']
+            session['mvars']['user']['used'] = 0
+
+    session[SHOW_CHALLENGE_FLAG] = True
     return redirect("/data/")
 
 
 @core_bp.route('/POST', methods=['GET'])
 def send_seq():
     data_p = None
+    ok = False
 
     fdebug("args", request.args, "POST")
     fdebug("mvars", session.get('mvars'), "POST")
+
+    if not _keys_ready():
+        print("[POST] keys_c not ready (DB missing?)")
+        init_session()
+        return redirect('/')
 
     if session.get('mvars') and len(request.args) == 1:
         data_p = request.args.get(session['mvars']['user']['seq'])
@@ -112,13 +133,16 @@ def send_seq():
         if len(ans) > 0:
             valid = session.get('id')
             if valid:
-                #      Add the guest to the key's session list.
                 keys_c.set_key(session['mvars']['user']['id'], valid[:8])
+                ok = True
             else:
                 print("[POST] Error: couldnt find UserID\n")
     else:
         print("--Not found\n")
         init_session()
 
+    # After a successful knock confirm, send the guest to the lobby room.
+    if ok:
+        return redirect('/room/lobby')
     return redirect('/')
 

@@ -109,11 +109,12 @@ class Rooms_c(Database):
     def get_room(self, value):
         with self.get_cur() as _cur:
             _cur.execute(
-                f"SELECT id FROM rooms WHERE paths LIKE %s",
+                "SELECT id FROM rooms WHERE paths LIKE %s",
                 (f'%.{value}.%',),
             )
-            print(f"[GET-ROOM]: value={value} rows={_cur.fetchall()}")
-            return _cur.fetchall()
+            rows = _cur.fetchall()
+            print(f"[GET-ROOM]: value={value} rows={rows}")
+            return rows
 
     def get_chat_messages(self, rid):
         with self.get_cur() as _cur:
