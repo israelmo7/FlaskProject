@@ -1,4 +1,4 @@
-.PHONY: build run all
+PHONY: build run all
 
 all: run
 
@@ -8,6 +8,7 @@ build:
 
 run:
 	@trap "kill 0" EXIT; \
+	clear; \
 	cd room-ui && npm run dev & \
 	echo "RUN: [V]" && \
 	FLASK_DEBUG=1 python3 -m srcs.app

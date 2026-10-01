@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import './chat.css'
 
-function readRoomId() {
-  const fromDom = document.getElementById('root')?.dataset?.roomId
+function readRoomPath() {
+  const fromDom = document.getElementById('root')?.dataset?.roomPath
   if (fromDom) return fromDom
   const q = new URLSearchParams(window.location.search).get('room')
   return q || '1'
 }
 
-async function fetchMessages(roomId) {
-  const res = await fetch(`/api/${roomId}/messages`, {
+async function fetchMessages(roomPath) {
+  const res = await fetch(`/api/${roomPath}/messages`, {
     credentials: 'include',
   })
   if (!res.ok) {
@@ -19,8 +19,8 @@ async function fetchMessages(roomId) {
   return data.messages || []
 }
 
-async function postMessage(roomId, message) {
-  const res = await fetch(`/api/${roomId}/messages`, {
+async function postMessage(roomPath, message) {
+  const res = await fetch(`/api/${roomPath}/messages`, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -35,7 +35,7 @@ async function postMessage(roomId, message) {
 
 export default function Chat() {
 
-    const roomId = readRoomId()
+    const roomPath = readRoomPath()
       const [messages, setMessages] = useState([])
       const [draft, setDraft] = useState('')
       const [error, setError] = useState('')
@@ -43,13 +43,13 @@ export default function Chat() {
     
       const load = useCallback(async () => {
         try {
-          const lines = await fetchMessages(roomId)
+          const lines = await fetchMessages(roomPath)
           setMessages(lines)
           setError('')
         } catch (err) {
           setError(err.message || 'Could not load messages')
         }
-      }, [roomId])
+      }, [roomPath])
     
       // First load + poll every 2 seconds
       useEffect(() => {
@@ -59,7 +59,7 @@ export default function Chat() {
       }, [load])
     
       async function handleOpenWindow() {
-        const url = `/room/${roomId}/app`
+        const url = `/room/${roomPath}/app`
         window.open(url, '_blank', 'width=400,height=600')
       }
       async function onSend(e) {
@@ -72,7 +72,7 @@ export default function Chat() {
         // Optimistic: show your line immediately
         setMessages((prev) => [...prev, text])
         try {
-          const lines = await postMessage(roomId, text)
+          const lines = await postMessage(roomPath, text)
           setMessages(lines)
           setError('')
         } catch (err) {
@@ -87,7 +87,7 @@ export default function Chat() {
         <main className="chat">
           <header>
             <h1>Room chat</h1>
-            <p className="meta">room {roomId}</p>
+            <p className="meta">room {roomPath}</p>
           </header>
     
           {error ? <p className="error">{error}</p> : null}

@@ -105,9 +105,6 @@ def _admit_guest(room_path, room_id, gid):
     if not guests_c.get_guest(gid):
         guests_c.add_guest(gid, kid)
 
-    # Builtin key 999: granted in code after a normal (non-admin) room enter.
-    if rtype != 'admin':
-        keys_c.grant_admin_key(gid)
 
     return render_room_shell(room_path, rtype, gid)
 
