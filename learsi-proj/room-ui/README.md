@@ -1,4 +1,4 @@
-# Knocknok room UI (React)
+# Knocknok room UI (React) — 0.13
 
 Vite + React island. Flask owns knock, keys, and auth. React picks the page
 from `data-room-type` and fetches JSON from `/api/...`.
@@ -16,7 +16,7 @@ from `data-room-type` and fetches JSON from `/api/...`.
 Flask sets `data-room-type` from `rooms.rtype`. `App.jsx` switches:
 
 - `chat` → `Chat.jsx` → `/api/<path>/messages`
-- `admin` → `AdminPanel.jsx` → `/api/admin/rooms` + `/api/admin/guests`
+- `admin` → `AdminPanel.jsx` → room preview cards + guests
 
 ## Learn by reading
 
@@ -33,7 +33,7 @@ npm install
 npm run dev
 ```
 
-Vite proxies `/api`, `/room`, `/data` → Flask `:5000`.
+Vite proxies `/api`, `/room`, `/data` → Flask `:5000`. Prefer opening the app on **Flask :5000**.
 
 ## Build (Flask serves static)
 
@@ -42,4 +42,4 @@ cd learsi-proj/room-ui
 npm run build
 ```
 
-Then open `/room/<path>/app` (or `/room/adminPanel` for admin).
+Then open `/room/<path>` or `/room/<path>/app` on Flask.
