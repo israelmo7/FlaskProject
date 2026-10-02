@@ -398,3 +398,64 @@ def test_character_command_endpoint_empty(client, monkeypatch):
         json={'message': ''},
     )
     assert response.status_code == 400
+
+
+def test_admin_grant_key_unauthorized(client):
+    response = client.post(
+        '/api/admin/grant-admin-key',
+        json={'session': 'abcd1234'},
+    )
+    assert response.status_code == 401
+
+
+def test_admin_grant_key_forbidden(client, monkeypatch):
+    from srcs.api import routes as api_routes
+
+    with client.session_transaction() as sess:
+        sess['id'] = 'admintry'
+    monkeypatch.setattr(api_routes, '_may_use_admin_panel', lambda gid: False)
+
+    response = client.post(
+        '/api/admin/grant-admin-key',
+        json={'session': 'abcd1234'},
+    )
+    assert response.status_code == 403
+
+
+def test_admin_grant_key_success(client, monkeypatch):
+    from srcs.api import routes as api_routes
+    from srcs.db import ADMIN_KEY_ID
+
+    calls = {}
+
+    class FakeKeys:
+        def set_key(self, kid, gid):
+            calls['set_key'] = (kid, gid)
+
+    class FakeGuests:
+        def get_guest(self, gid):
+            return (('row',) if gid == 'abcd1234' else None)
+
+        def update_guest(self, gid, pocket):
+            calls['update'] = (gid, pocket)
+
+        def list_guests(self):
+            return []
+
+    with client.session_transaction() as sess:
+        sess['id'] = 'adminusr'
+    monkeypatch.setattr(api_routes, '_may_use_admin_panel', lambda gid: True)
+    monkeypatch.setattr(api_routes, 'keys_c', FakeKeys())
+    monkeypatch.setattr(api_routes, 'guests_c', FakeGuests())
+
+    response = client.post(
+        '/api/admin/grant-admin-key',
+        json={'session': 'abcd1234xxxx'},
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['ok'] is True
+    assert data['session'] == 'abcd1234'
+    assert data['key'] == ADMIN_KEY_ID
+    assert calls['set_key'] == (ADMIN_KEY_ID, 'abcd1234')
+    assert calls['update'] == ('abcd1234', str(ADMIN_KEY_ID))

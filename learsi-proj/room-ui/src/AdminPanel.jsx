@@ -9,6 +9,20 @@ async function fetchJson(url) {
   return res.json()
 }
 
+async function postJson(url, body) {
+  const res = await fetch(url, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(data.error || `${url} failed (${res.status})`)
+  }
+  return data
+}
+
 /** Mini live preview of a chat room (last lines from /api). */
 function ChatPreview({ path }) {
   const [lines, setLines] = useState([])
@@ -110,10 +124,54 @@ function RoomPreviewCard({ room }) {
   )
 }
 
+function ConfirmGrantModal({ guest, busy, onYes, onNo }) {
+  if (!guest) return null
+  const label = guest.session || '?'
+  return (
+    <div className="admin-modal-backdrop" role="presentation" onClick={onNo}>
+      <div
+        className="admin-modal"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="grant-admin-title"
+        aria-describedby="grant-admin-desc"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 id="grant-admin-title">Grant admin key?</h3>
+        <p id="grant-admin-desc">
+          Give key <strong>999</strong> to guest <code>{label}</code>? They will
+          be able to open the admin panel.
+        </p>
+        <div className="admin-modal-actions">
+          <button
+            type="button"
+            className="admin-modal-no"
+            onClick={onNo}
+            disabled={busy}
+          >
+            No
+          </button>
+          <button
+            type="button"
+            className="admin-modal-yes"
+            onClick={onYes}
+            disabled={busy}
+          >
+            {busy ? 'Granting…' : 'Yes'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AdminPanel() {
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const [rooms, setRooms] = useState([])
   const [guests, setGuests] = useState([])
+  const [confirmGuest, setConfirmGuest] = useState(null)
+  const [granting, setGranting] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -141,6 +199,26 @@ export default function AdminPanel() {
     }
   }, [])
 
+  async function confirmGrant() {
+    if (!confirmGuest?.session || granting) return
+    setGranting(true)
+    setNotice('')
+    try {
+      await postJson('/api/admin/grant-admin-key', {
+        session: confirmGuest.session,
+      })
+      setNotice(`Admin key granted to ${confirmGuest.session}`)
+      setConfirmGuest(null)
+      const guestsData = await fetchJson('/api/admin/guests')
+      setGuests(guestsData.guests || [])
+    } catch (err) {
+      setError(err.message || 'Grant failed')
+      setConfirmGuest(null)
+    } finally {
+      setGranting(false)
+    }
+  }
+
   return (
     <main className="admin-shell">
       <header className="admin-hero">
@@ -150,6 +228,7 @@ export default function AdminPanel() {
       </header>
 
       {error ? <p className="error">{error}</p> : null}
+      {notice ? <p className="admin-notice">{notice}</p> : null}
 
       <section className="admin-block rooms-block" aria-labelledby="rooms-heading">
         <div className="admin-block-head">
@@ -168,7 +247,7 @@ export default function AdminPanel() {
       <section className="admin-block guests-block" aria-labelledby="guests-heading">
         <div className="admin-block-head">
           <h2 id="guests-heading">Guests</h2>
-          <p>Sessions currently holding a pocket.</p>
+          <p>Sessions currently holding a pocket. Grant admin key with confirm.</p>
         </div>
         <div className="guest-row">
           {guests.length === 0 ? (
@@ -182,6 +261,17 @@ export default function AdminPanel() {
               >
                 <span className="guest-chip-id">{guest.session || '?'}</span>
                 <span className="guest-chip-pocket">{guest.pocket || '—'}</span>
+                <button
+                  type="button"
+                  className="guest-grant-btn"
+                  onClick={() => {
+                    setError('')
+                    setNotice('')
+                    setConfirmGuest(guest)
+                  }}
+                >
+                  Grant admin
+                </button>
               </div>
             ))
           )}
@@ -197,6 +287,13 @@ export default function AdminPanel() {
           <span>Waiting for knock stream…</span>
         </div>
       </section>
+
+      <ConfirmGrantModal
+        guest={confirmGuest}
+        busy={granting}
+        onYes={confirmGrant}
+        onNo={() => !granting && setConfirmGuest(null)}
+      />
     </main>
   )
 }

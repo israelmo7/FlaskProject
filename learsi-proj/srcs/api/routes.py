@@ -7,6 +7,7 @@ from srcs.character.agent import (
     get_status,
     handle_character_command,
 )
+from srcs.db import ADMIN_KEY_ID
 from srcs.rooms.routes import ADMIN_ROOM_PATH, has_right_key, path_room_to_id
 
 api_bp = Blueprint(
@@ -159,6 +160,29 @@ def api_admin_guests():
     if not _may_use_admin_panel(gid):
         return jsonify(error='forbidden'), 403
     return jsonify(guests=guests_c.list_guests())
+
+
+@api_bp.route('/admin/grant-admin-key', methods=['POST'])
+def api_admin_grant_admin_key():
+    """Attach admin key 999 to a guest session. Caller must already hold admin access."""
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    if not _may_use_admin_panel(gid):
+        return jsonify(error='forbidden'), 403
+
+    payload = request.get_json(silent=True) or {}
+    target = str(payload.get('session') or '').strip()
+    if not target:
+        return jsonify(error='empty'), 400
+    target = target[:8]
+
+    if not guests_c.get_guest(target):
+        return jsonify(error='guest_not_found'), 404
+
+    keys_c.set_key(ADMIN_KEY_ID, target)
+    guests_c.update_guest(target, str(ADMIN_KEY_ID))
+    return jsonify(ok=True, session=target, key=ADMIN_KEY_ID), 200
 
 
 @api_bp.route('/', methods=['GET'])

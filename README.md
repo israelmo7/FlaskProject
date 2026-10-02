@@ -10,6 +10,7 @@ Session-based knock authentication with Flask, MySQL, and a React room UI.
 - Rooms typed by `rtype` (`chat` → Chat, `admin` → AdminPanel, `character` → Character)
 - Character Stick: command UI (`go` `read [n]` `send` `wait` `back`); visual-only replies
 - Stick may only visit rooms on his allowlist **and** that the asking guest can open
+- Admin panel can grant key `999` to a guest (yes/no confirm)
 - Admin key is attached manually (not via knock)
 
 ## Setup
@@ -98,6 +99,7 @@ pytest
 - Extra seed rooms: `garden`, `studio`
 - Rotating stick styles (classic / chalk / ink / neon / sketch)
 - `GET /api/character/status`, `POST /api/character/command`; AdminPanel Stick preview
+- Admin: `POST /api/admin/grant-admin-key` + yes/no confirm popup on guest chips
 
 ## Changelog (0.13)
 
