@@ -17,7 +17,7 @@ Flask sets `data-room-type` from `rooms.rtype`. `App.jsx` switches:
 
 - `chat` → `Chat.jsx` → `/api/<path>/messages`
 - `admin` → `AdminPanel.jsx` → room preview cards + guests
-- `character` → `Character.jsx` → Stick HQ + narration log + `/api/character/status`
+- `character` → `Character.jsx` → command chat + `/api/character/status`
 
 ## Learn by reading
 

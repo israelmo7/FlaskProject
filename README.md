@@ -8,7 +8,7 @@ Session-based knock authentication with Flask, MySQL, and a React room UI.
 - Blueprints: `data` (knock), `rooms` (door + React shell), `api` (JSON for React)
 - Progressive knock sequence in Flask sessions
 - Rooms typed by `rtype` (`chat` → Chat, `admin` → AdminPanel, `character` → Character)
-- Character agent: scripted Stick visits other rooms via the DB/API layer and narrates only on `/room/character`
+- Character agent: command chat in `/room/character` (`go` `read` `send` `wait` `back`) — no auto interval
 - Admin key is attached manually (not via knock)
 
 ## Setup
@@ -88,7 +88,8 @@ pytest
 ## Changelog (0.14)
 
 - New `rtype=character`: SVG stick-man HQ at `/room/character`
-- Scripted visit agent posts narration only to the character room chat (no LLM yet)
+- Command chat drives Stick (`go` `read` `send` `wait` `back`); replies stay on the character path
+- `send` writes into the room Stick is visiting; `read` peeks that room’s chat
 - `GET /api/character/status` for pose; AdminPanel character preview
 
 ## Changelog (0.13)

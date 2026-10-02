@@ -234,23 +234,73 @@ def test_set_chat_messages_appends_plain_text():
     assert cursor.params[1] == 1
 
 
-def test_character_brain_scripted_lines():
+def test_character_brain_command_lines():
     from srcs.character import brain
 
-    assert brain.say_hi() == 'Stick: hi'
-    assert 'visiting lobby' in brain.narrate_visit('lobby', 0)
-    assert 'quiet' in brain.narrate_visit('lobby', 0)
-    assert '3 lines' in brain.narrate_visit('lobby', 3)
-    assert '1 line' in brain.narrate_visit('lobby', 1)
+    assert 'go <room>' in brain.help_line()
+    assert brain.go_ok('lobby') == 'Stick: went to lobby'
+    assert 'quiet' in brain.read_quiet('lobby')
+    assert 'hello' in brain.send_ok('lobby', 'hello')
+    assert brain.back_ok() == 'Stick: back home'
 
 
-def test_character_agent_skipped_under_testing(app):
+def test_character_parse_command():
+    from srcs.character.agent import parse_command
+
+    assert parse_command('go lobby') == ('go', 'lobby')
+    assert parse_command('SEND hi there') == ('send', 'hi there')
+    assert parse_command('  wait  ') == ('wait', '')
+    assert parse_command('') == (None, '')
+
+
+def test_character_handle_command_go_read_back():
     from srcs.character import agent as character_agent
 
-    # TESTING + SKIP_MYSQL fixtures must not start the daemon.
-    before = character_agent._started
+    class FakeRooms:
+        def __init__(self):
+            self.rooms = [
+                {'id': 1, 'path': 'lobby', 'rtype': 'chat'},
+                {'id': 2, 'path': 'character', 'rtype': 'character'},
+            ]
+            self.chats = {1: 'hello\n', 2: ''}
+
+        def list_rooms(self):
+            return list(self.rooms)
+
+        def get_room(self, value):
+            for r in self.rooms:
+                if r['path'] == value:
+                    return ((r['id'],),)
+            return ()
+
+        def get_chat_messages(self, rid):
+            return ((self.chats.get(rid, ''),),)
+
+        def set_chat_messages(self, rid, message):
+            self.chats[rid] = self.chats.get(rid, '') + message + '\n'
+
+    rooms = FakeRooms()
+    character_agent._set_status(phase='idle', target=None, last_line=None)
+
+    assert 'went to lobby' in character_agent.handle_command(rooms, 'go lobby')
+    assert character_agent.get_status()['target'] == 'lobby'
+
+    reply = character_agent.handle_command(rooms, 'read')
+    assert 'lobby' in reply and 'hello' in reply
+
+    assert 'sent to lobby' in character_agent.handle_command(rooms, 'send knock knock')
+    assert 'Stick: knock knock' in rooms.chats[1]
+
+    assert 'waiting at lobby' in character_agent.handle_command(rooms, 'wait')
+    assert 'back home' in character_agent.handle_command(rooms, 'back')
+    assert character_agent.get_status()['target'] is None
+
+
+def test_character_agent_noop_under_testing(app):
+    from srcs.character import agent as character_agent
+
+    # Must not raise under TESTING / SKIP_MYSQL.
     character_agent.start_character_agent(app)
-    assert character_agent._started is before
 
 
 def test_character_status_unauthorized(client):

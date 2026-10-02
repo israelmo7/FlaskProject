@@ -2,7 +2,11 @@
 
 from flask import Blueprint, jsonify, request, session
 
-from srcs.character.agent import CHARACTER_ROOM_PATH, get_status
+from srcs.character.agent import (
+    CHARACTER_ROOM_PATH,
+    get_status,
+    handle_character_message,
+)
 from srcs.rooms.routes import ADMIN_ROOM_PATH, has_right_key, path_room_to_id
 
 api_bp = Blueprint(
@@ -76,7 +80,7 @@ def api_get_messages(room_path):
 
 @api_bp.route('/<room_path>/messages', methods=['POST'])
 def api_send_message(room_path):
-    """Append one plain message; returns updated line list."""
+    """Append one plain message; character path runs command chat + Stick reply."""
     gid = _require_guest()
     if not gid:
         return jsonify(error='unauthorized'), 401
@@ -88,6 +92,14 @@ def api_send_message(room_path):
     message = payload.get('message') or request.form.get('message', '')
     if not str(message).strip():
         return jsonify(error='empty'), 400
+
+    if room_path == CHARACTER_ROOM_PATH:
+        try:
+            lines = handle_character_message(rooms_c, message)
+        except Exception as exc:
+            print(f'[CHARACTER] command failed: {exc}')
+            return jsonify(error='character_error'), 500
+        return jsonify(messages=lines), 201
 
     rooms_c.set_chat_messages(room_id, message)
     return jsonify(messages=_chat_lines(room_id)), 201

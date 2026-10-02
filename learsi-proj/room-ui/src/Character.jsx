@@ -136,8 +136,10 @@ export default function Character() {
     phase === 'walking' && target
       ? `Walking to ${target}…`
       : phase === 'visiting' && target
-        ? `Visiting ${target}`
-        : 'At home'
+        ? `At ${target}`
+        : target
+          ? `Waiting at ${target}`
+          : 'At home'
 
   return (
     <main className="character-shell">
@@ -145,7 +147,7 @@ export default function Character() {
         <p className="character-brand">Stick</p>
         <h1>Character room</h1>
         <p className="character-lead">
-          Lives here. Walks other rooms by API. Texts home what it finds.
+          Command chat: go, read, send, wait, back. Stick moves on your word.
         </p>
       </header>
 
@@ -158,7 +160,7 @@ export default function Character() {
 
       <ul className="character-log" aria-live="polite">
         {messages.length === 0 ? (
-          <li className="empty">Quiet for now. Stick will say hi soon.</li>
+          <li className="empty">Try: go lobby — then read, send hi, wait, back.</li>
         ) : (
           messages.map((line, i) => (
             <li key={`${i}-${line.slice(0, 24)}`}>{line}</li>
@@ -171,8 +173,8 @@ export default function Character() {
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           maxLength={500}
-          placeholder="Say hi to Stick…"
-          aria-label="Message"
+          placeholder="go lobby"
+          aria-label="Command"
           disabled={sending}
         />
         <button type="submit" disabled={sending || !draft.trim()}>
