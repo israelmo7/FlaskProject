@@ -4,11 +4,11 @@ from flask import session
 
 
 MAX_KEY_SESSIONS = 5
-ALLOWED_ROOM_COLUMNS = frozenset({'paths', 'doors'})
 # Max characters kept in rooms.chat (oldest text trimmed from the front).
 CHAT_CAPACITY = 4000
-# Admin key id — granted only in app code, never via knock (seq is non a-z).
+# Admin key id — excluded from knock search (seq is non a-z; attach manually).
 ADMIN_KEY_ID = 999
+
 
 class Database:
 
@@ -21,12 +21,6 @@ class Database:
 
     def commitit(self):
         self._mysql.connection.commit()
-
-    def push_data(self, table, data):
-        with self.get_cur() as _cur:
-            placeholders = ', '.join(['%s'] * len(data))
-            _cur.execute(f"INSERT INTO {table} VALUES ({placeholders})", tuple(data))
-            return _cur.fetchall()
 
     def get_session(self, sid):
         ans = 0
@@ -99,22 +93,13 @@ class Rooms_c(Database):
             out.append({'id': rid, 'path': path, 'rtype': rtype})
         return out
 
-    def enter_aroom(self, path):
-        rid = self.get_room(path)
-        gid = session.get('id')
-        if rid and gid:
-            return rid[0][0], gid[:8]
-        return None, None
-
     def get_room(self, value):
         with self.get_cur() as _cur:
             _cur.execute(
                 "SELECT id FROM rooms WHERE paths LIKE %s",
                 (f'%.{value}.%',),
             )
-            rows = _cur.fetchall()
-            print(f"[GET-ROOM]: value={value} rows={rows}")
-            return rows
+            return _cur.fetchall()
 
     def get_chat_messages(self, rid):
         with self.get_cur() as _cur:
@@ -222,10 +207,7 @@ class Keys_c(Database):
             return _cur.fetchall()
 
     def find_key(self, seq, equal=False):
-        """Search keys by seq: exact match when equal=True, substring LIKE otherwise.
-
-        Builtin admin key (ADMIN_KEY_ID) is never returned — knock cannot gain it.
-        """
+        """Search keys by seq. ADMIN_KEY_ID is never returned via knock."""
         with self.get_cur() as _cur:
             if equal:
                 _cur.execute(
@@ -248,34 +230,11 @@ class Keys_c(Database):
             )
             return _cur.fetchall()
 
-    def grant_admin_key(self, gid):
-        """Builtin-only: attach ADMIN_KEY_ID without removing other keys."""
-        kses = self.get_key(ADMIN_KEY_ID)
-        if kses is None or kses == ():
-            return
-
-        parts = [p for p in str(kses[0][0]).split('.') if p]
-        if gid in parts:
-            return
-
-        parts.append(gid)
-        if len(parts) > MAX_KEY_SESSIONS:
-            parts = parts[-MAX_KEY_SESSIONS:]
-        new_sessions = '.' + '.'.join(parts) + '.'
-
-        with self.get_cur() as _cur:
-            _cur.execute(
-                "UPDATE keys_t SET sessions = %s WHERE id = %s",
-                (new_sessions, ADMIN_KEY_ID),
-            )
-            self.commitit()
-
 
 class Guests_c(Database):
 
     def update_guest(self, gid, s):
-
-        if self.get_guest(gid): 
+        if self.get_guest(gid):
             with self.get_cur() as _cur:
                 _cur.execute(
                     "UPDATE guests SET pocket = %s WHERE session = %s",
@@ -307,12 +266,6 @@ class Guests_c(Database):
 
         return ans
 
-    def get_pocket(self, gid):
-        with self.get_cur() as _cur:
-            _cur.execute("SELECT pocket FROM guests WHERE session = %s", (gid,))
-            ans = _cur.fetchall()
-
-        return ans if ans != () else None
     def get_guest(self, gid):
         with self.get_cur() as _cur:
             _cur.execute("SELECT * FROM guests WHERE session = %s", (gid,))

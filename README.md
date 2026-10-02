@@ -1,14 +1,14 @@
-Knocknok 0.12v
+Knocknok 0.13v
 --------------
 
-Session-based knock authentication built with Flask and MySQL.
+Session-based knock authentication with Flask, MySQL, and a React room UI.
 
 ## Features
 
-- Blueprint-based structure (`core`/`data`, `rooms`, `api`)
-- Progressive knock sequence stored in Flask sessions
-- MySQL storage for keys, guests, and rooms
-- React room UI: `rtype` picks Chat vs AdminPanel (and future pages)
+- Blueprints: `data` (knock), `rooms` (door + React shell), `api` (JSON for React)
+- Progressive knock sequence in Flask sessions
+- Rooms typed by `rtype` (`chat` → Chat, `admin` → AdminPanel)
+- Admin key is attached manually (not via knock)
 
 ## Setup
 
@@ -48,23 +48,21 @@ cp config.example.json config.json
 # sudo mysql < schema.sql
 ```
 
-5. Run the application from the repository root:
+5. Build the React room UI, then run Flask from the repo / `learsi-proj`:
 
 ```bash
 cd learsi-proj
+make build
 FLASK_DEBUG=1 PYTHONPATH=. python3 -m srcs.app
 ```
 
-The app listens on `http://127.0.0.1:5000/`.
-
-## Configuration
-
-`config.json` at the repository root holds database and session settings. See `config.example.json` for the expected format.
+The app listens on `http://127.0.0.1:5000/` (use this port for knock + rooms).
 
 ## Development
 
-- Set `FLASK_DEBUG=1` to enable Flask debug mode.
-- Set `FLASK_ENABLE_TEST_ROUTE=1` to expose the legacy `/test/<parm>` debug route (disabled by default).
+- **Flask `:5000`** — real app (knock, rooms, built static React).
+- **Vite `:5173`** — optional hot-reload while editing `room-ui` (`make run`). Prefer opening rooms via Flask so session cookies and `data-room-*` are set.
+- Set `FLASK_DEBUG=1` for Flask debug mode.
 
 ## Testing
 
@@ -75,9 +73,15 @@ pytest
 
 ## Flow
 
-1. Visit `/` and click through to `/data/` to start knocking.
-2. Visit `/data/<letter>` repeatedly to build a secret sequence.
-3. Confirm via `/data/POST` when matched.
-4. Enter rooms via `/room/<path>` after authentication.
+1. Visit `/` → `/data/` and knock letters (e.g. `abc`).
+2. Confirm via `/data/POST?<challenge>=1`.
+3. Land in `/room/lobby` (React chat) or open `/room/adminPanel` if you hold the admin key.
 
-###### [Flask | MySQL | Python]
+## Changelog (0.13)
+
+- React island for room pages; `rtype` selects Chat vs AdminPanel
+- Admin panel: live room preview cards + guest list
+- Core knock hardened; session cookie path forced to `/`
+- Dead helpers/templates removed for a lean formal cut
+
+###### [Flask | MySQL | Python | React]

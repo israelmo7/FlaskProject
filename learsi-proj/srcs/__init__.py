@@ -3,7 +3,7 @@ import logging
 import os
 from pathlib import Path
 
-from flask import Flask, jsonify, redirect, render_template, request
+from flask import Flask, render_template
 
 from srcs.core.routes import core_bp, init_db_c
 from srcs.db import get_package
