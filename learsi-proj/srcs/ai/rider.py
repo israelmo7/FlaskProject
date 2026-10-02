@@ -30,6 +30,24 @@ def get_brain_status():
     return status
 
 
+def presence_in_room(room_path: str) -> dict:
+    """
+    Whether Wander is visible in this room right now.
+    Present when target matches (walking toward or visiting / waiting there).
+    """
+    status = get_brain_status()
+    needle = (room_path or '').strip().lower()
+    target = (status.get('target') or '').strip().lower()
+    present = bool(needle and target and needle == target)
+    return {
+        'present': present,
+        'name': 'Wander',
+        'phase': status.get('phase') if present else None,
+        'caption': status.get('caption') if present else None,
+        'target': status.get('target') if present else None,
+    }
+
+
 def _set_memory(**kwargs):
     with _lock:
         _memory.update(kwargs)

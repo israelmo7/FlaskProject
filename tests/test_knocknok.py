@@ -563,3 +563,49 @@ def test_brain_rider_skipped_under_testing(app):
     before = rider._started
     rider.start_brain_rider(app)
     assert rider._started is before
+
+
+def test_presence_in_room_matches_target():
+    from srcs.ai import rider
+    from srcs.character import agent as stick
+
+    stick._status_by_guest.clear()
+    stick._set_status(
+        rider.BRAIN_ACTOR_ID,
+        phase='visiting',
+        target='lobby',
+        caption='quiet in lobby…',
+    )
+    here = rider.presence_in_room('lobby')
+    assert here['present'] is True
+    assert here['name'] == 'Wander'
+    assert here['caption'] == 'quiet in lobby…'
+    assert rider.presence_in_room('garden')['present'] is False
+    stick._set_status(rider.BRAIN_ACTOR_ID, target=None, phase='idle', caption='At home')
+    assert rider.presence_in_room('lobby')['present'] is False
+
+
+def test_room_presence_endpoint(client, monkeypatch):
+    from srcs.ai import rider
+    from srcs.api import routes as api_routes
+    from srcs.character import agent as stick
+
+    with client.session_transaction() as sess:
+        sess['id'] = 'guesttok'
+
+    monkeypatch.setattr(api_routes, 'path_room_to_id', lambda p: 1 if p == 'lobby' else None)
+    monkeypatch.setattr(api_routes, 'has_right_key', lambda rid, gid: 1)
+
+    stick._status_by_guest.clear()
+    stick._set_status(
+        rider.BRAIN_ACTOR_ID,
+        phase='walking',
+        target='lobby',
+        caption='heading over',
+    )
+
+    response = client.get('/api/lobby/presence')
+    assert response.status_code == 200
+    data = response.get_json()['wander']
+    assert data['present'] is True
+    assert data['phase'] == 'walking'

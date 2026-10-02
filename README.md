@@ -102,6 +102,7 @@ pytest
 - Extra seed rooms: `garden`, `studio`, `brain`
 - Rotating stick styles (classic / chalk / ink / neon / sketch)
 - `GET /api/character/status`, `POST /api/character/command`, `GET /api/brain/status`
+- Wander appears in chat rooms he visits (`GET /api/<room>/presence`)
 - Admin: `POST /api/admin/grant-admin-key` + yes/no confirm popup on guest chips
 
 ## Changelog (0.13)

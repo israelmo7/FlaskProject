@@ -2,7 +2,7 @@
 
 from flask import Blueprint, jsonify, request, session
 
-from srcs.ai.rider import BRAIN_ROOM_PATH, get_brain_status
+from srcs.ai.rider import BRAIN_ROOM_PATH, get_brain_status, presence_in_room
 from srcs.character.agent import (
     CHARACTER_ROOM_PATH,
     get_status,
@@ -123,6 +123,18 @@ def api_brain_status():
     if not _may_use_brain_room(gid):
         return jsonify(error='forbidden'), 403
     return jsonify(get_brain_status())
+
+
+@api_bp.route('/<room_path>/presence', methods=['GET'])
+def api_room_presence(room_path):
+    """Is Wander in this room? Used by Chat.jsx to draw the visiting stick-man."""
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    room_id = path_room_to_id(room_path)
+    if room_id is None or has_right_key(room_id, gid) is None:
+        return jsonify(error='forbidden'), 403
+    return jsonify(wander=presence_in_room(room_path))
 
 
 @api_bp.route('/<room_path>/messages', methods=['GET'])
