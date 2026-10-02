@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import './chat.css'
+import './Chat.css'
 
 function readRoomPath() {
   const fromDom = document.getElementById('root')?.dataset?.roomPath
