@@ -1,28 +1,38 @@
-"""Character command agent: guest chat verbs drive Stick (no interval loop)."""
+"""Character command agent: visual-only replies; guest-scoped room access."""
 
 from __future__ import annotations
+
+import json
+import threading
 
 from srcs.character import brain
 
 CHARACTER_ROOM_PATH = 'character'
+# Built-in routes Stick knows even before DB allowlist is read.
+BUILTIN_ALLOW = ('lobby', 'garden', 'studio')
 
-_lock = __import__('threading').Lock()
-_status = {
+_lock = threading.Lock()
+_DEFAULT = {
     'phase': 'idle',  # idle | walking | visiting
-    'target': None,  # room path Stick is "at", or None = home
-    'last_line': None,
+    'target': None,
+    'caption': 'At home',
 }
+# Per asking guest — Stick acts only as that guest.
+_status_by_guest: dict[str, dict] = {}
 
 
-def get_status():
-    """In-memory pose for Character.jsx / status API."""
+def get_status(gid: str | None = None):
+    """Pose + caption for Character.jsx (never persisted to rooms.chat)."""
     with _lock:
-        return dict(_status)
+        if not gid:
+            return dict(_DEFAULT)
+        return dict(_status_by_guest.get(gid, _DEFAULT))
 
 
-def _set_status(**kwargs):
+def _set_status(gid: str, **kwargs):
     with _lock:
-        _status.update(kwargs)
+        cur = _status_by_guest.setdefault(gid, dict(_DEFAULT))
+        cur.update(kwargs)
 
 
 def _chat_lines(rooms_c, room_id):
@@ -32,6 +42,14 @@ def _chat_lines(rooms_c, room_id):
         raw = data[0][0]
         if not isinstance(raw, str):
             raw = str(raw)
+    # Character HQ may store JSON config in chat — not a message log.
+    text = raw.strip()
+    if text.startswith('{'):
+        try:
+            json.loads(text)
+            return []
+        except (TypeError, ValueError, json.JSONDecodeError):
+            pass
     return [line for line in raw.split('\n') if line]
 
 
@@ -42,23 +60,52 @@ def _character_room_id(rooms_c):
     return rows[0][0]
 
 
+def get_allowlist(rooms_c) -> set[str]:
+    """
+    Rooms Stick may attempt: BUILTIN_ALLOW ∪ paths listed in character.chat JSON.
+    Expected shape: {"allow":["lobby","garden",...]}
+    """
+    allowed = {p.lower() for p in BUILTIN_ALLOW}
+    home_id = _character_room_id(rooms_c)
+    if home_id is None:
+        return allowed
+    data = rooms_c.get_chat_messages(home_id)
+    raw = ''
+    if data and data[0] and data[0][0] is not None:
+        raw = data[0][0]
+        if not isinstance(raw, str):
+            raw = str(raw)
+    raw = raw.strip()
+    if not raw:
+        return allowed
+    try:
+        parsed = json.loads(raw)
+        if isinstance(parsed, dict):
+            for item in parsed.get('allow') or []:
+                if isinstance(item, str) and item.strip():
+                    allowed.add(item.strip().lower())
+        elif isinstance(parsed, list):
+            for item in parsed:
+                if isinstance(item, str) and item.strip():
+                    allowed.add(item.strip().lower())
+    except (TypeError, ValueError, json.JSONDecodeError):
+        pass
+    allowed.discard(CHARACTER_ROOM_PATH)
+    return allowed
+
+
 def _find_room_by_path(rooms_c, path: str):
-    """Return room dict from list_rooms, or None. Blocks going into character HQ."""
+    """Return room dict from list_rooms, or None. Blocks character HQ."""
     needle = (path or '').strip().lower()
-    if not needle:
+    if not needle or needle == CHARACTER_ROOM_PATH:
         return None
     for room in rooms_c.list_rooms():
         rpath = str(room.get('path') or '').lower()
         if rpath == needle:
-            if room.get('rtype') == 'character' or rpath == CHARACTER_ROOM_PATH:
+            if room.get('rtype') == 'character':
                 return None
             return room
     return None
-
-
-def _post_home(rooms_c, home_id, line: str):
-    rooms_c.set_chat_messages(home_id, line)
-    _set_status(last_line=line)
 
 
 def parse_command(raw: str):
@@ -72,98 +119,154 @@ def parse_command(raw: str):
     return verb, arg
 
 
-def handle_command(rooms_c, raw_message: str) -> str:
+def _parse_read_count(arg: str) -> int | None:
+    """Return line count or None if arg is present but invalid."""
+    if not arg:
+        return brain.DEFAULT_READ_LINES
+    try:
+        n = int(arg.strip())
+    except (TypeError, ValueError):
+        return None
+    if n < 1 or n > brain.MAX_READ_LINES:
+        return None
+    return n
+
+
+def handle_command(rooms_c, raw_message: str, gid: str, can_enter) -> str:
     """
-    Run one command against shared rooms_c; update status; return Stick reply.
-    Caller posts the guest line first, then this reply, into character chat.
+    Run one command; update per-guest visual status; return caption.
+    can_enter(room_id) -> bool — same door rights as the asking guest.
+    Does not write to the character room chat/DB.
     """
     verb, arg = parse_command(raw_message)
     if verb is None:
-        return brain.help_line()
+        caption = brain.help_line()
+        _set_status(gid, caption=caption)
+        return caption
 
-    status = get_status()
+    status = get_status(gid)
     target_path = status.get('target')
+    allow = get_allowlist(rooms_c)
 
     if verb == 'go':
         if not arg:
-            _set_status(phase='idle')
-            return brain.go_missing_arg()
+            caption = brain.go_missing_arg()
+            _set_status(gid, phase='idle', caption=caption)
+            return caption
+        needle = arg.strip().lower()
+        if needle not in allow:
+            caption = brain.go_not_allowed(arg.strip())
+            _set_status(gid, phase='idle', caption=caption)
+            return caption
         room = _find_room_by_path(rooms_c, arg)
         if room is None:
-            needle = arg.strip().lower()
-            _set_status(phase='idle')
-            if needle == CHARACTER_ROOM_PATH:
-                return brain.go_denied(arg.strip())
-            return brain.go_not_found(arg.strip())
+            caption = (
+                brain.go_denied(arg.strip())
+                if needle == CHARACTER_ROOM_PATH
+                else brain.go_not_found(arg.strip())
+            )
+            _set_status(gid, phase='idle', caption=caption)
+            return caption
+        if not can_enter(room['id']):
+            caption = brain.go_forbidden(arg.strip())
+            _set_status(gid, phase='idle', caption=caption)
+            return caption
         path = room.get('path') or arg.strip()
-        _set_status(phase='visiting', target=path)
-        return brain.go_ok(path)
+        caption = brain.go_ok(path)
+        _set_status(gid, phase='visiting', target=path, caption=caption)
+        return caption
 
     if verb == 'read':
+        count = _parse_read_count(arg)
+        if count is None:
+            caption = brain.read_bad_count()
+            _set_status(gid, caption=caption)
+            return caption
         if not target_path:
-            _set_status(phase='idle')
-            return brain.read_need_target()
+            caption = brain.read_need_target()
+            _set_status(gid, phase='idle', caption=caption)
+            return caption
+        if target_path.lower() not in allow:
+            caption = brain.go_not_allowed(target_path)
+            _set_status(gid, phase='idle', target=None, caption=caption)
+            return caption
         room = _find_room_by_path(rooms_c, target_path)
         if room is None:
-            _set_status(phase='idle', target=None)
-            return brain.go_not_found(target_path)
+            caption = brain.go_not_found(target_path)
+            _set_status(gid, phase='idle', target=None, caption=caption)
+            return caption
+        if not can_enter(room['id']):
+            caption = brain.go_forbidden(target_path)
+            _set_status(gid, phase='idle', target=None, caption=caption)
+            return caption
         lines = _chat_lines(rooms_c, room['id'])
-        _set_status(phase='visiting', target=target_path)
-        return brain.read_report(target_path, lines)
+        caption = brain.read_report(target_path, lines, max_show=count)
+        _set_status(gid, phase='visiting', target=target_path, caption=caption)
+        return caption
 
     if verb == 'send':
         if not target_path:
-            _set_status(phase='idle')
-            return brain.send_need_target()
+            caption = brain.send_need_target()
+            _set_status(gid, phase='idle', caption=caption)
+            return caption
         if not arg:
-            return brain.send_need_text()
+            caption = brain.send_need_text()
+            _set_status(gid, caption=caption)
+            return caption
+        if target_path.lower() not in allow:
+            caption = brain.go_not_allowed(target_path)
+            _set_status(gid, phase='idle', target=None, caption=caption)
+            return caption
         room = _find_room_by_path(rooms_c, target_path)
         if room is None:
-            _set_status(phase='idle', target=None)
-            return brain.go_not_found(target_path)
+            caption = brain.go_not_found(target_path)
+            _set_status(gid, phase='idle', target=None, caption=caption)
+            return caption
+        if not can_enter(room['id']):
+            caption = brain.go_forbidden(target_path)
+            _set_status(gid, phase='idle', target=None, caption=caption)
+            return caption
         stamped = f'{brain.NAME}: {arg}'
         rooms_c.set_chat_messages(room['id'], stamped)
-        _set_status(phase='visiting', target=target_path)
-        return brain.send_ok(target_path, arg)
+        caption = brain.send_ok(target_path, arg)
+        _set_status(gid, phase='visiting', target=target_path, caption=caption)
+        return caption
 
     if verb == 'wait':
-        _set_status(phase='idle', target=target_path)
-        return brain.wait_ok(target_path)
+        caption = brain.wait_ok(target_path)
+        _set_status(gid, phase='idle', target=target_path, caption=caption)
+        return caption
 
     if verb == 'back':
         if not target_path:
-            _set_status(phase='idle', target=None)
-            return brain.back_already()
-        _set_status(phase='idle', target=None)
-        return brain.back_ok()
+            caption = brain.back_already()
+            _set_status(gid, phase='idle', target=None, caption=caption)
+            return caption
+        caption = brain.back_ok()
+        _set_status(gid, phase='idle', target=None, caption=caption)
+        return caption
 
-    return brain.unknown(verb)
+    caption = brain.unknown(verb)
+    _set_status(gid, caption=caption)
+    return caption
 
 
-def handle_character_message(rooms_c, guest_line: str) -> list[str]:
+def handle_character_command(rooms_c, raw_message: str, gid: str, can_enter) -> dict:
     """
-    Append guest command + Stick reply to character room chat.
-    Returns full chat lines for the API response.
+    Execute command for this guest. No writes to character room chat/DB.
+    Returns status dict for the UI.
     """
-    home_id = _character_room_id(rooms_c)
-    if home_id is None:
-        raise RuntimeError('character room missing')
+    text = (raw_message or '').strip()
+    verb, arg = parse_command(text)
+    if verb == 'go' and arg:
+        _set_status(gid, phase='walking', target=arg.strip())
 
-    text = (guest_line or '').strip()
-    rooms_c.set_chat_messages(home_id, text)
-
-    # Brief walking flash when going somewhere (UI can poll status).
-    verb, _arg = parse_command(text)
-    if verb == 'go' and _arg:
-        _set_status(phase='walking', target=_arg.strip())
-
-    reply = handle_command(rooms_c, text)
-    _post_home(rooms_c, home_id, reply)
-    return _chat_lines(rooms_c, home_id)
+    handle_command(rooms_c, text, gid, can_enter)
+    return get_status(gid)
 
 
 def start_character_agent(app):
-    """No interval loop — commands come from chat. Kept for create_app import safety."""
+    """No interval loop — commands come from the character UI."""
     if app.config.get('SKIP_MYSQL') or app.config.get('TESTING'):
         return
-    print('[CHARACTER] Command chat ready (go|read|send|wait|back)')
+    print('[CHARACTER] Command UI ready (go|read|send|wait|back), visual-only')

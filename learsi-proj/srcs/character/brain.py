@@ -1,77 +1,90 @@
-"""Command replies for Stick — swap later for an LM without rewriting handlers."""
+"""Short visual captions for Stick (shown on the figure — never written to DB)."""
 
 from __future__ import annotations
 
 NAME = 'Stick'
-
 COMMANDS = ('go', 'send', 'read', 'wait', 'back')
+DEFAULT_READ_LINES = 3
+MAX_READ_LINES = 20
 
 
 def help_line() -> str:
-    return f'{NAME}: commands — go <room> | read | send <text> | wait | back'
+    return 'Commands: go <room> | read [n] | send <text> | wait | back'
 
 
 def unknown(verb: str) -> str:
-    return f'{NAME}: unknown "{verb}". {help_line().split("—", 1)[-1].strip()}'
+    return f'Unknown "{verb}". {help_line()}'
 
 
 def go_ok(room_path: str) -> str:
-    return f'{NAME}: went to {room_path}'
+    return f'At {room_path}'
 
 
 def go_missing_arg() -> str:
-    return f'{NAME}: go where? try go lobby'
+    return 'Go where? try go lobby'
 
 
 def go_not_found(room_path: str) -> str:
-    return f'{NAME}: no room "{room_path}"'
+    return f'No room "{room_path}"'
 
 
 def go_denied(room_path: str) -> str:
-    return f'{NAME}: cannot go to {room_path}'
+    return f'Cannot go to {room_path}'
+
+
+def go_forbidden(room_path: str) -> str:
+    return f'No key for {room_path}'
+
+
+def go_not_allowed(room_path: str) -> str:
+    return f'{room_path} not on my list'
 
 
 def read_need_target() -> str:
-    return f'{NAME}: nowhere to read — go <room> first'
+    return 'Nowhere to read — go <room> first'
+
+
+def read_bad_count() -> str:
+    return f'read <1–{MAX_READ_LINES}>'
 
 
 def read_quiet(room_path: str) -> str:
-    return f'{NAME}: {room_path} is quiet'
+    return f'{room_path} is quiet'
 
 
-def read_report(room_path: str, lines: list[str], max_show: int = 3) -> str:
+def read_report(room_path: str, lines: list[str], max_show: int = DEFAULT_READ_LINES) -> str:
     if not lines:
         return read_quiet(room_path)
-    shown = lines[-max_show:]
-    preview = ' | '.join(shown)
-    extra = len(lines) - len(shown)
-    if extra > 0:
-        return f'{NAME}: read {room_path} ({len(lines)}) … {preview}'
-    return f'{NAME}: read {room_path} — {preview}'
+    n = max(1, min(int(max_show), MAX_READ_LINES))
+    shown = lines[-n:]
+    preview = ' · '.join(shown)
+    if len(preview) > 120:
+        preview = preview[:117] + '…'
+    return f'{room_path} ({len(lines)}): {preview}'
 
 
 def send_need_target() -> str:
-    return f'{NAME}: nowhere to send — go <room> first'
+    return 'Nowhere to send — go <room> first'
 
 
 def send_need_text() -> str:
-    return f'{NAME}: send what? try send hello'
+    return 'Send what? try send hello'
 
 
 def send_ok(room_path: str, text: str) -> str:
-    short = text if len(text) <= 40 else text[:37] + '…'
-    return f'{NAME}: sent to {room_path} — {short}'
+    short = text if len(text) <= 32 else text[:29] + '…'
+    return f'Sent to {room_path}: {short}'
 
 
 def wait_ok(room_path: str | None) -> str:
     if room_path:
-        return f'{NAME}: waiting at {room_path}'
-    return f'{NAME}: waiting at home'
+        return f'Waiting at {room_path}'
+    return 'Waiting at home'
 
 
 def back_ok() -> str:
-    return f'{NAME}: back home'
+    return 'At home'
 
 
 def back_already() -> str:
-    return f'{NAME}: already home'
+    return 'Already home'

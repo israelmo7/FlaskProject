@@ -5,7 +5,7 @@ from flask import Blueprint, jsonify, request, session
 from srcs.character.agent import (
     CHARACTER_ROOM_PATH,
     get_status,
-    handle_character_message,
+    handle_character_command,
 )
 from srcs.rooms.routes import ADMIN_ROOM_PATH, has_right_key, path_room_to_id
 
@@ -28,6 +28,16 @@ def _chat_lines(room_id):
         raw = data[0][0]
         if not isinstance(raw, str):
             raw = str(raw)
+    # Character HQ stores JSON allowlist in chat — not a message log.
+    text = raw.strip()
+    if text.startswith('{') or text.startswith('['):
+        try:
+            import json
+
+            json.loads(text)
+            return []
+        except (TypeError, ValueError):
+            pass
     return [line for line in raw.split('\n') if line]
 
 
@@ -56,13 +66,42 @@ def _may_use_character_room(gid):
 
 @api_bp.route('/character/status', methods=['GET'])
 def api_character_status():
-    """Pose + last narration line for Character.jsx stick-man."""
+    """Pose + visual caption for Character.jsx (per asking guest)."""
     gid = _require_guest()
     if not gid:
         return jsonify(error='unauthorized'), 401
     if not _may_use_character_room(gid):
         return jsonify(error='forbidden'), 403
-    return jsonify(get_status())
+    return jsonify(get_status(gid))
+
+
+@api_bp.route('/character/command', methods=['POST'])
+def api_character_command():
+    """
+    Run a Stick command for this guest. Visual-only reply (status caption).
+    Does not write to the character room chat/DB.
+    Stick may only visit allowlisted rooms the guest can open.
+    """
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    if not _may_use_character_room(gid):
+        return jsonify(error='forbidden'), 403
+
+    payload = request.get_json(silent=True) or {}
+    message = payload.get('message') or payload.get('command') or ''
+    if not str(message).strip():
+        return jsonify(error='empty'), 400
+
+    def can_enter(room_id):
+        return has_right_key(room_id, gid) is not None
+
+    try:
+        status = handle_character_command(rooms_c, message, gid, can_enter)
+    except Exception as exc:
+        print(f'[CHARACTER] command failed: {exc}')
+        return jsonify(error='character_error'), 500
+    return jsonify(status=status), 200
 
 
 @api_bp.route('/<room_path>/messages', methods=['GET'])
@@ -80,10 +119,13 @@ def api_get_messages(room_path):
 
 @api_bp.route('/<room_path>/messages', methods=['POST'])
 def api_send_message(room_path):
-    """Append one plain message; character path runs command chat + Stick reply."""
+    """Append one plain message; returns updated line list."""
     gid = _require_guest()
     if not gid:
         return jsonify(error='unauthorized'), 401
+    # Character HQ is command UI only — no message log.
+    if room_path == CHARACTER_ROOM_PATH:
+        return jsonify(error='use /api/character/command'), 400
     room_id = path_room_to_id(room_path)
     if room_id is None or has_right_key(room_id, gid) is None:
         return jsonify(error='forbidden'), 403
@@ -92,14 +134,6 @@ def api_send_message(room_path):
     message = payload.get('message') or request.form.get('message', '')
     if not str(message).strip():
         return jsonify(error='empty'), 400
-
-    if room_path == CHARACTER_ROOM_PATH:
-        try:
-            lines = handle_character_message(rooms_c, message)
-        except Exception as exc:
-            print(f'[CHARACTER] command failed: {exc}')
-            return jsonify(error='character_error'), 500
-        return jsonify(messages=lines), 201
 
     rooms_c.set_chat_messages(room_id, message)
     return jsonify(messages=_chat_lines(room_id)), 201

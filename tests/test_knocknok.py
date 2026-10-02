@@ -238,10 +238,10 @@ def test_character_brain_command_lines():
     from srcs.character import brain
 
     assert 'go <room>' in brain.help_line()
-    assert brain.go_ok('lobby') == 'Stick: went to lobby'
+    assert brain.go_ok('lobby') == 'At lobby'
     assert 'quiet' in brain.read_quiet('lobby')
-    assert 'hello' in brain.send_ok('lobby', 'hello')
-    assert brain.back_ok() == 'Stick: back home'
+    assert 'Sent to lobby' in brain.send_ok('lobby', 'hello')
+    assert brain.back_ok() == 'At home'
 
 
 def test_character_parse_command():
@@ -250,6 +250,7 @@ def test_character_parse_command():
     assert parse_command('go lobby') == ('go', 'lobby')
     assert parse_command('SEND hi there') == ('send', 'hi there')
     assert parse_command('  wait  ') == ('wait', '')
+    assert parse_command('read 5') == ('read', '5')
     assert parse_command('') == (None, '')
 
 
@@ -261,8 +262,13 @@ def test_character_handle_command_go_read_back():
             self.rooms = [
                 {'id': 1, 'path': 'lobby', 'rtype': 'chat'},
                 {'id': 2, 'path': 'character', 'rtype': 'character'},
+                {'id': 3, 'path': 'garden', 'rtype': 'chat'},
             ]
-            self.chats = {1: 'hello\n', 2: ''}
+            self.chats = {
+                1: 'hello\nworld\nthird\n',
+                2: '{"allow":["lobby","garden","studio"]}',
+                3: '',
+            }
 
         def list_rooms(self):
             return list(self.rooms)
@@ -280,26 +286,77 @@ def test_character_handle_command_go_read_back():
             self.chats[rid] = self.chats.get(rid, '') + message + '\n'
 
     rooms = FakeRooms()
-    character_agent._set_status(phase='idle', target=None, last_line=None)
+    gid = 'guest001'
+    character_agent._status_by_guest.clear()
 
-    assert 'went to lobby' in character_agent.handle_command(rooms, 'go lobby')
-    assert character_agent.get_status()['target'] == 'lobby'
+    def can_enter(rid):
+        return rid in (1, 3)
 
-    reply = character_agent.handle_command(rooms, 'read')
-    assert 'lobby' in reply and 'hello' in reply
+    assert 'At lobby' in character_agent.handle_command(
+        rooms, 'go lobby', gid, can_enter
+    )
+    assert character_agent.get_status(gid)['target'] == 'lobby'
+    # No write to character room chat (allowlist intact).
+    assert rooms.chats[2] == '{"allow":["lobby","garden","studio"]}'
 
-    assert 'sent to lobby' in character_agent.handle_command(rooms, 'send knock knock')
+    reply = character_agent.handle_command(rooms, 'read 2', gid, can_enter)
+    assert 'lobby' in reply and 'world' in reply and 'third' in reply
+    assert 'hello' not in reply  # only last 2
+
+    assert 'Sent to lobby' in character_agent.handle_command(
+        rooms, 'send knock knock', gid, can_enter
+    )
     assert 'Stick: knock knock' in rooms.chats[1]
 
-    assert 'waiting at lobby' in character_agent.handle_command(rooms, 'wait')
-    assert 'back home' in character_agent.handle_command(rooms, 'back')
-    assert character_agent.get_status()['target'] is None
+    assert 'Waiting at lobby' in character_agent.handle_command(
+        rooms, 'wait', gid, can_enter
+    )
+    assert 'At home' in character_agent.handle_command(
+        rooms, 'back', gid, can_enter
+    )
+    assert character_agent.get_status(gid)['target'] is None
+
+
+def test_character_go_requires_guest_key_and_allowlist():
+    from srcs.character import agent as character_agent
+
+    class FakeRooms:
+        def list_rooms(self):
+            return [
+                {'id': 1, 'path': 'lobby', 'rtype': 'chat'},
+                {'id': 999, 'path': 'adminPanel', 'rtype': 'admin'},
+            ]
+
+        def get_room(self, value):
+            if value == 'character':
+                return ((2,),)
+            return ()
+
+        def get_chat_messages(self, rid):
+            if rid == 2:
+                return (('{"allow":["lobby"]}',),)
+            return (('',),)
+
+        def set_chat_messages(self, rid, message):
+            raise AssertionError('character chat must stay unread for commands')
+
+    rooms = FakeRooms()
+    gid = 'guest002'
+    character_agent._status_by_guest.clear()
+
+    # adminPanel not on allowlist
+    assert 'not on my list' in character_agent.handle_command(
+        rooms, 'go adminPanel', gid, lambda rid: True
+    )
+    # lobby on allowlist but guest has no key
+    assert 'No key' in character_agent.handle_command(
+        rooms, 'go lobby', gid, lambda rid: False
+    )
 
 
 def test_character_agent_noop_under_testing(app):
     from srcs.character import agent as character_agent
 
-    # Must not raise under TESTING / SKIP_MYSQL.
     character_agent.start_character_agent(app)
 
 
@@ -311,17 +368,33 @@ def test_character_status_unauthorized(client):
 
 def test_character_status_shape_when_allowed(client, monkeypatch):
     from srcs.api import routes as api_routes
-    from srcs.character.agent import _set_status
+    from srcs.character import agent as character_agent
 
     with client.session_transaction() as sess:
         sess['id'] = 'guesttok'
 
     monkeypatch.setattr(api_routes, '_may_use_character_room', lambda gid: True)
-    _set_status(phase='walking', target='lobby', last_line='Stick: hi')
+    character_agent._set_status(
+        'guesttok', phase='walking', target='lobby', caption='Walking…'
+    )
 
     response = client.get('/api/character/status')
     assert response.status_code == 200
     data = response.get_json()
     assert data['phase'] == 'walking'
     assert data['target'] == 'lobby'
-    assert data['last_line'] == 'Stick: hi'
+    assert data['caption'] == 'Walking…'
+
+
+def test_character_command_endpoint_empty(client, monkeypatch):
+    from srcs.api import routes as api_routes
+
+    with client.session_transaction() as sess:
+        sess['id'] = 'guesttok'
+    monkeypatch.setattr(api_routes, '_may_use_character_room', lambda gid: True)
+
+    response = client.post(
+        '/api/character/command',
+        json={'message': ''},
+    )
+    assert response.status_code == 400

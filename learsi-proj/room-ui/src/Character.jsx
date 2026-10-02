@@ -1,36 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import './Character.css'
 
-function readRoomPath() {
-  const fromDom = document.getElementById('root')?.dataset?.roomPath
-  if (fromDom) return fromDom
-  const q = new URLSearchParams(window.location.search).get('room')
-  return q || 'character'
-}
+const STICK_STYLES = ['classic', 'chalk', 'ink', 'neon', 'sketch']
+const STYLE_ROTATE_MS = 2800
 
-async function fetchMessages(roomPath) {
-  const res = await fetch(`/api/${roomPath}/messages`, {
-    credentials: 'include',
-  })
-  if (!res.ok) {
-    throw new Error(`load failed (${res.status})`)
-  }
-  const data = await res.json()
-  return data.messages || []
-}
-
-async function postMessage(roomPath, message) {
-  const res = await fetch(`/api/${roomPath}/messages`, {
+async function postCommand(message) {
+  const res = await fetch('/api/character/command', {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message }),
   })
   if (!res.ok) {
-    throw new Error(`send failed (${res.status})`)
+    throw new Error(`command failed (${res.status})`)
   }
   const data = await res.json()
-  return data.messages || []
+  return data.status || {}
 }
 
 async function fetchStatus() {
@@ -43,63 +28,79 @@ async function fetchStatus() {
   return res.json()
 }
 
-function StickMan({ phase, talking }) {
+function StickMan({ phase, talking, styleName }) {
   const pose = talking ? 'talking' : phase || 'idle'
   return (
     <svg
-      className={`stick-man pose-${pose}`}
+      className={`stick-man style-${styleName} pose-${pose}`}
       viewBox="0 0 80 120"
       role="img"
-      aria-label={`Stick character, ${pose}`}
+      aria-label={`Stick character, ${styleName}, ${pose}`}
     >
       <g className="stick-figure">
-        <circle className="part head" cx="40" cy="18" r="12" />
-        <line className="part torso" x1="40" y1="30" x2="40" y2="70" />
+        {/* hat — ink / neon */}
+        <path
+          className="part accent hat"
+          d="M22 14 Q40 2 58 14"
+          fill="none"
+        />
+        <circle className="part head" cx="40" cy="20" r="11" />
+        {/* eyes — sketch / chalk */}
+        <circle className="part eye eye-l" cx="36" cy="18" r="1.4" />
+        <circle className="part eye eye-r" cx="44" cy="18" r="1.4" />
+        <line className="part torso" x1="40" y1="31" x2="40" y2="70" />
         <line className="part arm arm-l" x1="40" y1="42" x2="22" y2="58" />
         <line className="part arm arm-r" x1="40" y1="42" x2="58" y2="58" />
         <line className="part leg leg-l" x1="40" y1="70" x2="26" y2="104" />
         <line className="part leg leg-r" x1="40" y1="70" x2="54" y2="104" />
+        {/* scarf — classic / neon */}
+        <path
+          className="part accent scarf"
+          d="M34 32 Q40 38 46 32"
+          fill="none"
+        />
       </g>
     </svg>
   )
 }
 
 export default function Character() {
-  const roomPath = readRoomPath()
-  const [messages, setMessages] = useState([])
   const [draft, setDraft] = useState('')
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
   const [phase, setPhase] = useState('idle')
   const [target, setTarget] = useState(null)
+  const [caption, setCaption] = useState('At home')
   const [talking, setTalking] = useState(false)
-  const lastSeenLine = useRef(null)
+  const [styleIdx, setStyleIdx] = useState(0)
+  const lastCaption = useRef(null)
   const talkTimer = useRef(null)
+
+  const applyStatus = useCallback((status) => {
+    if (!status) return
+    setPhase(status.phase || 'idle')
+    setTarget(status.target || null)
+    const nextCaption = status.caption || 'At home'
+    setCaption(nextCaption)
+    if (nextCaption && nextCaption !== lastCaption.current) {
+      lastCaption.current = nextCaption
+      setTalking(true)
+      if (talkTimer.current) {
+        window.clearTimeout(talkTimer.current)
+      }
+      talkTimer.current = window.setTimeout(() => setTalking(false), 900)
+    }
+  }, [])
 
   const load = useCallback(async () => {
     try {
-      const [lines, status] = await Promise.all([
-        fetchMessages(roomPath),
-        fetchStatus().catch(() => null),
-      ])
-      setMessages(lines)
-      if (status) {
-        setPhase(status.phase || 'idle')
-        setTarget(status.target || null)
-        if (status.last_line && status.last_line !== lastSeenLine.current) {
-          lastSeenLine.current = status.last_line
-          setTalking(true)
-          if (talkTimer.current) {
-            window.clearTimeout(talkTimer.current)
-          }
-          talkTimer.current = window.setTimeout(() => setTalking(false), 900)
-        }
-      }
+      const status = await fetchStatus()
+      applyStatus(status)
       setError('')
     } catch (err) {
       setError(err.message || 'Could not load character')
     }
-  }, [roomPath])
+  }, [applyStatus])
 
   useEffect(() => {
     load()
@@ -112,6 +113,13 @@ export default function Character() {
     }
   }, [load])
 
+  useEffect(() => {
+    const id = setInterval(() => {
+      setStyleIdx((i) => (i + 1) % STICK_STYLES.length)
+    }, STYLE_ROTATE_MS)
+    return () => clearInterval(id)
+  }, [])
+
   async function onSend(e) {
     e.preventDefault()
     const text = draft.trim()
@@ -119,20 +127,20 @@ export default function Character() {
 
     setSending(true)
     setDraft('')
-    setMessages((prev) => [...prev, text])
     try {
-      const lines = await postMessage(roomPath, text)
-      setMessages(lines)
+      const status = await postCommand(text)
+      applyStatus(status)
       setError('')
     } catch (err) {
-      setError(err.message || 'Send failed')
+      setError(err.message || 'Command failed')
       await load()
     } finally {
       setSending(false)
     }
   }
 
-  const statusLabel =
+  const styleName = STICK_STYLES[styleIdx]
+  const fallbackLabel =
     phase === 'walking' && target
       ? `Walking to ${target}…`
       : phase === 'visiting' && target
@@ -140,6 +148,7 @@ export default function Character() {
         : target
           ? `Waiting at ${target}`
           : 'At home'
+  const statusLabel = caption || fallbackLabel
 
   return (
     <main className="character-shell">
@@ -147,26 +156,17 @@ export default function Character() {
         <p className="character-brand">Stick</p>
         <h1>Character room</h1>
         <p className="character-lead">
-          Command chat: go, read, send, wait, back. Stick moves on your word.
+          Commands only — go, read [n], send, wait, back. Replies stay on Stick.
         </p>
       </header>
 
       <section className="character-stage" aria-live="polite">
-        <StickMan phase={phase} talking={talking} />
+        <StickMan phase={phase} talking={talking} styleName={styleName} />
         <p className="character-status">{statusLabel}</p>
+        <p className="character-style-tag">{styleName}</p>
       </section>
 
       {error ? <p className="error">{error}</p> : null}
-
-      <ul className="character-log" aria-live="polite">
-        {messages.length === 0 ? (
-          <li className="empty">Try: go lobby — then read, send hi, wait, back.</li>
-        ) : (
-          messages.map((line, i) => (
-            <li key={`${i}-${line.slice(0, 24)}`}>{line}</li>
-          ))
-        )}
-      </ul>
 
       <form onSubmit={onSend} className="character-composer">
         <input

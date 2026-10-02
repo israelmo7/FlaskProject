@@ -8,7 +8,8 @@ Session-based knock authentication with Flask, MySQL, and a React room UI.
 - Blueprints: `data` (knock), `rooms` (door + React shell), `api` (JSON for React)
 - Progressive knock sequence in Flask sessions
 - Rooms typed by `rtype` (`chat` → Chat, `admin` → AdminPanel, `character` → Character)
-- Character agent: command chat in `/room/character` (`go` `read` `send` `wait` `back`) — no auto interval
+- Character Stick: command UI (`go` `read [n]` `send` `wait` `back`); visual-only replies
+- Stick may only visit rooms on his allowlist **and** that the asking guest can open
 - Admin key is attached manually (not via knock)
 
 ## Setup
@@ -49,11 +50,15 @@ cp config.example.json config.json
 # sudo mysql < schema.sql
 ```
 
-If the DB already exists from 0.13, add the character room:
+If the DB already exists from an older 0.14 cut, refresh character + extra rooms:
 
 ```sql
 INSERT IGNORE INTO rooms (id, paths, doors, chat, rtype) VALUES
-  (2, '.character.', '999.1.2.', '{}', 'character');
+  (2, '.character.', '999.1.2.', '{"allow":["lobby","garden","studio"]}', 'character'),
+  (3, '.garden.', '999.1.2.', '{}', 'chat'),
+  (4, '.studio.', '999.1.2.', '{}', 'chat');
+UPDATE rooms SET chat = '{"allow":["lobby","garden","studio"]}'
+  WHERE id = 2 AND rtype = 'character';
 ```
 
 5. Build the React room UI, then run Flask from the repo / `learsi-proj`:
@@ -88,9 +93,11 @@ pytest
 ## Changelog (0.14)
 
 - New `rtype=character`: SVG stick-man HQ at `/room/character`
-- Command chat drives Stick (`go` `read` `send` `wait` `back`); replies stay on the character path
-- `send` writes into the room Stick is visiting; `read` peeks that room’s chat
-- `GET /api/character/status` for pose; AdminPanel character preview
+- Command UI (`go` `read [n]` `send` `wait` `back`); replies are visual captions only (no character chat log)
+- Stick visits = guest door rights ∩ character allowlist (`rooms.chat` JSON + builtin lobby/garden/studio)
+- Extra seed rooms: `garden`, `studio`
+- Rotating stick styles (classic / chalk / ink / neon / sketch)
+- `GET /api/character/status`, `POST /api/character/command`; AdminPanel Stick preview
 
 ## Changelog (0.13)
 
