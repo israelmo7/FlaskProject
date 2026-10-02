@@ -232,3 +232,46 @@ def test_set_chat_messages_appends_plain_text():
     stored = json.loads(cursor.params[0])
     assert stored == 'old\nhello\n'
     assert cursor.params[1] == 1
+
+
+def test_character_brain_scripted_lines():
+    from srcs.character import brain
+
+    assert brain.say_hi() == 'Stick: hi'
+    assert 'visiting lobby' in brain.narrate_visit('lobby', 0)
+    assert 'quiet' in brain.narrate_visit('lobby', 0)
+    assert '3 lines' in brain.narrate_visit('lobby', 3)
+    assert '1 line' in brain.narrate_visit('lobby', 1)
+
+
+def test_character_agent_skipped_under_testing(app):
+    from srcs.character import agent as character_agent
+
+    # TESTING + SKIP_MYSQL fixtures must not start the daemon.
+    before = character_agent._started
+    character_agent.start_character_agent(app)
+    assert character_agent._started is before
+
+
+def test_character_status_unauthorized(client):
+    response = client.get('/api/character/status')
+    assert response.status_code == 401
+    assert response.get_json()['error'] == 'unauthorized'
+
+
+def test_character_status_shape_when_allowed(client, monkeypatch):
+    from srcs.api import routes as api_routes
+    from srcs.character.agent import _set_status
+
+    with client.session_transaction() as sess:
+        sess['id'] = 'guesttok'
+
+    monkeypatch.setattr(api_routes, '_may_use_character_room', lambda gid: True)
+    _set_status(phase='walking', target='lobby', last_line='Stick: hi')
+
+    response = client.get('/api/character/status')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['phase'] == 'walking'
+    assert data['target'] == 'lobby'
+    assert data['last_line'] == 'Stick: hi'

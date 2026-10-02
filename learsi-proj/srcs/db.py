@@ -63,7 +63,7 @@ class Rooms_c(Database):
             return _cur.fetchall()
 
     def get_rtype(self, rid):
-        """Return rooms.rtype ('chat'|'admin'), or None if column/row missing."""
+        """Return rooms.rtype ('chat'|'admin'|'character'), or None if missing."""
         try:
             with self.get_cur() as _cur:
                 _cur.execute("SELECT rtype FROM rooms WHERE id = %s", (rid,))

@@ -2,6 +2,7 @@
 
 from flask import Blueprint, jsonify, request, session
 
+from srcs.character.agent import CHARACTER_ROOM_PATH, get_status
 from srcs.rooms.routes import ADMIN_ROOM_PATH, has_right_key, path_room_to_id
 
 api_bp = Blueprint(
@@ -39,6 +40,25 @@ def _may_use_admin_panel(gid):
     if admin_id is None:
         return False
     return has_right_key(admin_id, gid) is not None
+
+
+def _may_use_character_room(gid):
+    """Same door check as entering /room/character."""
+    char_id = path_room_to_id(CHARACTER_ROOM_PATH)
+    if char_id is None:
+        return False
+    return has_right_key(char_id, gid) is not None
+
+
+@api_bp.route('/character/status', methods=['GET'])
+def api_character_status():
+    """Pose + last narration line for Character.jsx stick-man."""
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    if not _may_use_character_room(gid):
+        return jsonify(error='forbidden'), 403
+    return jsonify(get_status())
 
 
 @api_bp.route('/<room_path>/messages', methods=['GET'])

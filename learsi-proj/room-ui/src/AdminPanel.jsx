@@ -67,8 +67,26 @@ function AdminPreview() {
   )
 }
 
+/** Miniature stick-man for character rtype previews. */
+function CharacterPreview() {
+  return (
+    <div className="preview-inner preview-character" aria-hidden="true">
+      <svg className="preview-stick" viewBox="0 0 80 120">
+        <circle cx="40" cy="18" r="12" />
+        <line x1="40" y1="30" x2="40" y2="70" />
+        <line x1="40" y1="42" x2="22" y2="58" />
+        <line x1="40" y1="42" x2="58" y2="58" />
+        <line x1="40" y1="70" x2="26" y2="104" />
+        <line x1="40" y1="70" x2="54" y2="104" />
+      </svg>
+      <span className="preview-character-label">Stick</span>
+    </div>
+  )
+}
+
 function RoomPreviewCard({ room }) {
   const isAdmin = room.rtype === 'admin'
+  const isCharacter = room.rtype === 'character'
   return (
     <a
       className="room-preview-card"
@@ -76,7 +94,13 @@ function RoomPreviewCard({ room }) {
       title={`Open ${room.path} (${room.rtype})`}
     >
       <div className="room-preview-stage">
-        {isAdmin ? <AdminPreview /> : <ChatPreview path={room.path} />}
+        {isAdmin ? (
+          <AdminPreview />
+        ) : isCharacter ? (
+          <CharacterPreview />
+        ) : (
+          <ChatPreview path={room.path} />
+        )}
       </div>
       <div className="room-preview-caption">
         <span className="room-preview-name">{room.path}</span>

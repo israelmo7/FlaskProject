@@ -83,8 +83,11 @@ def create_app(test_config=None):
 
 
         from srcs.rooms.routes import start_guest_cleaner
+        from srcs.character.agent import start_character_agent
+
         start_guest_cleaner(app)
-    
+        start_character_agent(app)
+
     else:
         app.extensions['mysql'] = None
         app.extensions['rooms_c'] = None

@@ -1,4 +1,4 @@
-Knocknok 0.13v
+Knocknok 0.14v
 --------------
 
 Session-based knock authentication with Flask, MySQL, and a React room UI.
@@ -7,7 +7,8 @@ Session-based knock authentication with Flask, MySQL, and a React room UI.
 
 - Blueprints: `data` (knock), `rooms` (door + React shell), `api` (JSON for React)
 - Progressive knock sequence in Flask sessions
-- Rooms typed by `rtype` (`chat` → Chat, `admin` → AdminPanel)
+- Rooms typed by `rtype` (`chat` → Chat, `admin` → AdminPanel, `character` → Character)
+- Character agent: scripted Stick visits other rooms via the DB/API layer and narrates only on `/room/character`
 - Admin key is attached manually (not via knock)
 
 ## Setup
@@ -48,6 +49,13 @@ cp config.example.json config.json
 # sudo mysql < schema.sql
 ```
 
+If the DB already exists from 0.13, add the character room:
+
+```sql
+INSERT IGNORE INTO rooms (id, paths, doors, chat, rtype) VALUES
+  (2, '.character.', '999.1.2.', '{}', 'character');
+```
+
 5. Build the React room UI, then run Flask from the repo / `learsi-proj`:
 
 ```bash
@@ -75,7 +83,13 @@ pytest
 
 1. Visit `/` → `/data/` and knock letters (e.g. `abc`).
 2. Confirm via `/data/POST?<challenge>=1`.
-3. Land in `/room/lobby` (React chat) or open `/room/adminPanel` if you hold the admin key.
+3. Land in `/room/lobby` (React chat), open `/room/character` (Stick HQ), or `/room/adminPanel` if you hold the admin key.
+
+## Changelog (0.14)
+
+- New `rtype=character`: SVG stick-man HQ at `/room/character`
+- Scripted visit agent posts narration only to the character room chat (no LLM yet)
+- `GET /api/character/status` for pose; AdminPanel character preview
 
 ## Changelog (0.13)
 

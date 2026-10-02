@@ -1,5 +1,6 @@
 import Chat from './Chat'
 import AdminPanel from './AdminPanel'
+import Character from './Character'
 
 /**
  * Flask sets data-room-type on #root (from rooms.rtype).
@@ -21,6 +22,10 @@ export default function App() {
 
   if (roomType === 'admin') {
     return <AdminPanel />
+  }
+
+  if (roomType === 'character') {
+    return <Character />
   }
 
   // default / chat (and unknown types fall back to chat for now)
