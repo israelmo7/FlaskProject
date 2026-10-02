@@ -84,9 +84,11 @@ def create_app(test_config=None):
 
         from srcs.rooms.routes import start_guest_cleaner
         from srcs.character.agent import start_character_agent
+        from srcs.ai.rider import start_brain_rider
 
         start_guest_cleaner(app)
         start_character_agent(app)
+        start_brain_rider(app)
 
     else:
         app.extensions['mysql'] = None

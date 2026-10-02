@@ -9,7 +9,7 @@ from `data-room-type` and fetches JSON from `/api/...`.
 |--------|-----|
 | `/data` | Knock |
 | `/room` | Enter room, serve React shell |
-| `/api` | JSON for React (`/<path>/messages`, `/character/status`, `/character/command`, `/admin/...`) |
+| `/api` | JSON (`/<path>/messages`, `/character/*`, `/brain/status`, `/admin/...`) |
 
 ## Room types
 
@@ -18,6 +18,7 @@ Flask sets `data-room-type` from `rooms.rtype`. `App.jsx` switches:
 - `chat` → `Chat.jsx` → `/api/<path>/messages`
 - `admin` → `AdminPanel.jsx` → room preview cards + guests
 - `character` → `Character.jsx` → command UI + visual status (no chat log)
+- `ai` → `Brain.jsx` → watch Wander ride Stick tools
 
 ## Learn by reading
 

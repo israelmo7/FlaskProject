@@ -45,4 +45,5 @@ INSERT IGNORE INTO rooms (id, paths, doors, chat, rtype) VALUES
     (2, '.character.', '999.1.2.', '{"allow":["lobby","garden","studio"]}', 'character'),
     (3, '.garden.', '999.1.2.', '{}', 'chat'),
     (4, '.studio.', '999.1.2.', '{}', 'chat'),
+    (5, '.brain.', '999.1.2.', '{"allow":["lobby","garden","studio"]}', 'ai'),
     (999, '.adminPanel.', '999.', '{}', 'admin');

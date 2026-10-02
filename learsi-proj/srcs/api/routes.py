@@ -2,6 +2,7 @@
 
 from flask import Blueprint, jsonify, request, session
 
+from srcs.ai.rider import BRAIN_ROOM_PATH, get_brain_status
 from srcs.character.agent import (
     CHARACTER_ROOM_PATH,
     get_status,
@@ -65,6 +66,14 @@ def _may_use_character_room(gid):
     return has_right_key(char_id, gid) is not None
 
 
+def _may_use_brain_room(gid):
+    """Same door check as entering /room/brain."""
+    brain_id = path_room_to_id(BRAIN_ROOM_PATH)
+    if brain_id is None:
+        return False
+    return has_right_key(brain_id, gid) is not None
+
+
 @api_bp.route('/character/status', methods=['GET'])
 def api_character_status():
     """Pose + visual caption for Character.jsx (per asking guest)."""
@@ -105,6 +114,17 @@ def api_character_command():
     return jsonify(status=status), 200
 
 
+@api_bp.route('/brain/status', methods=['GET'])
+def api_brain_status():
+    """Watch Wander (autonomous Stick rider) — caption + last tool command."""
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    if not _may_use_brain_room(gid):
+        return jsonify(error='forbidden'), 403
+    return jsonify(get_brain_status())
+
+
 @api_bp.route('/<room_path>/messages', methods=['GET'])
 def api_get_messages(room_path):
     """JSON list of chat lines for Chat.jsx."""
@@ -124,9 +144,9 @@ def api_send_message(room_path):
     gid = _require_guest()
     if not gid:
         return jsonify(error='unauthorized'), 401
-    # Character HQ is command UI only — no message log.
-    if room_path == CHARACTER_ROOM_PATH:
-        return jsonify(error='use /api/character/command'), 400
+    # Character / AI HQ store JSON allowlist in chat — not a message log.
+    if room_path in (CHARACTER_ROOM_PATH, BRAIN_ROOM_PATH):
+        return jsonify(error='hq_has_no_chat_log'), 400
     room_id = path_room_to_id(room_path)
     if room_id is None or has_right_key(room_id, gid) is None:
         return jsonify(error='forbidden'), 403

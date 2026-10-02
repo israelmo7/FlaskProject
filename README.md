@@ -7,9 +7,10 @@ Session-based knock authentication with Flask, MySQL, and a React room UI.
 
 - Blueprints: `data` (knock), `rooms` (door + React shell), `api` (JSON for React)
 - Progressive knock sequence in Flask sessions
-- Rooms typed by `rtype` (`chat` → Chat, `admin` → AdminPanel, `character` → Character)
-- Character Stick: command UI (`go` `read [n]` `send` `wait` `back`); visual-only replies
-- Stick may only visit rooms on his allowlist **and** that the asking guest can open
+- Rooms typed by `rtype` (`chat` → Chat, `admin` → AdminPanel, `character` → Character, `ai` → Brain)
+- Character Stick: manual command UI; visual-only replies
+- Brain / Wander: autonomous mind rides the same Stick tools (`go` `read` `say` `wait` `back`)
+- Stick/Wander may only visit allowlisted rooms (guest keys for Stick; allowlist for Wander)
 - Admin panel can grant key `999` to a guest (yes/no confirm)
 - Admin key is attached manually (not via knock)
 
@@ -51,15 +52,16 @@ cp config.example.json config.json
 # sudo mysql < schema.sql
 ```
 
-If the DB already exists from an older 0.14 cut, refresh character + extra rooms:
+If the DB already exists from an older 0.14 cut:
 
 ```sql
 INSERT IGNORE INTO rooms (id, paths, doors, chat, rtype) VALUES
   (2, '.character.', '999.1.2.', '{"allow":["lobby","garden","studio"]}', 'character'),
   (3, '.garden.', '999.1.2.', '{}', 'chat'),
-  (4, '.studio.', '999.1.2.', '{}', 'chat');
+  (4, '.studio.', '999.1.2.', '{}', 'chat'),
+  (5, '.brain.', '999.1.2.', '{"allow":["lobby","garden","studio"]}', 'ai');
 UPDATE rooms SET chat = '{"allow":["lobby","garden","studio"]}'
-  WHERE id = 2 AND rtype = 'character';
+  WHERE id IN (2, 5) AND rtype IN ('character', 'ai');
 ```
 
 5. Build the React room UI, then run Flask from the repo / `learsi-proj`:
@@ -89,16 +91,17 @@ pytest
 
 1. Visit `/` → `/data/` and knock letters (e.g. `abc`).
 2. Confirm via `/data/POST?<challenge>=1`.
-3. Land in `/room/lobby` (React chat), open `/room/character` (Stick HQ), or `/room/adminPanel` if you hold the admin key.
+3. Land in `/room/lobby`, open `/room/character` (manual Stick), `/room/brain` (Wander), or `/room/adminPanel` with the admin key.
 
 ## Changelog (0.14)
 
 - New `rtype=character`: SVG stick-man HQ at `/room/character`
-- Command UI (`go` `read [n]` `send` `wait` `back`); replies are visual captions only (no character chat log)
-- Stick visits = guest door rights ∩ character allowlist (`rooms.chat` JSON + builtin lobby/garden/studio)
-- Extra seed rooms: `garden`, `studio`
+- Command UI (`go` `read [n]` `say` `send` `wait` `back`); replies are visual captions only
+- New `rtype=ai` room `/room/brain`: Wander mind rides Stick tools autonomously (heuristic; LM-ready)
+- Stick visits = guest door rights ∩ allowlist; Wander = allowlist only (server rider)
+- Extra seed rooms: `garden`, `studio`, `brain`
 - Rotating stick styles (classic / chalk / ink / neon / sketch)
-- `GET /api/character/status`, `POST /api/character/command`; AdminPanel Stick preview
+- `GET /api/character/status`, `POST /api/character/command`, `GET /api/brain/status`
 - Admin: `POST /api/admin/grant-admin-key` + yes/no confirm popup on guest chips
 
 ## Changelog (0.13)

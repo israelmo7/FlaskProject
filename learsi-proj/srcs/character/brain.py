@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 NAME = 'Stick'
-COMMANDS = ('go', 'send', 'read', 'wait', 'back')
+COMMANDS = ('go', 'send', 'read', 'wait', 'back', 'say')
 DEFAULT_READ_LINES = 3
 MAX_READ_LINES = 20
 
 
 def help_line() -> str:
-    return 'Commands: go <room> | read [n] | send <text> | wait | back'
+    return 'Commands: go <room> | read [n] | say <text> | send <text> | wait | back'
 
 
 def unknown(verb: str) -> str:
@@ -88,3 +88,11 @@ def back_ok() -> str:
 
 def back_already() -> str:
     return 'Already home'
+
+
+def say_need_text() -> str:
+    return 'Say what?'
+
+
+def say_ok(text: str) -> str:
+    return (text or '').strip() or '…'

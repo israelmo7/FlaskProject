@@ -8,6 +8,8 @@ import threading
 from srcs.character import brain
 
 CHARACTER_ROOM_PATH = 'character'
+# HQ room types Stick / brain must not "go" into.
+HQ_RTYPES = frozenset({'character', 'ai'})
 # Built-in routes Stick knows even before DB allowlist is read.
 BUILTIN_ALLOW = ('lobby', 'garden', 'studio')
 
@@ -17,7 +19,7 @@ _DEFAULT = {
     'target': None,
     'caption': 'At home',
 }
-# Per asking guest — Stick acts only as that guest.
+# Per actor id — guest session or autonomous '__brain__'.
 _status_by_guest: dict[str, dict] = {}
 
 
@@ -42,7 +44,7 @@ def _chat_lines(rooms_c, room_id):
         raw = data[0][0]
         if not isinstance(raw, str):
             raw = str(raw)
-    # Character HQ may store JSON config in chat — not a message log.
+    # HQ rooms may store JSON config in chat — not a message log.
     text = raw.strip()
     if text.startswith('{'):
         try:
@@ -53,20 +55,20 @@ def _chat_lines(rooms_c, room_id):
     return [line for line in raw.split('\n') if line]
 
 
-def _character_room_id(rooms_c):
-    rows = rooms_c.get_room(CHARACTER_ROOM_PATH)
+def _home_room_id(rooms_c, home_path: str):
+    rows = rooms_c.get_room(home_path)
     if not rows:
         return None
     return rows[0][0]
 
 
-def get_allowlist(rooms_c) -> set[str]:
+def get_allowlist(rooms_c, home_path: str = CHARACTER_ROOM_PATH) -> set[str]:
     """
-    Rooms Stick may attempt: BUILTIN_ALLOW ∪ paths listed in character.chat JSON.
+    Rooms Stick may attempt: BUILTIN_ALLOW ∪ paths listed in home room chat JSON.
     Expected shape: {"allow":["lobby","garden",...]}
     """
     allowed = {p.lower() for p in BUILTIN_ALLOW}
-    home_id = _character_room_id(rooms_c)
+    home_id = _home_room_id(rooms_c, home_path)
     if home_id is None:
         return allowed
     data = rooms_c.get_chat_messages(home_id)
@@ -90,19 +92,20 @@ def get_allowlist(rooms_c) -> set[str]:
                     allowed.add(item.strip().lower())
     except (TypeError, ValueError, json.JSONDecodeError):
         pass
+    allowed.discard(home_path.lower())
     allowed.discard(CHARACTER_ROOM_PATH)
     return allowed
 
 
 def _find_room_by_path(rooms_c, path: str):
-    """Return room dict from list_rooms, or None. Blocks character HQ."""
+    """Return room dict from list_rooms, or None. Blocks HQ rtypes."""
     needle = (path or '').strip().lower()
-    if not needle or needle == CHARACTER_ROOM_PATH:
+    if not needle or needle in HQ_RTYPES or needle == CHARACTER_ROOM_PATH:
         return None
     for room in rooms_c.list_rooms():
         rpath = str(room.get('path') or '').lower()
         if rpath == needle:
-            if room.get('rtype') == 'character':
+            if room.get('rtype') in HQ_RTYPES:
                 return None
             return room
     return None
@@ -132,11 +135,17 @@ def _parse_read_count(arg: str) -> int | None:
     return n
 
 
-def handle_command(rooms_c, raw_message: str, gid: str, can_enter) -> str:
+def handle_command(
+    rooms_c,
+    raw_message: str,
+    gid: str,
+    can_enter,
+    home_path: str = CHARACTER_ROOM_PATH,
+) -> str:
     """
-    Run one command; update per-guest visual status; return caption.
-    can_enter(room_id) -> bool — same door rights as the asking guest.
-    Does not write to the character room chat/DB.
+    Run one command; update per-actor visual status; return caption.
+    can_enter(room_id) -> bool — door rights for this actor.
+    Does not write to the HQ room chat/DB.
     """
     verb, arg = parse_command(raw_message)
     if verb is None:
@@ -146,7 +155,7 @@ def handle_command(rooms_c, raw_message: str, gid: str, can_enter) -> str:
 
     status = get_status(gid)
     target_path = status.get('target')
-    allow = get_allowlist(rooms_c)
+    allow = get_allowlist(rooms_c, home_path)
 
     if verb == 'go':
         if not arg:
@@ -162,7 +171,7 @@ def handle_command(rooms_c, raw_message: str, gid: str, can_enter) -> str:
         if room is None:
             caption = (
                 brain.go_denied(arg.strip())
-                if needle == CHARACTER_ROOM_PATH
+                if needle in HQ_RTYPES or needle == home_path.lower()
                 else brain.go_not_found(arg.strip())
             )
             _set_status(gid, phase='idle', caption=caption)
@@ -202,6 +211,15 @@ def handle_command(rooms_c, raw_message: str, gid: str, can_enter) -> str:
         lines = _chat_lines(rooms_c, room['id'])
         caption = brain.read_report(target_path, lines, max_show=count)
         _set_status(gid, phase='visiting', target=target_path, caption=caption)
+        return caption
+
+    if verb == 'say':
+        if not arg:
+            caption = brain.say_need_text()
+            _set_status(gid, caption=caption)
+            return caption
+        caption = brain.say_ok(arg)
+        _set_status(gid, caption=caption)
         return caption
 
     if verb == 'send':
@@ -253,7 +271,7 @@ def handle_command(rooms_c, raw_message: str, gid: str, can_enter) -> str:
 
 def handle_character_command(rooms_c, raw_message: str, gid: str, can_enter) -> dict:
     """
-    Execute command for this guest. No writes to character room chat/DB.
+    Execute command for this guest. No writes to the character room chat/DB.
     Returns status dict for the UI.
     """
     text = (raw_message or '').strip()
@@ -261,7 +279,7 @@ def handle_character_command(rooms_c, raw_message: str, gid: str, can_enter) -> 
     if verb == 'go' and arg:
         _set_status(gid, phase='walking', target=arg.strip())
 
-    handle_command(rooms_c, text, gid, can_enter)
+    handle_command(rooms_c, text, gid, can_enter, home_path=CHARACTER_ROOM_PATH)
     return get_status(gid)
 
 
@@ -269,4 +287,4 @@ def start_character_agent(app):
     """No interval loop — commands come from the character UI."""
     if app.config.get('SKIP_MYSQL') or app.config.get('TESTING'):
         return
-    print('[CHARACTER] Command UI ready (go|read|send|wait|back), visual-only')
+    print('[CHARACTER] Command UI ready (go|read|say|send|wait|back), visual-only')

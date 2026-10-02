@@ -1,13 +1,11 @@
 import Chat from './Chat'
 import AdminPanel from './AdminPanel'
 import Character from './Character'
+import Brain from './Brain'
 
 /**
  * Flask sets data-room-type on #root (from rooms.rtype).
  * React only picks which page to show — auth stays on the server.
- *
- * Add more types later the same way:
- *   board → <BoardGame />
  */
 
 function readRoomType() {
@@ -26,6 +24,10 @@ export default function App() {
 
   if (roomType === 'character') {
     return <Character />
+  }
+
+  if (roomType === 'ai') {
+    return <Brain />
   }
 
   // default / chat (and unknown types fall back to chat for now)

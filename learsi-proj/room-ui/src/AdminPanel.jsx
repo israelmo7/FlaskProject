@@ -101,6 +101,7 @@ function CharacterPreview() {
 function RoomPreviewCard({ room }) {
   const isAdmin = room.rtype === 'admin'
   const isCharacter = room.rtype === 'character'
+  const isAi = room.rtype === 'ai'
   return (
     <a
       className="room-preview-card"
@@ -110,7 +111,7 @@ function RoomPreviewCard({ room }) {
       <div className="room-preview-stage">
         {isAdmin ? (
           <AdminPreview />
-        ) : isCharacter ? (
+        ) : isCharacter || isAi ? (
           <CharacterPreview />
         ) : (
           <ChatPreview path={room.path} />

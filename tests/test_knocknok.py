@@ -459,3 +459,107 @@ def test_admin_grant_key_success(client, monkeypatch):
     assert data['key'] == ADMIN_KEY_ID
     assert calls['set_key'] == (ADMIN_KEY_ID, 'abcd1234')
     assert calls['update'] == ('abcd1234', str(ADMIN_KEY_ID))
+
+
+def test_say_command_sets_caption_only():
+    from srcs.character import agent as character_agent
+
+    class FakeRooms:
+        def list_rooms(self):
+            return [{'id': 1, 'path': 'lobby', 'rtype': 'chat'}]
+
+        def get_room(self, value):
+            return ((2,),) if value == 'character' else ()
+
+        def get_chat_messages(self, rid):
+            return (('{"allow":["lobby"]}',),)
+
+        def set_chat_messages(self, rid, message):
+            raise AssertionError('say must not write chat')
+
+    rooms = FakeRooms()
+    gid = 'sayuser'
+    character_agent._status_by_guest.clear()
+    caption = character_agent.handle_command(
+        rooms, 'say hello world', gid, lambda rid: True
+    )
+    assert caption == 'hello world'
+    assert character_agent.get_status(gid)['caption'] == 'hello world'
+
+
+def test_brain_mind_decide_from_home():
+    from srcs.ai import mind
+
+    obs = mind.build_observation(
+        here=None,
+        can_go=['lobby', 'garden'],
+        last_lines=[],
+        caption='At home',
+        phase='idle',
+        step=mind._STEP_HOME,
+    )
+    cmd = mind.decide(obs)
+    assert cmd.startswith('go ')
+    assert cmd.split()[1] in ('lobby', 'garden')
+
+
+def test_brain_tick_runs_go_then_read():
+    from srcs.ai import rider
+    from srcs.character import agent as stick
+
+    class FakeRooms:
+        def __init__(self):
+            self.rooms = [
+                {'id': 1, 'path': 'lobby', 'rtype': 'chat'},
+                {'id': 5, 'path': 'brain', 'rtype': 'ai'},
+            ]
+            self.chats = {
+                1: 'hi\n',
+                5: '{"allow":["lobby"]}',
+            }
+
+        def list_rooms(self):
+            return list(self.rooms)
+
+        def get_room(self, value):
+            for r in self.rooms:
+                if r['path'] == value:
+                    return ((r['id'],),)
+            return ()
+
+        def get_chat_messages(self, rid):
+            return ((self.chats.get(rid, ''),),)
+
+        def set_chat_messages(self, rid, message):
+            self.chats[rid] = self.chats.get(rid, '') + message + '\n'
+
+    rooms = FakeRooms()
+    stick._status_by_guest.clear()
+    rider._set_memory(step=mind_step_home(), last_command=None)
+
+    status = rider.run_brain_tick(rooms)
+    assert status['target'] == 'lobby'
+    assert status['last_command'] == 'go lobby'
+
+    status = rider.run_brain_tick(rooms)
+    assert status['last_command'] == 'read 3'
+    assert 'lobby' in (status.get('caption') or '')
+
+
+def mind_step_home():
+    from srcs.ai import mind
+
+    return mind._STEP_HOME
+
+
+def test_brain_status_unauthorized(client):
+    response = client.get('/api/brain/status')
+    assert response.status_code == 401
+
+
+def test_brain_rider_skipped_under_testing(app):
+    from srcs.ai import rider
+
+    before = rider._started
+    rider.start_brain_rider(app)
+    assert rider._started is before
