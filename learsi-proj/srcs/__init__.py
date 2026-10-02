@@ -3,12 +3,12 @@ import logging
 import os
 from pathlib import Path
 
-from flask import Flask, jsonify, redirect, render_template, request
+from flask import Flask, render_template
 
-from srcs.admin.routes import admin_bp
 from srcs.core.routes import core_bp, init_db_c
 from srcs.db import get_package
 from srcs.rooms.routes import init_db_r, rooms_bp
+from srcs.api.routes import api_bp, init_db_a
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,15 @@ def _load_json_config(app):
     app.config['MYSQL_DB'] = data_conf['db']['NAME']
     app.config["SESSION_PERMANENT"] = data_conf['ses']['PERMANENT']
     app.config["SESSION_TYPE"] = data_conf['ses']['TYPE']
-    app.config['SESSION_COOKIE_PATH'] = data_conf['ses']['PATH']
+    # Cookie must cover /data, /room, /api — never a narrow path.
+    cookie_path = data_conf['ses'].get('PATH') or '/'
+    if cookie_path != '/':
+        logger.warning(
+            "SESSION_COOKIE_PATH=%r is not '/'; forcing '/' so knock/rooms share the session",
+            cookie_path,
+        )
+        cookie_path = '/'
+    app.config['SESSION_COOKIE_PATH'] = cookie_path
     app.config['CHAT_CAPACITY'] = data_conf['chat']['CAPACITY']
     app.config['SESSION_LENGTH'] = data_conf['ses']['LENGTH']
     app.config['SESSION_TIMEOUT'] = data_conf['ses']['TIMEOUT']
@@ -54,10 +62,11 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    # Three blueprints: rooms (door), data (knock), api (React JSON)
     app.register_blueprint(rooms_bp, url_prefix='/room')
     app.register_blueprint(core_bp, url_prefix='/data')
-    app.register_blueprint(admin_bp, url_prefix='/admin')
-
+    app.register_blueprint(api_bp, url_prefix='/api')
+    
     if not app.config.get('SKIP_MYSQL'):
         from flask_mysqldb import MySQL
 
@@ -65,14 +74,17 @@ def create_app(test_config=None):
         rooms_c, keys_c, guests_c = get_package(app, mysql)
         init_db_r(rooms_c, keys_c, guests_c)
         init_db_c(rooms_c, keys_c, guests_c)
-
+        init_db_a(rooms_c, keys_c, guests_c)
+        
         app.extensions['mysql'] = mysql
         app.extensions['rooms_c'] = rooms_c
         app.extensions['keys_c'] = keys_c
         app.extensions['guests_c'] = guests_c
-        from srcs.rooms.routes import start_guest_cleaner
 
+
+        from srcs.rooms.routes import start_guest_cleaner
         start_guest_cleaner(app)
+    
     else:
         app.extensions['mysql'] = None
         app.extensions['rooms_c'] = None
@@ -82,53 +94,5 @@ def create_app(test_config=None):
     @app.route('/', methods=['GET'])
     def gindex():
         return render_template("gindex.html")
-
-    @app.route('/<value>', methods=['POST'])
-    def join_room(value):
-        ret = jsonify(success=False)
-        if app.config.get('SKIP_MYSQL'):
-            return ret
-
-        mysql_ext = app.extensions['mysql']
-
-        if isinstance(value, str) and 0 < len(value) < 15:
-            with mysql_ext.connection.cursor() as cur:
-                cur.execute(
-                    "SELECT id FROM keys_t WHERE sessions LIKE %s",
-                    (f'%{value}%',),
-                )
-                ans = cur.fetchall()
-
-                if len(ans) == 1:
-                    cur.execute("SELECT * FROM guests WHERE pocket = %s", (value,))
-                    ans = cur.fetchall()
-                    if len(ans) == 0:
-                        cur.execute(
-                            "INSERT INTO guests (pocket) VALUES (%s)",
-                            (value,),
-                        )
-                        mysql_ext.connection.commit()
-                    ret = redirect('/admin')
-
-        return ret
-
-    if os.environ.get("FLASK_ENABLE_TEST_ROUTE") == "1":
-
-        @app.route('/test/<parm>')
-        def tests(parm):
-            ret = jsonify(success=True)
-            mysql_ext = app.extensions['mysql']
-            try:
-                parm_int = int(parm, 10)
-            except ValueError:
-                return jsonify(success=False)
-
-            with mysql_ext.connection.cursor() as cur:
-                cur.execute(
-                    "UPDATE keys_t SET sessions = %s WHERE id = %s",
-                    (parm_int, 99),
-                )
-                mysql_ext.connection.commit()
-            return ret
 
     return app
