@@ -540,7 +540,8 @@ def test_brain_tick_runs_go_then_read(monkeypatch):
         last_command=None,
         echo_room=None,
         echo_seen=0,
-        echo_cooldown_until=0.0,
+        echo_talking=False,
+        echo_silence_until=0.0,
     )
     # Deterministic: first decide goes to lobby (only real room in fixture).
     monkeypatch.setattr(mind, 'decide', lambda obs: 'go lobby')
@@ -609,27 +610,41 @@ def test_brain_echoes_new_chat_line_caption_only(monkeypatch):
         last_command=None,
         echo_room='lobby',
         echo_seen=1,  # "old line" already there at arrival
-        echo_cooldown_until=0.0,
+        echo_talking=False,
+        echo_silence_until=0.0,
     )
 
     status = rider.run_brain_tick(rooms)
     assert status['last_command'].startswith('say ')
     assert status['caption'] == 'Ha Ha, he said "fresh hello"!'
+    assert status['echo_talking'] is True
     # Echo is caption-only — must not append to lobby chat.
     assert rooms.writes == []
     assert rooms.chats[1] == 'old line\nfresh hello\n'
     assert status['echo_cooldown'] > 0
 
-    # Still inside 30s → forced wait
+    # Still inside silence window, no new lines → wait (keep talking)
     clock['t'] = 1_010.0
     status = rider.run_brain_tick(rooms)
     assert status['last_command'] == 'wait'
+    assert status['echo_talking'] is True
     assert rooms.writes == []
 
-    # Cooldown over, no newer lines → normal mind may act (not another echo)
-    clock['t'] = 1_040.0
+    # Another guest line mid-conversation → echo again, reset silence
+    rooms.chats[1] = 'old line\nfresh hello\nanother one\n'
+    clock['t'] = 1_015.0
     status = rider.run_brain_tick(rooms)
-    assert not (status.get('last_command') or '').startswith('say Ha Ha')
+    assert status['caption'] == 'Ha Ha, he said "another one"!'
+    assert status['echo_talking'] is True
+    assert rooms.writes == []
+
+    # 30s silence after last echo → conversation ends; normal mind may act
+    clock['t'] = 1_050.0
+    monkeypatch.setattr(mind, 'decide', lambda obs: 'back')
+    status = rider.run_brain_tick(rooms)
+    # First tick after silence clears talking and runs decide
+    assert status['echo_talking'] is False
+    assert status['last_command'] == 'back'
 
 
 def test_format_echo_quote():

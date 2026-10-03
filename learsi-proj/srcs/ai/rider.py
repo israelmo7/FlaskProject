@@ -11,19 +11,22 @@ from srcs.character import agent as stick
 BRAIN_ROOM_PATH = 'brain'
 BRAIN_ACTOR_ID = '__brain__'
 CYCLE_SECONDS = 8
-# After echoing a guest line, only wait this long before normal tools resume.
-ECHO_WAIT_SECONDS = 30
+# Conversation ends after this long with no new guest messages.
+ECHO_SILENCE_SECONDS = 30
 ECHO_QUOTE_MAX = 40
+# Back-compat alias for tests / config readers.
+ECHO_WAIT_SECONDS = ECHO_SILENCE_SECONDS
 
 _started = False
 _lock = threading.Lock()
 _memory = {
     'step': mind._STEP_HOME,
     'last_command': None,
-    # Presence-echo tracking (caption only — never written to rooms.chat).
+    # Presence-echo loop (caption only — never written to rooms.chat).
     'echo_room': None,
     'echo_seen': 0,
-    'echo_cooldown_until': 0.0,
+    'echo_talking': False,
+    'echo_silence_until': 0.0,
 }
 
 
@@ -35,8 +38,12 @@ def get_brain_status():
         status = dict(status)
         status['last_command'] = _memory.get('last_command')
         status['step'] = _memory.get('step')
-        until = float(_memory.get('echo_cooldown_until') or 0)
-        status['echo_cooldown'] = max(0, int(until - now)) if until else 0
+        talking = bool(_memory.get('echo_talking'))
+        until = float(_memory.get('echo_silence_until') or 0)
+        status['echo_talking'] = talking
+        status['echo_cooldown'] = (
+            max(0, int(until - now)) if talking and until else 0
+        )
     return status
 
 
@@ -55,6 +62,7 @@ def presence_in_room(room_path: str) -> dict:
         'phase': status.get('phase') if present else None,
         'caption': status.get('caption') if present else None,
         'target': status.get('target') if present else None,
+        'talking': bool(status.get('echo_talking')) if present else False,
     }
 
 
@@ -78,6 +86,15 @@ def _format_echo(quote: str) -> str:
     return f'Ha Ha, he said "{text}"!'
 
 
+def _clear_echo_state():
+    _set_memory(
+        echo_room=None,
+        echo_seen=0,
+        echo_talking=False,
+        echo_silence_until=0.0,
+    )
+
+
 def _sync_echo_tracking(rooms_c, here: str | None):
     """
     On enter: baseline line count so only messages after arrival are echoed.
@@ -87,22 +104,25 @@ def _sync_echo_tracking(rooms_c, here: str | None):
         prev = _memory.get('echo_room')
     if not here:
         if prev is not None:
-            _set_memory(echo_room=None, echo_seen=0, echo_cooldown_until=0.0)
+            _clear_echo_state()
         return
     if here != prev:
         lines = _room_lines(rooms_c, here)
         _set_memory(
             echo_room=here,
             echo_seen=len(lines),
-            echo_cooldown_until=0.0,
+            echo_talking=False,
+            echo_silence_until=0.0,
         )
 
 
 def _echo_or_none(rooms_c, here: str | None) -> str | None:
     """
-    If a new chat line appeared after arrival and cooldown is clear,
-    return a `say` command. If still in post-echo wait, return `wait`.
-    Otherwise None → caller runs normal mind.decide().
+    Echo conversation loop while present:
+    - Guest message after arrival → start/continue talking, caption echo
+    - While talking and messages keep coming → keep echoing (reset silence clock)
+    - While talking and quiet → wait (stay put, only communicate)
+    - After 30s silence → end talking; return None so normal decide() can leave etc.
     """
     if not here:
         return None
@@ -111,25 +131,33 @@ def _echo_or_none(rooms_c, here: str | None) -> str | None:
     with _lock:
         echo_room = _memory.get('echo_room')
         seen = int(_memory.get('echo_seen') or 0)
-        cooldown_until = float(_memory.get('echo_cooldown_until') or 0)
+        talking = bool(_memory.get('echo_talking'))
+        silence_until = float(_memory.get('echo_silence_until') or 0)
 
     if echo_room != here:
         return None
 
-    if now < cooldown_until:
-        return 'wait'
-
     lines = _room_lines(rooms_c, here)
-    if len(lines) <= seen:
+
+    # New guest line(s) since arrival / last echo — communicate.
+    if len(lines) > seen:
+        quote = lines[seen]
+        _set_memory(
+            echo_seen=seen + 1,
+            echo_talking=True,
+            echo_silence_until=now + ECHO_SILENCE_SECONDS,
+        )
+        return f'say {_format_echo(quote)}'
+
+    if talking:
+        if now < silence_until:
+            # Still in the conversation window — stay and listen.
+            return 'wait'
+        # 30s of silence: conversation over; resume normal roaming next.
+        _set_memory(echo_talking=False, echo_silence_until=0.0)
         return None
 
-    # One new message per reaction; then 30s wait before next echo / normal play.
-    quote = lines[seen]
-    _set_memory(
-        echo_seen=seen + 1,
-        echo_cooldown_until=now + ECHO_WAIT_SECONDS,
-    )
-    return f'say {_format_echo(quote)}'
+    return None
 
 
 def _observe(rooms_c) -> dict:
@@ -174,7 +202,7 @@ def _advance_step(command: str):
 
 
 def run_brain_tick(rooms_c) -> dict:
-    """One observe → (echo?) → decide → execute cycle."""
+    """One observe → (echo loop?) → decide → execute cycle."""
     status = stick.get_status(BRAIN_ACTOR_ID)
     here = status.get('target')
     _sync_echo_tracking(rooms_c, here)
@@ -191,8 +219,6 @@ def run_brain_tick(rooms_c) -> dict:
         room = stick._find_room_by_path(rooms_c, arg)
         if room and needle in allow:
             stick._set_status(BRAIN_ACTOR_ID, phase='walking', target=arg.strip())
-
-    # Server rider: allowlisted rooms only (executor still checks allowlist).
 
     def can_enter(room_id):
         for room in rooms_c.list_rooms():
@@ -217,10 +243,11 @@ def run_brain_tick(rooms_c) -> dict:
         _set_memory(
             echo_room=new_here,
             echo_seen=len(lines),
-            echo_cooldown_until=0.0,
+            echo_talking=False,
+            echo_silence_until=0.0,
         )
     elif verb == 'back':
-        _set_memory(echo_room=None, echo_seen=0, echo_cooldown_until=0.0)
+        _clear_echo_state()
 
     return get_brain_status()
 
@@ -252,5 +279,6 @@ def start_brain_rider(app):
 
     threading.Thread(target=_loop, name='brain-rider', daemon=True).start()
     print(
-        f'[BRAIN] Rider started (cycle={interval}s, echo_wait={ECHO_WAIT_SECONDS}s)'
+        f'[BRAIN] Rider started '
+        f'(cycle={interval}s, echo_silence={ECHO_SILENCE_SECONDS}s)'
     )
