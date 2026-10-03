@@ -103,6 +103,7 @@ pytest
 - Rotating stick styles (classic / chalk / ink / neon / sketch)
 - `GET /api/character/status`, `POST /api/character/command`, `GET /api/brain/status`
 - Wander appears in chat rooms he visits (`GET /api/<room>/presence`)
+- While present: new chat lines → caption `Ha Ha, he said "…"!` then 30s wait (not written to chat)
 - Admin: `POST /api/admin/grant-admin-key` + yes/no confirm popup on guest chips
 
 ## Changelog (0.13)

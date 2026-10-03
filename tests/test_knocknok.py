@@ -503,8 +503,8 @@ def test_brain_mind_decide_from_home():
     assert cmd.split()[1] in ('lobby', 'garden')
 
 
-def test_brain_tick_runs_go_then_read():
-    from srcs.ai import rider
+def test_brain_tick_runs_go_then_read(monkeypatch):
+    from srcs.ai import mind, rider
     from srcs.character import agent as stick
 
     class FakeRooms:
@@ -535,12 +535,21 @@ def test_brain_tick_runs_go_then_read():
 
     rooms = FakeRooms()
     stick._status_by_guest.clear()
-    rider._set_memory(step=mind_step_home(), last_command=None)
+    rider._set_memory(
+        step=mind_step_home(),
+        last_command=None,
+        echo_room=None,
+        echo_seen=0,
+        echo_cooldown_until=0.0,
+    )
+    # Deterministic: first decide goes to lobby (only real room in fixture).
+    monkeypatch.setattr(mind, 'decide', lambda obs: 'go lobby')
 
     status = rider.run_brain_tick(rooms)
     assert status['target'] == 'lobby'
     assert status['last_command'] == 'go lobby'
 
+    monkeypatch.setattr(mind, 'decide', lambda obs: 'read 3')
     status = rider.run_brain_tick(rooms)
     assert status['last_command'] == 'read 3'
     assert 'lobby' in (status.get('caption') or '')
@@ -550,6 +559,88 @@ def mind_step_home():
     from srcs.ai import mind
 
     return mind._STEP_HOME
+
+
+def test_brain_echoes_new_chat_line_caption_only(monkeypatch):
+    from srcs.ai import mind, rider
+    from srcs.character import agent as stick
+
+    clock = {'t': 1_000.0}
+    monkeypatch.setattr(rider.time, 'time', lambda: clock['t'])
+
+    class FakeRooms:
+        def __init__(self):
+            self.rooms = [
+                {'id': 1, 'path': 'lobby', 'rtype': 'chat'},
+                {'id': 5, 'path': 'brain', 'rtype': 'ai'},
+            ]
+            self.chats = {
+                1: 'old line\nfresh hello\n',
+                5: '{"allow":["lobby"]}',
+            }
+            self.writes = []
+
+        def list_rooms(self):
+            return list(self.rooms)
+
+        def get_room(self, value):
+            for r in self.rooms:
+                if r['path'] == value:
+                    return ((r['id'],),)
+            return ()
+
+        def get_chat_messages(self, rid):
+            return ((self.chats.get(rid, ''),),)
+
+        def set_chat_messages(self, rid, message):
+            self.writes.append((rid, message))
+            self.chats[rid] = self.chats.get(rid, '') + message + '\n'
+
+    rooms = FakeRooms()
+    stick._status_by_guest.clear()
+    stick._set_status(
+        rider.BRAIN_ACTOR_ID,
+        phase='visiting',
+        target='lobby',
+        caption='At lobby',
+    )
+    rider._set_memory(
+        step=mind._STEP_SAID,
+        last_command=None,
+        echo_room='lobby',
+        echo_seen=1,  # "old line" already there at arrival
+        echo_cooldown_until=0.0,
+    )
+
+    status = rider.run_brain_tick(rooms)
+    assert status['last_command'].startswith('say ')
+    assert status['caption'] == 'Ha Ha, he said "fresh hello"!'
+    # Echo is caption-only — must not append to lobby chat.
+    assert rooms.writes == []
+    assert rooms.chats[1] == 'old line\nfresh hello\n'
+    assert status['echo_cooldown'] > 0
+
+    # Still inside 30s → forced wait
+    clock['t'] = 1_010.0
+    status = rider.run_brain_tick(rooms)
+    assert status['last_command'] == 'wait'
+    assert rooms.writes == []
+
+    # Cooldown over, no newer lines → normal mind may act (not another echo)
+    clock['t'] = 1_040.0
+    status = rider.run_brain_tick(rooms)
+    assert not (status.get('last_command') or '').startswith('say Ha Ha')
+
+
+def test_format_echo_quote():
+    from srcs.ai import rider
+
+    assert rider._format_echo('hi') == 'Ha Ha, he said "hi"!'
+    long = 'x' * 50
+    out = rider._format_echo(long)
+    assert out.startswith('Ha Ha, he said "')
+    assert '…' in out
+    assert out.endswith('!')
 
 
 def test_brain_status_unauthorized(client):
