@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import StickFigure from './StickFigure'
 import './AdminPanel.css'
 
 async function fetchJson(url) {
@@ -7,6 +8,20 @@ async function fetchJson(url) {
     throw new Error(`${url} failed (${res.status})`)
   }
   return res.json()
+}
+
+async function postJson(url, body) {
+  const res = await fetch(url, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(data.error || `${url} failed (${res.status})`)
+  }
+  return data
 }
 
 /** Mini live preview of a chat room (last lines from /api). */
@@ -67,16 +82,52 @@ function AdminPreview() {
   )
 }
 
-function RoomPreviewCard({ room }) {
+/** Miniature stick-man for character rtype previews. */
+function CharacterPreview() {
+  return (
+    <div className="preview-inner preview-character" aria-hidden="true">
+      <svg className="preview-stick" viewBox="0 0 80 120">
+        <circle cx="40" cy="18" r="12" />
+        <line x1="40" y1="30" x2="40" y2="70" />
+        <line x1="40" y1="42" x2="22" y2="58" />
+        <line x1="40" y1="42" x2="58" y2="58" />
+        <line x1="40" y1="70" x2="26" y2="104" />
+        <line x1="40" y1="70" x2="54" y2="104" />
+      </svg>
+      <span className="preview-character-label">Stick</span>
+    </div>
+  )
+}
+
+function RoomPreviewCard({ room, wanderHere }) {
   const isAdmin = room.rtype === 'admin'
+  const isCharacter = room.rtype === 'character'
+  const isAi = room.rtype === 'ai'
   return (
     <a
-      className="room-preview-card"
+      className={`room-preview-card ${wanderHere ? 'has-wander' : ''}`}
       href={`/room/${room.path}`}
       title={`Open ${room.path} (${room.rtype})`}
     >
       <div className="room-preview-stage">
-        {isAdmin ? <AdminPreview /> : <ChatPreview path={room.path} />}
+        {isAdmin ? (
+          <AdminPreview />
+        ) : isCharacter || isAi ? (
+          <CharacterPreview />
+        ) : (
+          <ChatPreview path={room.path} />
+        )}
+        {wanderHere ? (
+          <div className="wander-on-card" title={wanderHere.caption || 'Wander'}>
+            <StickFigure
+              phase={wanderHere.phase || 'visiting'}
+              styleName="neon"
+              gear="pack"
+              size="mini"
+              label="Wander"
+            />
+          </div>
+        ) : null}
       </div>
       <div className="room-preview-caption">
         <span className="room-preview-name">{room.path}</span>
@@ -86,10 +137,55 @@ function RoomPreviewCard({ room }) {
   )
 }
 
+function ConfirmGrantModal({ guest, busy, onYes, onNo }) {
+  if (!guest) return null
+  const label = guest.session || '?'
+  return (
+    <div className="admin-modal-backdrop" role="presentation" onClick={onNo}>
+      <div
+        className="admin-modal"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="grant-admin-title"
+        aria-describedby="grant-admin-desc"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 id="grant-admin-title">Grant admin key?</h3>
+        <p id="grant-admin-desc">
+          Give key <strong>999</strong> to guest <code>{label}</code>? They will
+          be able to open the admin panel.
+        </p>
+        <div className="admin-modal-actions">
+          <button
+            type="button"
+            className="admin-modal-no"
+            onClick={onNo}
+            disabled={busy}
+          >
+            No
+          </button>
+          <button
+            type="button"
+            className="admin-modal-yes"
+            onClick={onYes}
+            disabled={busy}
+          >
+            {busy ? 'Granting…' : 'Yes'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AdminPanel() {
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const [rooms, setRooms] = useState([])
   const [guests, setGuests] = useState([])
+  const [wander, setWander] = useState(null)
+  const [confirmGuest, setConfirmGuest] = useState(null)
+  const [granting, setGranting] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -102,6 +198,7 @@ export default function AdminPanel() {
         ])
         if (cancelled) return
         setRooms(roomsData.rooms || [])
+        setWander(roomsData.wander || null)
         setGuests(guestsData.guests || [])
         setError('')
       } catch (err) {
@@ -117,6 +214,26 @@ export default function AdminPanel() {
     }
   }, [])
 
+  async function confirmGrant() {
+    if (!confirmGuest?.session || granting) return
+    setGranting(true)
+    setNotice('')
+    try {
+      await postJson('/api/admin/grant-admin-key', {
+        session: confirmGuest.session,
+      })
+      setNotice(`Admin key granted to ${confirmGuest.session}`)
+      setConfirmGuest(null)
+      const guestsData = await fetchJson('/api/admin/guests')
+      setGuests(guestsData.guests || [])
+    } catch (err) {
+      setError(err.message || 'Grant failed')
+      setConfirmGuest(null)
+    } finally {
+      setGranting(false)
+    }
+  }
+
   return (
     <main className="admin-shell">
       <header className="admin-hero">
@@ -126,17 +243,35 @@ export default function AdminPanel() {
       </header>
 
       {error ? <p className="error">{error}</p> : null}
+      {notice ? <p className="admin-notice">{notice}</p> : null}
 
       <section className="admin-block rooms-block" aria-labelledby="rooms-heading">
         <div className="admin-block-head">
           <h2 id="rooms-heading">Rooms</h2>
-          <p>Small previews of how each room looks inside.</p>
+          <p>
+            Small previews of how each room looks inside.
+            {wander?.target
+              ? ` Wander is at ${wander.target}.`
+              : ' Wander is at HQ / between rooms.'}
+          </p>
         </div>
         <div className="preview-row">
           {rooms.length === 0 ? (
             <p className="admin-empty">No rooms yet.</p>
           ) : (
-            rooms.map((room) => <RoomPreviewCard key={room.id} room={room} />)
+            rooms.map((room) => (
+              <RoomPreviewCard
+                key={room.id}
+                room={room}
+                wanderHere={
+                  wander?.target &&
+                  String(wander.target).toLowerCase() ===
+                    String(room.path).toLowerCase()
+                    ? wander
+                    : null
+                }
+              />
+            ))
           )}
         </div>
       </section>
@@ -144,7 +279,7 @@ export default function AdminPanel() {
       <section className="admin-block guests-block" aria-labelledby="guests-heading">
         <div className="admin-block-head">
           <h2 id="guests-heading">Guests</h2>
-          <p>Sessions currently holding a pocket.</p>
+          <p>Sessions currently holding a pocket. Grant admin key with confirm.</p>
         </div>
         <div className="guest-row">
           {guests.length === 0 ? (
@@ -158,6 +293,17 @@ export default function AdminPanel() {
               >
                 <span className="guest-chip-id">{guest.session || '?'}</span>
                 <span className="guest-chip-pocket">{guest.pocket || '—'}</span>
+                <button
+                  type="button"
+                  className="guest-grant-btn"
+                  onClick={() => {
+                    setError('')
+                    setNotice('')
+                    setConfirmGuest(guest)
+                  }}
+                >
+                  Grant admin
+                </button>
               </div>
             ))
           )}
@@ -173,6 +319,13 @@ export default function AdminPanel() {
           <span>Waiting for knock stream…</span>
         </div>
       </section>
+
+      <ConfirmGrantModal
+        guest={confirmGuest}
+        busy={granting}
+        onYes={confirmGrant}
+        onNo={() => !granting && setConfirmGuest(null)}
+      />
     </main>
   )
 }
