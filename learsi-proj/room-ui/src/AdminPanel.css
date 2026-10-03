@@ -106,6 +106,29 @@
   background: #151a17;
   border-bottom: 1px solid var(--line);
   pointer-events: none;
+  position: relative;
+}
+
+.room-preview-card.has-wander {
+  border-color: var(--accent);
+}
+
+.wander-on-card {
+  position: absolute;
+  right: 0.35rem;
+  bottom: 0.2rem;
+  filter: drop-shadow(0 0 6px rgba(125, 255, 179, 0.45));
+  animation: wander-hop 1.2s ease-in-out infinite;
+}
+
+@keyframes wander-hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 .room-preview-caption {

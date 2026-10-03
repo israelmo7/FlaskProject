@@ -141,11 +141,13 @@ def handle_command(
     gid: str,
     can_enter,
     home_path: str = CHARACTER_ROOM_PATH,
+    keys_c=None,
 ) -> str:
     """
     Run one command; update per-actor visual status; return caption.
     can_enter(room_id) -> bool — door rights for this actor.
     Does not write to the HQ room chat/DB.
+    keys_c optional — enables read-only `knock <letters>` against keys_t.
     """
     verb, arg = parse_command(raw_message)
     if verb is None:
@@ -222,6 +224,40 @@ def handle_command(
         _set_status(gid, caption=caption)
         return caption
 
+    if verb == 'knock':
+        # Read-only probe of keys_t (same a-z alphabet as /data knock).
+        # Does not attach keys or mutate guest session.
+        raw = (arg or '').strip().lower().replace(' ', '')
+        if not raw:
+            caption = brain.knock_need_seq()
+            _set_status(gid, caption=caption)
+            return caption
+        if any(ch < 'a' or ch > 'z' for ch in raw):
+            caption = brain.knock_bad_seq()
+            _set_status(gid, caption=caption)
+            return caption
+        seq = raw
+        if keys_c is None:
+            caption = brain.knock_miss(seq)
+            _set_status(gid, caption=caption)
+            return caption
+        try:
+            exact = keys_c.find_key(seq, equal=True) or ()
+            if exact:
+                caption = brain.knock_hit(seq, exact[0][0])
+                _set_status(gid, caption=caption)
+                return caption
+            partial = keys_c.find_key(seq, equal=False) or ()
+            if partial:
+                caption = brain.knock_partial(seq)
+                _set_status(gid, caption=caption)
+                return caption
+        except Exception as exc:
+            print(f'[CHARACTER] knock failed: {exc}')
+        caption = brain.knock_miss(seq)
+        _set_status(gid, caption=caption)
+        return caption
+
     if verb == 'send':
         if not target_path:
             caption = brain.send_need_target()
@@ -269,7 +305,9 @@ def handle_command(
     return caption
 
 
-def handle_character_command(rooms_c, raw_message: str, gid: str, can_enter) -> dict:
+def handle_character_command(
+    rooms_c, raw_message: str, gid: str, can_enter, keys_c=None
+) -> dict:
     """
     Execute command for this guest. No writes to the character room chat/DB.
     Returns status dict for the UI.
@@ -279,7 +317,14 @@ def handle_character_command(rooms_c, raw_message: str, gid: str, can_enter) -> 
     if verb == 'go' and arg:
         _set_status(gid, phase='walking', target=arg.strip())
 
-    handle_command(rooms_c, text, gid, can_enter, home_path=CHARACTER_ROOM_PATH)
+    handle_command(
+        rooms_c,
+        text,
+        gid,
+        can_enter,
+        home_path=CHARACTER_ROOM_PATH,
+        keys_c=keys_c,
+    )
     return get_status(gid)
 
 
@@ -287,4 +332,7 @@ def start_character_agent(app):
     """No interval loop — commands come from the character UI."""
     if app.config.get('SKIP_MYSQL') or app.config.get('TESTING'):
         return
-    print('[CHARACTER] Command UI ready (go|read|say|send|wait|back), visual-only')
+    print(
+        '[CHARACTER] Command UI ready '
+        '(go|read|say|send|wait|back|knock), visual-only'
+    )

@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import StickFigure, { useRotatingStick } from './StickFigure'
 import './Character.css'
-
-const STICK_STYLES = ['classic', 'chalk', 'ink', 'neon', 'sketch']
-const STYLE_ROTATE_MS = 2800
 
 async function fetchBrainStatus() {
   const res = await fetch('/api/brain/status', {
@@ -14,39 +12,6 @@ async function fetchBrainStatus() {
   return res.json()
 }
 
-function StickMan({ phase, talking, styleName }) {
-  const pose = talking ? 'talking' : phase || 'idle'
-  return (
-    <svg
-      className={`stick-man style-${styleName} pose-${pose}`}
-      viewBox="0 0 80 120"
-      role="img"
-      aria-label={`Wander, ${styleName}, ${pose}`}
-    >
-      <g className="stick-figure">
-        <path
-          className="part accent hat"
-          d="M22 14 Q40 2 58 14"
-          fill="none"
-        />
-        <circle className="part head" cx="40" cy="20" r="11" />
-        <circle className="part eye eye-l" cx="36" cy="18" r="1.4" />
-        <circle className="part eye eye-r" cx="44" cy="18" r="1.4" />
-        <line className="part torso" x1="40" y1="31" x2="40" y2="70" />
-        <line className="part arm arm-l" x1="40" y1="42" x2="22" y2="58" />
-        <line className="part arm arm-r" x1="40" y1="42" x2="58" y2="58" />
-        <line className="part leg leg-l" x1="40" y1="70" x2="26" y2="104" />
-        <line className="part leg leg-r" x1="40" y1="70" x2="54" y2="104" />
-        <path
-          className="part accent scarf"
-          d="M34 32 Q40 38 46 32"
-          fill="none"
-        />
-      </g>
-    </svg>
-  )
-}
-
 export default function Brain() {
   const [error, setError] = useState('')
   const [phase, setPhase] = useState('idle')
@@ -54,7 +19,7 @@ export default function Brain() {
   const [caption, setCaption] = useState('Waking up…')
   const [lastCommand, setLastCommand] = useState(null)
   const [talking, setTalking] = useState(false)
-  const [styleIdx, setStyleIdx] = useState(0)
+  const { styleName, gear } = useRotatingStick(2600)
   const lastCaption = useRef(null)
   const talkTimer = useRef(null)
 
@@ -96,14 +61,6 @@ export default function Brain() {
     }
   }, [load])
 
-  useEffect(() => {
-    const id = setInterval(() => {
-      setStyleIdx((i) => (i + 1) % STICK_STYLES.length)
-    }, STYLE_ROTATE_MS)
-    return () => clearInterval(id)
-  }, [])
-
-  const styleName = STICK_STYLES[styleIdx]
   const placeLabel =
     phase === 'walking' && target
       ? `Walking to ${target}…`
@@ -112,31 +69,34 @@ export default function Brain() {
         : 'At HQ'
 
   return (
-    <main className="character-shell">
+    <main className="character-shell character-shell-wide">
       <header className="character-hero">
         <p className="character-brand">Wander</p>
         <h1>Brain room</h1>
         <p className="character-lead">
-          Same Stick body. A mind rides the tools — goes, reads, says captions.
-          No chat log. You watch.
+          Full-size Stick body. A mind rides the tools — goes, reads, knocks, says
+          captions. You watch.
         </p>
       </header>
 
-      <section className="character-stage" aria-live="polite">
-        <StickMan phase={phase} talking={talking} styleName={styleName} />
+      <section className="character-stage character-stage-full" aria-live="polite">
+        <StickFigure
+          phase={phase}
+          talking={talking}
+          styleName={styleName}
+          gear={gear}
+          size="full"
+          label="Wander"
+        />
         <p className="character-status">{caption}</p>
         <p className="character-style-tag">
           {placeLabel}
           {lastCommand ? ` · ${lastCommand}` : ''}
+          {` · ${styleName}/${gear}`}
         </p>
       </section>
 
       {error ? <p className="error">{error}</p> : null}
-
-      <p className="character-lead" style={{ marginTop: '1rem' }}>
-        Tools only: go · read · say · wait · back. Personality + allowlist — no
-        map lessons.
-      </p>
     </main>
   )
 }

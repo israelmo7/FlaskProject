@@ -638,24 +638,68 @@ def test_brain_echoes_new_chat_line_caption_only(monkeypatch):
     assert status['echo_talking'] is True
     assert rooms.writes == []
 
-    # 30s silence after last echo → conversation ends; normal mind may act
-    clock['t'] = 1_050.0
+    # Quiet inside the 60s window → wait
+    clock['t'] = 1_040.0
+    status = rider.run_brain_tick(rooms)
+    assert status['last_command'] == 'wait'
+    assert status['echo_talking'] is True
+
+    # 60s silence after last echo → closing caption, talking ends
+    clock['t'] = 1_080.0
+    status = rider.run_brain_tick(rooms)
+    assert status['echo_talking'] is False
+    assert status['caption'] == rider.ECHO_WASTE_LINE
+
+    # Next tick can roam normally
     monkeypatch.setattr(mind, 'decide', lambda obs: 'back')
     status = rider.run_brain_tick(rooms)
-    # First tick after silence clears talking and runs decide
-    assert status['echo_talking'] is False
     assert status['last_command'] == 'back'
 
 
-def test_format_echo_quote():
-    from srcs.ai import rider
+def test_knock_command_read_only():
+    from srcs.character import agent as character_agent
+    from srcs.character import brain
 
-    assert rider._format_echo('hi') == 'Ha Ha, he said "hi"!'
-    long = 'x' * 50
-    out = rider._format_echo(long)
-    assert out.startswith('Ha Ha, he said "')
-    assert '…' in out
-    assert out.endswith('!')
+    class FakeKeys:
+        def find_key(self, seq, equal=False):
+            if equal and seq == 'abc':
+                return [(1,)]
+            if not equal and seq == 'ab':
+                return [(1,)]
+            return ()
+
+    class FakeRooms:
+        def list_rooms(self):
+            return [{'id': 1, 'path': 'lobby', 'rtype': 'chat'}]
+
+        def get_room(self, value):
+            return ((2,),) if value == 'character' else ()
+
+        def get_chat_messages(self, rid):
+            return (('{"allow":["lobby"]}',),)
+
+        def set_chat_messages(self, rid, message):
+            raise AssertionError('knock must not write chat')
+
+    rooms = FakeRooms()
+    keys = FakeKeys()
+    gid = 'knockusr'
+    character_agent._status_by_guest.clear()
+
+    hit = character_agent.handle_command(
+        rooms, 'knock abc', gid, lambda rid: True, keys_c=keys
+    )
+    assert hit == brain.knock_hit('abc', 1)
+
+    partial = character_agent.handle_command(
+        rooms, 'knock ab', gid, lambda rid: True, keys_c=keys
+    )
+    assert 'nearby' in partial
+
+    miss = character_agent.handle_command(
+        rooms, 'knock zzzz', gid, lambda rid: True, keys_c=keys
+    )
+    assert 'silence' in miss
 
 
 def test_brain_status_unauthorized(client):

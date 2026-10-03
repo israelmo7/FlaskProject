@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import StickFigure from './StickFigure'
 import './AdminPanel.css'
 
 async function fetchJson(url) {
@@ -98,13 +99,13 @@ function CharacterPreview() {
   )
 }
 
-function RoomPreviewCard({ room }) {
+function RoomPreviewCard({ room, wanderHere }) {
   const isAdmin = room.rtype === 'admin'
   const isCharacter = room.rtype === 'character'
   const isAi = room.rtype === 'ai'
   return (
     <a
-      className="room-preview-card"
+      className={`room-preview-card ${wanderHere ? 'has-wander' : ''}`}
       href={`/room/${room.path}`}
       title={`Open ${room.path} (${room.rtype})`}
     >
@@ -116,6 +117,17 @@ function RoomPreviewCard({ room }) {
         ) : (
           <ChatPreview path={room.path} />
         )}
+        {wanderHere ? (
+          <div className="wander-on-card" title={wanderHere.caption || 'Wander'}>
+            <StickFigure
+              phase={wanderHere.phase || 'visiting'}
+              styleName="neon"
+              gear="pack"
+              size="mini"
+              label="Wander"
+            />
+          </div>
+        ) : null}
       </div>
       <div className="room-preview-caption">
         <span className="room-preview-name">{room.path}</span>
@@ -171,6 +183,7 @@ export default function AdminPanel() {
   const [notice, setNotice] = useState('')
   const [rooms, setRooms] = useState([])
   const [guests, setGuests] = useState([])
+  const [wander, setWander] = useState(null)
   const [confirmGuest, setConfirmGuest] = useState(null)
   const [granting, setGranting] = useState(false)
 
@@ -185,6 +198,7 @@ export default function AdminPanel() {
         ])
         if (cancelled) return
         setRooms(roomsData.rooms || [])
+        setWander(roomsData.wander || null)
         setGuests(guestsData.guests || [])
         setError('')
       } catch (err) {
@@ -234,13 +248,30 @@ export default function AdminPanel() {
       <section className="admin-block rooms-block" aria-labelledby="rooms-heading">
         <div className="admin-block-head">
           <h2 id="rooms-heading">Rooms</h2>
-          <p>Small previews of how each room looks inside.</p>
+          <p>
+            Small previews of how each room looks inside.
+            {wander?.target
+              ? ` Wander is at ${wander.target}.`
+              : ' Wander is at HQ / between rooms.'}
+          </p>
         </div>
         <div className="preview-row">
           {rooms.length === 0 ? (
             <p className="admin-empty">No rooms yet.</p>
           ) : (
-            rooms.map((room) => <RoomPreviewCard key={room.id} room={room} />)
+            rooms.map((room) => (
+              <RoomPreviewCard
+                key={room.id}
+                room={room}
+                wanderHere={
+                  wander?.target &&
+                  String(wander.target).toLowerCase() ===
+                    String(room.path).toLowerCase()
+                    ? wander
+                    : null
+                }
+              />
+            ))
           )}
         </div>
       </section>

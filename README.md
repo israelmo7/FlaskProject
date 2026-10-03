@@ -103,7 +103,9 @@ pytest
 - Rotating stick styles (classic / chalk / ink / neon / sketch)
 - `GET /api/character/status`, `POST /api/character/command`, `GET /api/brain/status`
 - Wander appears in chat rooms he visits (`GET /api/<room>/presence`)
-- While present: guest messages start an echo loop (caption `Ha Ha, he said "…"!`); ends after 30s silence, then normal roam
+- While present: guest messages start an echo loop (caption `Ha Ha…`); ends after **60s silence** with `What a waste of talk - no point!`, then normal roam
+- Stick tools: `go <room>` · `read [n]` · `say <text>` · `send <text>` · `wait` · `back` · `knock <a-z>` (read-only key probe)
+- Admin room cards show Wander on the preview of the room he currently occupies
 - Admin: `POST /api/admin/grant-admin-key` + yes/no confirm popup on guest chips
 
 ## Changelog (0.13)

@@ -107,7 +107,9 @@ def api_character_command():
         return has_right_key(room_id, gid) is not None
 
     try:
-        status = handle_character_command(rooms_c, message, gid, can_enter)
+        status = handle_character_command(
+            rooms_c, message, gid, can_enter, keys_c=keys_c
+        )
     except Exception as exc:
         print(f'[CHARACTER] command failed: {exc}')
         return jsonify(error='character_error'), 500
@@ -174,13 +176,22 @@ def api_send_message(room_path):
 
 @api_bp.route('/admin/rooms', methods=['GET'])
 def api_admin_rooms():
-    """Live room list for AdminPanel.jsx."""
+    """Live room list for AdminPanel.jsx (+ where Wander is right now)."""
     gid = _require_guest()
     if not gid:
         return jsonify(error='unauthorized'), 401
     if not _may_use_admin_panel(gid):
         return jsonify(error='forbidden'), 403
-    return jsonify(rooms=rooms_c.list_rooms())
+    wander = get_brain_status()
+    return jsonify(
+        rooms=rooms_c.list_rooms(),
+        wander={
+            'target': wander.get('target'),
+            'phase': wander.get('phase'),
+            'caption': wander.get('caption'),
+            'talking': bool(wander.get('echo_talking')),
+        },
+    )
 
 
 @api_bp.route('/admin/guests', methods=['GET'])

@@ -1,0 +1,139 @@
+/* Shared stick-man figure (Brain HQ, chat sides, admin mini). */
+
+.stick-man {
+  overflow: visible;
+  transition: filter 0.4s ease, opacity 0.35s ease;
+}
+
+.stick-man.size-full {
+  width: min(14rem, 46vw);
+  height: min(19.6rem, 64vw);
+}
+
+.stick-man.size-side {
+  width: 7.5rem;
+  height: 10.5rem;
+}
+
+.stick-man.size-mini {
+  width: 2.5rem;
+  height: 3.5rem;
+}
+
+.stick-man .part {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.stick-man .head {
+  fill: var(--panel, #243028);
+  stroke: var(--accent);
+}
+
+.stick-man .eye {
+  display: none;
+  fill: var(--accent);
+  stroke: none;
+}
+
+.stick-man .hat,
+.stick-man .scarf,
+.stick-man .gear,
+.stick-man .lantern,
+.stick-man .hammer {
+  display: none;
+  opacity: 0.9;
+}
+
+.stick-man .pack,
+.stick-man .map {
+  display: none;
+}
+
+/* styles */
+.style-classic .part { stroke: var(--accent); stroke-width: 3.5; }
+.style-classic .scarf { display: inline; stroke: #e07a5f; stroke-width: 2.5; }
+
+.style-chalk .part { stroke: #dce8df; stroke-width: 4.2; stroke-linecap: square; }
+.style-chalk .eye { display: inline; fill: #dce8df; }
+.style-chalk .head { fill: #1a1f1c; }
+
+.style-ink .part { stroke: #9bb0a2; stroke-width: 2.2; }
+.style-ink .hat { display: inline; stroke: #c4a35a; stroke-width: 2.8; }
+.style-ink .head { fill: transparent; }
+
+.style-neon .part {
+  stroke: #7dffb3;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 4px rgba(125, 255, 179, 0.55));
+}
+.style-neon .hat,
+.style-neon .scarf { display: inline; stroke: #ffd27a; }
+.style-neon .head { fill: #102018; stroke: #7dffb3; }
+
+.style-sketch .part { stroke: #e8f0ea; stroke-width: 1.8; stroke-dasharray: 5 3; }
+.style-sketch .eye { display: inline; fill: #e8f0ea; }
+
+.style-runner .part { stroke: #c4a35a; stroke-width: 3; }
+.style-runner .scarf { display: inline; stroke: #7dffb3; }
+
+/* gear overlays */
+.gear-pack .pack { display: inline; fill: rgba(196, 163, 90, 0.25); stroke: var(--accent); }
+.gear-lantern .lantern { display: inline; }
+.gear-lantern .lantern .accent { fill: rgba(255, 210, 122, 0.35); stroke: #ffd27a; }
+.gear-map .map { display: inline; fill: rgba(232, 240, 234, 0.15); stroke: #dce8df; }
+.gear-hammer .hammer { display: inline; }
+.gear-hammer .hammer .accent { fill: rgba(196, 163, 90, 0.4); stroke: var(--accent); }
+
+.stick-figure { transform-origin: 50px 88px; }
+
+.pose-idle .stick-figure { animation: stick-sway 2.4s ease-in-out infinite; }
+.pose-idle .arm-l { transform-origin: 50px 56px; animation: arm-idle-l 2.4s ease-in-out infinite; }
+.pose-idle .arm-r { transform-origin: 50px 56px; animation: arm-idle-r 2.4s ease-in-out infinite; }
+
+.pose-walking .leg-l { transform-origin: 50px 88px; animation: leg-walk 0.45s ease-in-out infinite alternate; }
+.pose-walking .leg-r { transform-origin: 50px 88px; animation: leg-walk-r 0.45s ease-in-out infinite alternate; }
+.pose-walking .arm-l,
+.pose-walking .arm-r { transform-origin: 50px 56px; animation: arm-walk 0.45s ease-in-out infinite alternate; }
+.pose-walking .arm-r { animation-direction: alternate-reverse; }
+
+.pose-visiting .stick-figure { transform: rotate(-4deg); }
+
+.pose-talking .head { animation: head-talk 0.35s ease-in-out 2; }
+.pose-talking .arm-r { transform-origin: 50px 56px; animation: wave 0.4s ease-in-out 2; }
+
+@keyframes stick-sway {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+@keyframes arm-idle-l {
+  0%, 100% { transform: rotate(4deg); }
+  50% { transform: rotate(-4deg); }
+}
+@keyframes arm-idle-r {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+@keyframes leg-walk {
+  from { transform: rotate(18deg); }
+  to { transform: rotate(-14deg); }
+}
+@keyframes leg-walk-r {
+  from { transform: rotate(-14deg); }
+  to { transform: rotate(18deg); }
+}
+@keyframes arm-walk {
+  from { transform: rotate(-16deg); }
+  to { transform: rotate(16deg); }
+}
+@keyframes head-talk {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-35deg); }
+}

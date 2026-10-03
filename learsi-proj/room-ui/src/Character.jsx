@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import StickFigure, { useRotatingStick } from './StickFigure'
 import './Character.css'
 
-const STICK_STYLES = ['classic', 'chalk', 'ink', 'neon', 'sketch']
-const STYLE_ROTATE_MS = 2800
+function readRoomPath() {
+  const fromDom = document.getElementById('root')?.dataset?.roomPath
+  if (fromDom) return fromDom
+  const q = new URLSearchParams(window.location.search).get('room')
+  return q || 'character'
+}
 
 async function postCommand(message) {
   const res = await fetch('/api/character/command', {
@@ -28,43 +33,8 @@ async function fetchStatus() {
   return res.json()
 }
 
-function StickMan({ phase, talking, styleName }) {
-  const pose = talking ? 'talking' : phase || 'idle'
-  return (
-    <svg
-      className={`stick-man style-${styleName} pose-${pose}`}
-      viewBox="0 0 80 120"
-      role="img"
-      aria-label={`Stick character, ${styleName}, ${pose}`}
-    >
-      <g className="stick-figure">
-        {/* hat — ink / neon */}
-        <path
-          className="part accent hat"
-          d="M22 14 Q40 2 58 14"
-          fill="none"
-        />
-        <circle className="part head" cx="40" cy="20" r="11" />
-        {/* eyes — sketch / chalk */}
-        <circle className="part eye eye-l" cx="36" cy="18" r="1.4" />
-        <circle className="part eye eye-r" cx="44" cy="18" r="1.4" />
-        <line className="part torso" x1="40" y1="31" x2="40" y2="70" />
-        <line className="part arm arm-l" x1="40" y1="42" x2="22" y2="58" />
-        <line className="part arm arm-r" x1="40" y1="42" x2="58" y2="58" />
-        <line className="part leg leg-l" x1="40" y1="70" x2="26" y2="104" />
-        <line className="part leg leg-r" x1="40" y1="70" x2="54" y2="104" />
-        {/* scarf — classic / neon */}
-        <path
-          className="part accent scarf"
-          d="M34 32 Q40 38 46 32"
-          fill="none"
-        />
-      </g>
-    </svg>
-  )
-}
-
 export default function Character() {
+  const roomPath = readRoomPath()
   const [draft, setDraft] = useState('')
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
@@ -72,7 +42,7 @@ export default function Character() {
   const [target, setTarget] = useState(null)
   const [caption, setCaption] = useState('At home')
   const [talking, setTalking] = useState(false)
-  const [styleIdx, setStyleIdx] = useState(0)
+  const { styleName, gear } = useRotatingStick(2800)
   const lastCaption = useRef(null)
   const talkTimer = useRef(null)
 
@@ -113,13 +83,6 @@ export default function Character() {
     }
   }, [load])
 
-  useEffect(() => {
-    const id = setInterval(() => {
-      setStyleIdx((i) => (i + 1) % STICK_STYLES.length)
-    }, STYLE_ROTATE_MS)
-    return () => clearInterval(id)
-  }, [])
-
   async function onSend(e) {
     e.preventDefault()
     const text = draft.trim()
@@ -139,7 +102,6 @@ export default function Character() {
     }
   }
 
-  const styleName = STICK_STYLES[styleIdx]
   const fallbackLabel =
     phase === 'walking' && target
       ? `Walking to ${target}…`
@@ -151,19 +113,29 @@ export default function Character() {
   const statusLabel = caption || fallbackLabel
 
   return (
-    <main className="character-shell">
+    <main className="character-shell character-shell-wide">
       <header className="character-hero">
         <p className="character-brand">Stick</p>
         <h1>Character room</h1>
         <p className="character-lead">
-          Commands only — go, read [n], send, wait, back. Replies stay on Stick.
+          Commands: go · read [n] · say · send · wait · back · knock &lt;letters&gt;.
+          Replies stay on the figure.
         </p>
       </header>
 
-      <section className="character-stage" aria-live="polite">
-        <StickMan phase={phase} talking={talking} styleName={styleName} />
+      <section className="character-stage character-stage-full" aria-live="polite">
+        <StickFigure
+          phase={phase}
+          talking={talking}
+          styleName={styleName}
+          gear={gear}
+          size="full"
+          label="Stick"
+        />
         <p className="character-status">{statusLabel}</p>
-        <p className="character-style-tag">{styleName}</p>
+        <p className="character-style-tag">
+          {styleName}/{gear} · room {roomPath}
+        </p>
       </section>
 
       {error ? <p className="error">{error}</p> : null}

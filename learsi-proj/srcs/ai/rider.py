@@ -12,8 +12,9 @@ BRAIN_ROOM_PATH = 'brain'
 BRAIN_ACTOR_ID = '__brain__'
 CYCLE_SECONDS = 8
 # Conversation ends after this long with no new guest messages.
-ECHO_SILENCE_SECONDS = 30
+ECHO_SILENCE_SECONDS = 60
 ECHO_QUOTE_MAX = 40
+ECHO_WASTE_LINE = 'What a waste of talk - no point!'
 # Back-compat alias for tests / config readers.
 ECHO_WAIT_SECONDS = ECHO_SILENCE_SECONDS
 
@@ -153,9 +154,9 @@ def _echo_or_none(rooms_c, here: str | None) -> str | None:
         if now < silence_until:
             # Still in the conversation window — stay and listen.
             return 'wait'
-        # 30s of silence: conversation over; resume normal roaming next.
+        # Silence timeout: closing caption, then normal roam next ticks.
         _set_memory(echo_talking=False, echo_silence_until=0.0)
-        return None
+        return f'say {ECHO_WASTE_LINE}'
 
     return None
 

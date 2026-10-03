@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 NAME = 'Stick'
-COMMANDS = ('go', 'send', 'read', 'wait', 'back', 'say')
+COMMANDS = ('go', 'send', 'read', 'wait', 'back', 'say', 'knock')
 DEFAULT_READ_LINES = 3
 MAX_READ_LINES = 20
 
 
 def help_line() -> str:
-    return 'Commands: go <room> | read [n] | say <text> | send <text> | wait | back'
+    return (
+        'Commands: go <room> | read [n] | say <text> | send <text> | '
+        'wait | back | knock <letters>'
+    )
 
 
 def unknown(verb: str) -> str:
@@ -96,3 +99,23 @@ def say_need_text() -> str:
 
 def say_ok(text: str) -> str:
     return (text or '').strip() or '…'
+
+
+def knock_need_seq() -> str:
+    return 'Knock what? try knock abc'
+
+
+def knock_bad_seq() -> str:
+    return 'Knock letters a-z only'
+
+
+def knock_hit(seq: str, key_id) -> str:
+    return f'Knock "{seq}" — matched key {key_id}'
+
+
+def knock_partial(seq: str) -> str:
+    return f'Knock "{seq}" — something nearby…'
+
+
+def knock_miss(seq: str) -> str:
+    return f'Knock "{seq}" — silence'

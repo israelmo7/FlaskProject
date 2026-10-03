@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import StickFigure, { useRotatingStick } from './StickFigure'
 import './chat.css'
 
 function readRoomPath() {
@@ -44,25 +45,18 @@ async function fetchPresence(roomPath) {
   return data.wander || null
 }
 
-function WanderVisitor({ phase, caption }) {
-  const pose = phase || 'visiting'
+function WanderRail({ phase, caption, side }) {
+  const { styleName, gear } = useRotatingStick(3000)
   return (
-    <aside className={`wander-visit pose-${pose}`} aria-live="polite">
-      <svg
-        className="wander-visit-stick"
-        viewBox="0 0 80 120"
-        role="img"
-        aria-label="Wander is here"
-      >
-        <g className="wander-visit-figure">
-          <circle className="wv-part wv-head" cx="40" cy="20" r="11" />
-          <line className="wv-part" x1="40" y1="31" x2="40" y2="70" />
-          <line className="wv-part wv-arm-l" x1="40" y1="42" x2="22" y2="58" />
-          <line className="wv-part wv-arm-r" x1="40" y1="42" x2="58" y2="58" />
-          <line className="wv-part wv-leg-l" x1="40" y1="70" x2="26" y2="104" />
-          <line className="wv-part wv-leg-r" x1="40" y1="70" x2="54" y2="104" />
-        </g>
-      </svg>
+    <aside className={`wander-rail wander-rail-${side}`} aria-live="polite">
+      <StickFigure
+        phase={phase || 'visiting'}
+        talking={Boolean(caption)}
+        styleName={styleName}
+        gear={gear}
+        size="side"
+        label="Wander"
+      />
       <div className="wander-visit-copy">
         <span className="wander-visit-name">Wander</span>
         <span className="wander-visit-caption">{caption || 'Looking around…'}</span>
@@ -125,7 +119,7 @@ export default function Chat() {
   }
 
   return (
-    <main className="chat">
+    <main className={`chat ${wander ? 'chat-with-wander' : ''}`}>
       <header>
         <h1>Room chat</h1>
         <p className="meta">room {roomPath}</p>
@@ -133,36 +127,52 @@ export default function Chat() {
 
       {error ? <p className="error">{error}</p> : null}
 
-      {wander ? (
-        <WanderVisitor phase={wander.phase} caption={wander.caption} />
-      ) : null}
+      <div className="chat-body">
+        {wander ? (
+          <WanderRail
+            phase={wander.phase}
+            caption={wander.caption}
+            side="left"
+          />
+        ) : null}
 
-      <ul className="log" aria-live="polite">
-        {messages.length === 0 ? (
-          <li className="empty">No messages yet. Say hello.</li>
-        ) : (
-          messages.map((line, i) => (
-            <li key={`${i}-${line.slice(0, 24)}`}>{line}</li>
-          ))
-        )}
-      </ul>
+        <div className="chat-main">
+          <ul className="log" aria-live="polite">
+            {messages.length === 0 ? (
+              <li className="empty">No messages yet. Say hello.</li>
+            ) : (
+              messages.map((line, i) => (
+                <li key={`${i}-${line.slice(0, 24)}`}>{line}</li>
+              ))
+            )}
+          </ul>
 
-      <form onSubmit={onSend} className="composer">
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          maxLength={500}
-          placeholder="Type a message…"
-          aria-label="Message"
-          disabled={sending}
-        />
-        <button type="submit" disabled={sending || !draft.trim()}>
-          Send
-        </button>
-      </form>
-      <button type="button" onClick={handleOpenWindow}>
-        Open in new window
-      </button>
+          <form onSubmit={onSend} className="composer">
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              maxLength={500}
+              placeholder="Type a message…"
+              aria-label="Message"
+              disabled={sending}
+            />
+            <button type="submit" disabled={sending || !draft.trim()}>
+              Send
+            </button>
+          </form>
+          <button type="button" onClick={handleOpenWindow}>
+            Open in new window
+          </button>
+        </div>
+
+        {wander ? (
+          <WanderRail
+            phase={wander.phase}
+            caption={wander.caption}
+            side="right"
+          />
+        ) : null}
+      </div>
     </main>
   )
 }
