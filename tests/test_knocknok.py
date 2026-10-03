@@ -656,16 +656,49 @@ def test_brain_echoes_new_chat_line_caption_only(monkeypatch):
     assert status['last_command'] == 'back'
 
 
-def test_knock_command_read_only():
-    from srcs.character import agent as character_agent
-    from srcs.character import brain
+def test_knock_log_filter_and_list():
+    from srcs.core.knock_log import clear_knocks, list_knocks, record_knock
+
+    clear_knocks()
+    assert record_knock(letter='a', text='a')['text'] == 'a'
+    assert record_knock(letter='b', text='ab')['id'] == 2
+    # At 8 chars the filter drops the event.
+    assert record_knock(letter='h', text='abcdefgh') is None
+    assert [k['text'] for k in list_knocks()] == ['a', 'ab']
+    assert [k['text'] for k in list_knocks(after_id=1)] == ['ab']
+
+
+def test_data_knock_records_for_admin(client, app):
+    """Real /data letters land in the knock ring when keys_c is ready."""
+    from srcs.core import routes as core_routes
+    from srcs.core.knock_log import clear_knocks, list_knocks
 
     class FakeKeys:
         def find_key(self, seq, equal=False):
-            if equal and seq == 'abc':
-                return [(1,)]
-            if not equal and seq == 'ab':
-                return [(1,)]
+            return ()
+
+    clear_knocks()
+    core_routes.keys_c = FakeKeys()
+    try:
+        response = client.get('/data/x', follow_redirects=True)
+        assert response.status_code == 200
+        knocks = list_knocks()
+        assert len(knocks) == 1
+        assert knocks[0]['letter'] == 'x'
+        assert knocks[0]['text'] == 'x'
+    finally:
+        core_routes.keys_c = 0
+
+
+def test_knock_command_hits_data(app):
+    """Stick knock goes through /data (isolated jar), not find_key."""
+    from srcs.character import agent as character_agent
+    from srcs.character import brain
+    from srcs.core import routes as core_routes
+    from srcs.core.knock_log import clear_knocks, list_knocks
+
+    class FakeKeys:
+        def find_key(self, seq, equal=False):
             return ()
 
     class FakeRooms:
@@ -681,25 +714,29 @@ def test_knock_command_read_only():
         def set_chat_messages(self, rid, message):
             raise AssertionError('knock must not write chat')
 
-    rooms = FakeRooms()
-    keys = FakeKeys()
-    gid = 'knockusr'
+    clear_knocks()
     character_agent._status_by_guest.clear()
+    core_routes.keys_c = FakeKeys()
+    try:
+        with app.app_context():
+            caption = character_agent.handle_command(
+                FakeRooms(), 'knock ab', 'knockusr', lambda rid: True
+            )
+        assert caption == brain.knock_via_data('ab')
+        assert [k['text'] for k in list_knocks()] == ['a', 'ab']
 
-    hit = character_agent.handle_command(
-        rooms, 'knock abc', gid, lambda rid: True, keys_c=keys
-    )
-    assert hit == brain.knock_hit('abc', 1)
+        with app.app_context():
+            long_cap = character_agent.handle_command(
+                FakeRooms(), 'knock abcdefgh', 'knockusr', lambda rid: True
+            )
+        assert long_cap == brain.knock_too_long()
+    finally:
+        core_routes.keys_c = 0
 
-    partial = character_agent.handle_command(
-        rooms, 'knock ab', gid, lambda rid: True, keys_c=keys
-    )
-    assert 'nearby' in partial
 
-    miss = character_agent.handle_command(
-        rooms, 'knock zzzz', gid, lambda rid: True, keys_c=keys
-    )
-    assert 'silence' in miss
+def test_admin_knocks_unauthorized(client):
+    response = client.get('/api/admin/knocks')
+    assert response.status_code == 401
 
 
 def test_brain_status_unauthorized(client):

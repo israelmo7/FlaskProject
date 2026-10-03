@@ -86,15 +86,13 @@ function AdminPreview() {
 function CharacterPreview() {
   return (
     <div className="preview-inner preview-character" aria-hidden="true">
-      <svg className="preview-stick" viewBox="0 0 80 120">
-        <circle cx="40" cy="18" r="12" />
-        <line x1="40" y1="30" x2="40" y2="70" />
-        <line x1="40" y1="42" x2="22" y2="58" />
-        <line x1="40" y1="42" x2="58" y2="58" />
-        <line x1="40" y1="70" x2="26" y2="104" />
-        <line x1="40" y1="70" x2="54" y2="104" />
-      </svg>
-      <span className="preview-character-label">Stick</span>
+      <StickFigure
+        phase="idle"
+        styleName="classic"
+        gear="none"
+        size="mini"
+        label="Stick"
+      />
     </div>
   )
 }
@@ -178,28 +176,73 @@ function ConfirmGrantModal({ guest, busy, onYes, onNo }) {
   )
 }
 
+const LETTERS = 'abcdefghijklmnopqrstuvwxyz'.split('')
+
+function KnockLetterMap({ flashes }) {
+  return (
+    <div className="knock-letter-map" aria-hidden="true">
+      {LETTERS.map((ch) => {
+        const flashId = flashes[ch] || 0
+        return (
+          <span
+            key={`${ch}-${flashId}`}
+            className={`knock-map-letter${flashId ? ' lit' : ''}`}
+            data-letter={ch}
+          >
+            {ch}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function AdminPanel() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [rooms, setRooms] = useState([])
   const [guests, setGuests] = useState([])
   const [wander, setWander] = useState(null)
+  const [flashes, setFlashes] = useState({})
   const [confirmGuest, setConfirmGuest] = useState(null)
   const [granting, setGranting] = useState(false)
 
   useEffect(() => {
     let cancelled = false
+    let afterId = 0
+    let primed = false
 
     async function load() {
       try {
-        const [roomsData, guestsData] = await Promise.all([
+        const [roomsData, guestsData, knocksData] = await Promise.all([
           fetchJson('/api/admin/rooms'),
           fetchJson('/api/admin/guests'),
+          fetchJson(`/api/admin/knocks?after=${afterId}`),
         ])
         if (cancelled) return
         setRooms(roomsData.rooms || [])
         setWander(roomsData.wander || null)
         setGuests(guestsData.guests || [])
+
+        const fresh = knocksData.knocks || []
+        if (fresh.length) {
+          afterId = fresh[fresh.length - 1].id
+          if (primed) {
+            setFlashes((prev) => {
+              const next = { ...prev }
+              for (const knock of fresh) {
+                const ch = String(knock.letter || '')
+                  .toLowerCase()
+                  .slice(0, 1)
+                if (ch >= 'a' && ch <= 'z') {
+                  next[ch] = (next[ch] || 0) + 1
+                }
+              }
+              return next
+            })
+          }
+        }
+        primed = true
         setError('')
       } catch (err) {
         if (!cancelled) setError(err.message || 'Load failed')
@@ -207,7 +250,7 @@ export default function AdminPanel() {
     }
 
     load()
-    const id = setInterval(load, 3000)
+    const id = setInterval(load, 1500)
     return () => {
       cancelled = true
       clearInterval(id)
@@ -236,6 +279,8 @@ export default function AdminPanel() {
 
   return (
     <main className="admin-shell">
+      <KnockLetterMap flashes={flashes} />
+
       <header className="admin-hero">
         <p className="admin-brand">Knocknok</p>
         <h1>Admin panel</h1>
@@ -307,16 +352,6 @@ export default function AdminPanel() {
               </div>
             ))
           )}
-        </div>
-      </section>
-
-      <section className="admin-block knocks-block" aria-labelledby="knocks-heading">
-        <div className="admin-block-head">
-          <h2 id="knocks-heading">Knocks</h2>
-          <p>Live /data activity comes here next.</p>
-        </div>
-        <div className="knocks-placeholder">
-          <span>Waiting for knock stream…</span>
         </div>
       </section>
 

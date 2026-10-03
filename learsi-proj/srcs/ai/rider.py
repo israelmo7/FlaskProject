@@ -193,10 +193,8 @@ def _advance_step(command: str):
         elif verb == 'back':
             step = mind._STEP_HOME
         elif verb == 'wait':
-            # Stay in said/home so next tick can move again.
-            if step == mind._STEP_SAID:
-                step = mind._STEP_SAID
-            elif not stick.get_status(BRAIN_ACTOR_ID).get('target'):
+            # Only reset to home when Wander has no room target.
+            if not stick.get_status(BRAIN_ACTOR_ID).get('target'):
                 step = mind._STEP_HOME
         _memory['step'] = step
         _memory['last_command'] = command
