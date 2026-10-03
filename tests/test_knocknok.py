@@ -232,3 +232,471 @@ def test_set_chat_messages_appends_plain_text():
     stored = json.loads(cursor.params[0])
     assert stored == 'old\nhello\n'
     assert cursor.params[1] == 1
+
+
+def test_character_brain_command_lines():
+    from srcs.character import brain
+
+    assert 'go <room>' in brain.help_line()
+    assert brain.go_ok('lobby') == 'At lobby'
+    assert 'quiet' in brain.read_quiet('lobby')
+    assert 'Sent to lobby' in brain.send_ok('lobby', 'hello')
+    assert brain.back_ok() == 'At home'
+
+
+def test_character_parse_command():
+    from srcs.character.agent import parse_command
+
+    assert parse_command('go lobby') == ('go', 'lobby')
+    assert parse_command('SEND hi there') == ('send', 'hi there')
+    assert parse_command('  wait  ') == ('wait', '')
+    assert parse_command('read 5') == ('read', '5')
+    assert parse_command('') == (None, '')
+
+
+def test_character_handle_command_go_read_back():
+    from srcs.character import agent as character_agent
+
+    class FakeRooms:
+        def __init__(self):
+            self.rooms = [
+                {'id': 1, 'path': 'lobby', 'rtype': 'chat'},
+                {'id': 2, 'path': 'character', 'rtype': 'character'},
+                {'id': 3, 'path': 'garden', 'rtype': 'chat'},
+            ]
+            self.chats = {
+                1: 'hello\nworld\nthird\n',
+                2: '{"allow":["lobby","garden","studio"]}',
+                3: '',
+            }
+
+        def list_rooms(self):
+            return list(self.rooms)
+
+        def get_room(self, value):
+            for r in self.rooms:
+                if r['path'] == value:
+                    return ((r['id'],),)
+            return ()
+
+        def get_chat_messages(self, rid):
+            return ((self.chats.get(rid, ''),),)
+
+        def set_chat_messages(self, rid, message):
+            self.chats[rid] = self.chats.get(rid, '') + message + '\n'
+
+    rooms = FakeRooms()
+    gid = 'guest001'
+    character_agent._status_by_guest.clear()
+
+    def can_enter(rid):
+        return rid in (1, 3)
+
+    assert 'At lobby' in character_agent.handle_command(
+        rooms, 'go lobby', gid, can_enter
+    )
+    assert character_agent.get_status(gid)['target'] == 'lobby'
+    # No write to character room chat (allowlist intact).
+    assert rooms.chats[2] == '{"allow":["lobby","garden","studio"]}'
+
+    reply = character_agent.handle_command(rooms, 'read 2', gid, can_enter)
+    assert 'lobby' in reply and 'world' in reply and 'third' in reply
+    assert 'hello' not in reply  # only last 2
+
+    assert 'Sent to lobby' in character_agent.handle_command(
+        rooms, 'send knock knock', gid, can_enter
+    )
+    assert 'Stick: knock knock' in rooms.chats[1]
+
+    assert 'Waiting at lobby' in character_agent.handle_command(
+        rooms, 'wait', gid, can_enter
+    )
+    assert 'At home' in character_agent.handle_command(
+        rooms, 'back', gid, can_enter
+    )
+    assert character_agent.get_status(gid)['target'] is None
+
+
+def test_character_go_requires_guest_key_and_allowlist():
+    from srcs.character import agent as character_agent
+
+    class FakeRooms:
+        def list_rooms(self):
+            return [
+                {'id': 1, 'path': 'lobby', 'rtype': 'chat'},
+                {'id': 999, 'path': 'adminPanel', 'rtype': 'admin'},
+            ]
+
+        def get_room(self, value):
+            if value == 'character':
+                return ((2,),)
+            return ()
+
+        def get_chat_messages(self, rid):
+            if rid == 2:
+                return (('{"allow":["lobby"]}',),)
+            return (('',),)
+
+        def set_chat_messages(self, rid, message):
+            raise AssertionError('character chat must stay unread for commands')
+
+    rooms = FakeRooms()
+    gid = 'guest002'
+    character_agent._status_by_guest.clear()
+
+    # adminPanel not on allowlist
+    assert 'not on my list' in character_agent.handle_command(
+        rooms, 'go adminPanel', gid, lambda rid: True
+    )
+    # lobby on allowlist but guest has no key
+    assert 'No key' in character_agent.handle_command(
+        rooms, 'go lobby', gid, lambda rid: False
+    )
+
+
+def test_character_agent_noop_under_testing(app):
+    from srcs.character import agent as character_agent
+
+    character_agent.start_character_agent(app)
+
+
+def test_character_status_unauthorized(client):
+    response = client.get('/api/character/status')
+    assert response.status_code == 401
+    assert response.get_json()['error'] == 'unauthorized'
+
+
+def test_character_status_shape_when_allowed(client, monkeypatch):
+    from srcs.api import routes as api_routes
+    from srcs.character import agent as character_agent
+
+    with client.session_transaction() as sess:
+        sess['id'] = 'guesttok'
+
+    monkeypatch.setattr(api_routes, '_may_use_character_room', lambda gid: True)
+    character_agent._set_status(
+        'guesttok', phase='walking', target='lobby', caption='Walking…'
+    )
+
+    response = client.get('/api/character/status')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['phase'] == 'walking'
+    assert data['target'] == 'lobby'
+    assert data['caption'] == 'Walking…'
+
+
+def test_character_command_endpoint_empty(client, monkeypatch):
+    from srcs.api import routes as api_routes
+
+    with client.session_transaction() as sess:
+        sess['id'] = 'guesttok'
+    monkeypatch.setattr(api_routes, '_may_use_character_room', lambda gid: True)
+
+    response = client.post(
+        '/api/character/command',
+        json={'message': ''},
+    )
+    assert response.status_code == 400
+
+
+def test_admin_grant_key_unauthorized(client):
+    response = client.post(
+        '/api/admin/grant-admin-key',
+        json={'session': 'abcd1234'},
+    )
+    assert response.status_code == 401
+
+
+def test_admin_grant_key_forbidden(client, monkeypatch):
+    from srcs.api import routes as api_routes
+
+    with client.session_transaction() as sess:
+        sess['id'] = 'admintry'
+    monkeypatch.setattr(api_routes, '_may_use_admin_panel', lambda gid: False)
+
+    response = client.post(
+        '/api/admin/grant-admin-key',
+        json={'session': 'abcd1234'},
+    )
+    assert response.status_code == 403
+
+
+def test_admin_grant_key_success(client, monkeypatch):
+    from srcs.api import routes as api_routes
+    from srcs.db import ADMIN_KEY_ID
+
+    calls = {}
+
+    class FakeKeys:
+        def set_key(self, kid, gid):
+            calls['set_key'] = (kid, gid)
+
+    class FakeGuests:
+        def get_guest(self, gid):
+            return (('row',) if gid == 'abcd1234' else None)
+
+        def update_guest(self, gid, pocket):
+            calls['update'] = (gid, pocket)
+
+        def list_guests(self):
+            return []
+
+    with client.session_transaction() as sess:
+        sess['id'] = 'adminusr'
+    monkeypatch.setattr(api_routes, '_may_use_admin_panel', lambda gid: True)
+    monkeypatch.setattr(api_routes, 'keys_c', FakeKeys())
+    monkeypatch.setattr(api_routes, 'guests_c', FakeGuests())
+
+    response = client.post(
+        '/api/admin/grant-admin-key',
+        json={'session': 'abcd1234xxxx'},
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['ok'] is True
+    assert data['session'] == 'abcd1234'
+    assert data['key'] == ADMIN_KEY_ID
+    assert calls['set_key'] == (ADMIN_KEY_ID, 'abcd1234')
+    assert calls['update'] == ('abcd1234', str(ADMIN_KEY_ID))
+
+
+def test_say_command_sets_caption_only():
+    from srcs.character import agent as character_agent
+
+    class FakeRooms:
+        def list_rooms(self):
+            return [{'id': 1, 'path': 'lobby', 'rtype': 'chat'}]
+
+        def get_room(self, value):
+            return ((2,),) if value == 'character' else ()
+
+        def get_chat_messages(self, rid):
+            return (('{"allow":["lobby"]}',),)
+
+        def set_chat_messages(self, rid, message):
+            raise AssertionError('say must not write chat')
+
+    rooms = FakeRooms()
+    gid = 'sayuser'
+    character_agent._status_by_guest.clear()
+    caption = character_agent.handle_command(
+        rooms, 'say hello world', gid, lambda rid: True
+    )
+    assert caption == 'hello world'
+    assert character_agent.get_status(gid)['caption'] == 'hello world'
+
+
+def test_brain_mind_decide_from_home():
+    from srcs.ai import mind
+
+    obs = mind.build_observation(
+        here=None,
+        can_go=['lobby', 'garden'],
+        last_lines=[],
+        caption='At home',
+        phase='idle',
+        step=mind._STEP_HOME,
+    )
+    cmd = mind.decide(obs)
+    assert cmd.startswith('go ')
+    assert cmd.split()[1] in ('lobby', 'garden')
+
+
+def test_brain_tick_runs_go_then_read(monkeypatch):
+    from srcs.ai import mind, rider
+    from srcs.character import agent as stick
+
+    class FakeRooms:
+        def __init__(self):
+            self.rooms = [
+                {'id': 1, 'path': 'lobby', 'rtype': 'chat'},
+                {'id': 5, 'path': 'brain', 'rtype': 'ai'},
+            ]
+            self.chats = {
+                1: 'hi\n',
+                5: '{"allow":["lobby"]}',
+            }
+
+        def list_rooms(self):
+            return list(self.rooms)
+
+        def get_room(self, value):
+            for r in self.rooms:
+                if r['path'] == value:
+                    return ((r['id'],),)
+            return ()
+
+        def get_chat_messages(self, rid):
+            return ((self.chats.get(rid, ''),),)
+
+        def set_chat_messages(self, rid, message):
+            self.chats[rid] = self.chats.get(rid, '') + message + '\n'
+
+    rooms = FakeRooms()
+    stick._status_by_guest.clear()
+    rider._set_memory(
+        step=mind_step_home(),
+        last_command=None,
+        echo_room=None,
+        echo_seen=0,
+        echo_cooldown_until=0.0,
+    )
+    # Deterministic: first decide goes to lobby (only real room in fixture).
+    monkeypatch.setattr(mind, 'decide', lambda obs: 'go lobby')
+
+    status = rider.run_brain_tick(rooms)
+    assert status['target'] == 'lobby'
+    assert status['last_command'] == 'go lobby'
+
+    monkeypatch.setattr(mind, 'decide', lambda obs: 'read 3')
+    status = rider.run_brain_tick(rooms)
+    assert status['last_command'] == 'read 3'
+    assert 'lobby' in (status.get('caption') or '')
+
+
+def mind_step_home():
+    from srcs.ai import mind
+
+    return mind._STEP_HOME
+
+
+def test_brain_echoes_new_chat_line_caption_only(monkeypatch):
+    from srcs.ai import mind, rider
+    from srcs.character import agent as stick
+
+    clock = {'t': 1_000.0}
+    monkeypatch.setattr(rider.time, 'time', lambda: clock['t'])
+
+    class FakeRooms:
+        def __init__(self):
+            self.rooms = [
+                {'id': 1, 'path': 'lobby', 'rtype': 'chat'},
+                {'id': 5, 'path': 'brain', 'rtype': 'ai'},
+            ]
+            self.chats = {
+                1: 'old line\nfresh hello\n',
+                5: '{"allow":["lobby"]}',
+            }
+            self.writes = []
+
+        def list_rooms(self):
+            return list(self.rooms)
+
+        def get_room(self, value):
+            for r in self.rooms:
+                if r['path'] == value:
+                    return ((r['id'],),)
+            return ()
+
+        def get_chat_messages(self, rid):
+            return ((self.chats.get(rid, ''),),)
+
+        def set_chat_messages(self, rid, message):
+            self.writes.append((rid, message))
+            self.chats[rid] = self.chats.get(rid, '') + message + '\n'
+
+    rooms = FakeRooms()
+    stick._status_by_guest.clear()
+    stick._set_status(
+        rider.BRAIN_ACTOR_ID,
+        phase='visiting',
+        target='lobby',
+        caption='At lobby',
+    )
+    rider._set_memory(
+        step=mind._STEP_SAID,
+        last_command=None,
+        echo_room='lobby',
+        echo_seen=1,  # "old line" already there at arrival
+        echo_cooldown_until=0.0,
+    )
+
+    status = rider.run_brain_tick(rooms)
+    assert status['last_command'].startswith('say ')
+    assert status['caption'] == 'Ha Ha, he said "fresh hello"!'
+    # Echo is caption-only — must not append to lobby chat.
+    assert rooms.writes == []
+    assert rooms.chats[1] == 'old line\nfresh hello\n'
+    assert status['echo_cooldown'] > 0
+
+    # Still inside 30s → forced wait
+    clock['t'] = 1_010.0
+    status = rider.run_brain_tick(rooms)
+    assert status['last_command'] == 'wait'
+    assert rooms.writes == []
+
+    # Cooldown over, no newer lines → normal mind may act (not another echo)
+    clock['t'] = 1_040.0
+    status = rider.run_brain_tick(rooms)
+    assert not (status.get('last_command') or '').startswith('say Ha Ha')
+
+
+def test_format_echo_quote():
+    from srcs.ai import rider
+
+    assert rider._format_echo('hi') == 'Ha Ha, he said "hi"!'
+    long = 'x' * 50
+    out = rider._format_echo(long)
+    assert out.startswith('Ha Ha, he said "')
+    assert '…' in out
+    assert out.endswith('!')
+
+
+def test_brain_status_unauthorized(client):
+    response = client.get('/api/brain/status')
+    assert response.status_code == 401
+
+
+def test_brain_rider_skipped_under_testing(app):
+    from srcs.ai import rider
+
+    before = rider._started
+    rider.start_brain_rider(app)
+    assert rider._started is before
+
+
+def test_presence_in_room_matches_target():
+    from srcs.ai import rider
+    from srcs.character import agent as stick
+
+    stick._status_by_guest.clear()
+    stick._set_status(
+        rider.BRAIN_ACTOR_ID,
+        phase='visiting',
+        target='lobby',
+        caption='quiet in lobby…',
+    )
+    here = rider.presence_in_room('lobby')
+    assert here['present'] is True
+    assert here['name'] == 'Wander'
+    assert here['caption'] == 'quiet in lobby…'
+    assert rider.presence_in_room('garden')['present'] is False
+    stick._set_status(rider.BRAIN_ACTOR_ID, target=None, phase='idle', caption='At home')
+    assert rider.presence_in_room('lobby')['present'] is False
+
+
+def test_room_presence_endpoint(client, monkeypatch):
+    from srcs.ai import rider
+    from srcs.api import routes as api_routes
+    from srcs.character import agent as stick
+
+    with client.session_transaction() as sess:
+        sess['id'] = 'guesttok'
+
+    monkeypatch.setattr(api_routes, 'path_room_to_id', lambda p: 1 if p == 'lobby' else None)
+    monkeypatch.setattr(api_routes, 'has_right_key', lambda rid, gid: 1)
+
+    stick._status_by_guest.clear()
+    stick._set_status(
+        rider.BRAIN_ACTOR_ID,
+        phase='walking',
+        target='lobby',
+        caption='heading over',
+    )
+
+    response = client.get('/api/lobby/presence')
+    assert response.status_code == 200
+    data = response.get_json()['wander']
+    assert data['present'] is True
+    assert data['phase'] == 'walking'

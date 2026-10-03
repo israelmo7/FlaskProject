@@ -83,3 +83,117 @@ h1 {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Wander visiting this chat room */
+
+.wander-visit {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background:
+    linear-gradient(120deg, rgba(196, 163, 90, 0.14), transparent 55%),
+    var(--panel);
+  animation: wander-enter 0.45s ease-out;
+}
+
+.wander-visit-stick {
+  width: 2.6rem;
+  height: 3.9rem;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.wander-visit .wv-part {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.wander-visit .wv-head {
+  fill: #151a17;
+}
+
+.wander-visit-figure {
+  transform-origin: 40px 70px;
+}
+
+.wander-visit.pose-idle .wander-visit-figure,
+.wander-visit.pose-visiting .wander-visit-figure {
+  animation: wander-sway 2.2s ease-in-out infinite;
+}
+
+.wander-visit.pose-walking .wv-leg-l {
+  transform-origin: 40px 70px;
+  animation: wander-leg 0.4s ease-in-out infinite alternate;
+}
+
+.wander-visit.pose-walking .wv-leg-r {
+  transform-origin: 40px 70px;
+  animation: wander-leg-r 0.4s ease-in-out infinite alternate;
+}
+
+.wander-visit-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.wander-visit-name {
+  font-family: "IBM Plex Serif", Georgia, serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.wander-visit-caption {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.82rem;
+  color: var(--muted);
+  word-break: break-word;
+}
+
+@keyframes wander-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes wander-sway {
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes wander-leg {
+  from {
+    transform: rotate(16deg);
+  }
+  to {
+    transform: rotate(-12deg);
+  }
+}
+
+@keyframes wander-leg-r {
+  from {
+    transform: rotate(-12deg);
+  }
+  to {
+    transform: rotate(16deg);
+  }
+}

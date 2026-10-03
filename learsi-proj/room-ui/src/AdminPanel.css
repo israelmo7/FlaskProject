@@ -234,6 +234,42 @@
   text-transform: uppercase;
 }
 
+/* Mini character HQ */
+
+.preview-character {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  background:
+    radial-gradient(ellipse at center, rgba(196, 163, 90, 0.12), transparent 65%),
+    #151a17;
+}
+
+.preview-stick {
+  width: 2.6rem;
+  height: 3.9rem;
+}
+
+.preview-stick circle,
+.preview-stick line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+
+.preview-stick circle {
+  fill: #151a17;
+}
+
+.preview-character-label {
+  font-family: "IBM Plex Serif", Georgia, serif;
+  font-size: 0.7rem;
+  color: var(--accent);
+}
+
 /* Guests */
 
 .guest-row {
@@ -262,6 +298,106 @@
 .guest-chip-pocket {
   font-size: 0.75rem;
   color: var(--muted);
+}
+
+.guest-grant-btn {
+  margin-top: 0.45rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.guest-grant-btn:hover {
+  border-color: var(--accent);
+  background: rgba(196, 163, 90, 0.12);
+}
+
+.admin-notice {
+  margin: 0 0 1rem;
+  color: var(--accent);
+  font-size: 0.9rem;
+}
+
+/* Grant-admin confirm popup */
+
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(10, 14, 12, 0.72);
+}
+
+.admin-modal {
+  width: min(22rem, 100%);
+  padding: 1.25rem 1.35rem 1.15rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.admin-modal h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.admin-modal p {
+  margin: 0 0 1.1rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.admin-modal code {
+  font-family: "IBM Plex Mono", Consolas, monospace;
+  color: var(--accent);
+}
+
+.admin-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.admin-modal-no,
+.admin-modal-yes {
+  min-width: 4.5rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-modal-no {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+}
+
+.admin-modal-yes {
+  border: none;
+  background: var(--accent);
+  color: #1a1508;
+}
+
+.admin-modal-no:disabled,
+.admin-modal-yes:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 /* Knocks placeholder */

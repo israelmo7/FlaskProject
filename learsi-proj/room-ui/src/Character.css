@@ -1,29 +1,357 @@
-.character {
-  position: absolute;
-  width: 32px;
-  height: 32px;
-  background-color: #ffcc00;
-  border-radius: 50%;
-  transition: transform 0.3s ease-in-out;
+/* Character HQ — Stick lives here; narrations only on this path. */
+
+.character-shell {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
 }
 
-.character-head {
-  position: absolute;
-  top: -16px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 24px;
-  height: 24px;
-  background-color: #ffcc00;
-  border-radius: 50%;
+.character-hero {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(140deg, rgba(196, 163, 90, 0.14), transparent 50%),
+    transparent;
 }
-.character-body {
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 16px;
-  height: 16px;
-  background-color: #ffcc00;
-  border-radius: 50%;
+
+.character-brand {
+  margin: 0 0 0.25rem;
+  font-family: "IBM Plex Serif", "Georgia", serif;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+}
+
+.character-hero h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.character-lead {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  max-width: 28rem;
+}
+
+.character-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 11rem;
+  margin: 0 0 1rem;
+  padding: 1.25rem 1rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.character-status {
+  margin: 0.75rem 0 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-align: center;
+  max-width: 28rem;
+  min-height: 2.4em;
+}
+
+.character-style-tag {
+  margin: 0.35rem 0 0;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--line);
+}
+
+.stick-man {
+  width: 5.5rem;
+  height: 8.25rem;
+  overflow: visible;
+  transition: filter 0.4s ease, opacity 0.35s ease;
+}
+
+.stick-man .part {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.stick-man .head {
+  fill: var(--panel);
+  stroke: var(--accent);
+}
+
+.stick-man .eye {
+  display: none;
+  fill: var(--accent);
+  stroke: none;
+}
+
+.stick-man .hat,
+.stick-man .scarf {
+  display: none;
+  opacity: 0.85;
+}
+
+/* —— style variants (same body, different look) —— */
+
+.style-classic .part {
+  stroke: var(--accent);
+  stroke-width: 3.5;
+}
+
+.style-classic .scarf {
+  display: inline;
+  stroke: #e07a5f;
+  stroke-width: 2.5;
+}
+
+.style-chalk .part {
+  stroke: #dce8df;
+  stroke-width: 4.2;
+  stroke-linecap: square;
+  opacity: 0.92;
+}
+
+.style-chalk .eye {
+  display: inline;
+  fill: #dce8df;
+}
+
+.style-chalk .head {
+  fill: #1a1f1c;
+}
+
+.style-ink .part {
+  stroke: #9bb0a2;
+  stroke-width: 2.2;
+}
+
+.style-ink .hat {
+  display: inline;
+  stroke: #c4a35a;
+  stroke-width: 2.8;
+}
+
+.style-ink .head {
+  fill: transparent;
+}
+
+.style-neon .part {
+  stroke: #7dffb3;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 4px rgba(125, 255, 179, 0.55));
+}
+
+.style-neon .hat,
+.style-neon .scarf {
+  display: inline;
+  stroke: #ffd27a;
+}
+
+.style-neon .head {
+  fill: #102018;
+  stroke: #7dffb3;
+}
+
+.style-sketch .part {
+  stroke: #e8f0ea;
+  stroke-width: 1.8;
+  stroke-dasharray: 5 3;
+}
+
+.style-sketch .eye {
+  display: inline;
+  fill: #e8f0ea;
+}
+
+.style-sketch .torso {
+  stroke-dasharray: 2 2;
+}
+
+.stick-figure {
+  transform-origin: 40px 70px;
+}
+
+/* idle sway */
+.pose-idle .stick-figure {
+  animation: stick-sway 2.4s ease-in-out infinite;
+}
+
+.pose-idle .arm-l {
+  transform-origin: 40px 42px;
+  animation: arm-idle-l 2.4s ease-in-out infinite;
+}
+
+.pose-idle .arm-r {
+  transform-origin: 40px 42px;
+  animation: arm-idle-r 2.4s ease-in-out infinite;
+}
+
+/* walking legs */
+.pose-walking .leg-l {
+  transform-origin: 40px 70px;
+  animation: leg-walk 0.45s ease-in-out infinite alternate;
+}
+
+.pose-walking .leg-r {
+  transform-origin: 40px 70px;
+  animation: leg-walk-r 0.45s ease-in-out infinite alternate;
+}
+
+.pose-walking .arm-l,
+.pose-walking .arm-r {
+  transform-origin: 40px 42px;
+  animation: arm-walk 0.45s ease-in-out infinite alternate;
+}
+
+.pose-walking .arm-r {
+  animation-direction: alternate-reverse;
+}
+
+/* visiting — still, slight lean */
+.pose-visiting .stick-figure {
+  transform: rotate(-4deg);
+}
+
+/* talking bounce */
+.pose-talking .head {
+  animation: head-talk 0.35s ease-in-out 2;
+}
+
+.pose-talking .arm-r {
+  transform-origin: 40px 42px;
+  animation: wave 0.4s ease-in-out 2;
+}
+
+@keyframes stick-sway {
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes arm-idle-l {
+  0%,
+  100% {
+    transform: rotate(4deg);
+  }
+  50% {
+    transform: rotate(-4deg);
+  }
+}
+
+@keyframes arm-idle-r {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+@keyframes leg-walk {
+  from {
+    transform: rotate(18deg);
+  }
+  to {
+    transform: rotate(-14deg);
+  }
+}
+
+@keyframes leg-walk-r {
+  from {
+    transform: rotate(-14deg);
+  }
+  to {
+    transform: rotate(18deg);
+  }
+}
+
+@keyframes arm-walk {
+  from {
+    transform: rotate(-16deg);
+  }
+  to {
+    transform: rotate(16deg);
+  }
+}
+
+@keyframes head-talk {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes wave {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-35deg);
+  }
+}
+
+.character-composer {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.character-composer input {
+  flex: 1;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+}
+
+.character-composer button {
+  padding: 0.65rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #1a1f1c;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.character-composer button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.character-shell .error {
+  color: var(--danger);
+  margin: 0 0 0.75rem;
+}
+
+@media (max-width: 520px) {
+  .character-brand {
+    font-size: 1.65rem;
+  }
+
+  .stick-man {
+    width: 4.5rem;
+    height: 6.75rem;
+  }
 }
