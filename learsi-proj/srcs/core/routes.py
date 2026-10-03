@@ -1,8 +1,8 @@
 from flask import Blueprint, redirect, request, session
 
+from srcs.core.knock_log import SIZE_LIMIT, record_knock
 from srcs.utils import fdebug, rand_str
 
-SIZE_LIMIT = 8
 SHOW_CHALLENGE_FLAG = 'show_challenge'
 
 core_bp = Blueprint(
@@ -82,30 +82,31 @@ def knock_knock(tav):
     session['mvars']['buffer']['output'] += rand_str(1)[0]
     session['mvars']['buffer']['used'] = 0
 
-    similar_ans = keys_c.find_key(session['mvars']['buffer']['input'])
-    fdebug("similar_ans", similar_ans, "KNOCKx2")
-    fdebug(
-        "session['mvars']['buffer']['input']",
-        session['mvars']['buffer']['input'],
-        "KNOCKx2",
+    buf_in = session['mvars']['buffer']['input']
+    # Admin knocks screen: only text below SIZE_LIMIT (8).
+    gid = session.get('id')
+    record_knock(
+        letter=tav,
+        text=buf_in,
+        guest=(gid[:8] if gid else None),
     )
 
-    if similar_ans:
-        kid = keys_c.find_key(session['mvars']['buffer']['input'], equal=True)
-        fdebug("kid", kid, "KNOCKx2")
+    # Exact seq match arms the confirm step (/data/POST). LIKE-only hits are silent.
+    kid = keys_c.find_key(buf_in, equal=True)
+    fdebug("kid", kid, "KNOCKx2")
+    fdebug("session['mvars']['buffer']['input']", buf_in, "KNOCKx2")
 
-        if len(kid) > 0 and kid[0] in similar_ans:
-            # Reuse existing guest token if already authenticated.
-            if not session.get('id'):
-                session['id'] = rand_str(13)
+    if kid:
+        # Reuse existing guest token if already authenticated.
+        if not session.get('id'):
+            session['id'] = rand_str(13)
 
-            session['mvars']['user']['id'] = kid[0][0]  # key id
-            session['mvars']['user']['seq'] = session['mvars']['buffer']['output']
-            session['mvars']['user']['used'] = 0
+        session['mvars']['user']['id'] = kid[0][0]  # key id
+        session['mvars']['user']['seq'] = session['mvars']['buffer']['output']
+        session['mvars']['user']['used'] = 0
 
     session[SHOW_CHALLENGE_FLAG] = True
     return redirect("/data/")
-
 
 @core_bp.route('/POST', methods=['GET'])
 def send_seq():

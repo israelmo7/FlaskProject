@@ -86,15 +86,13 @@ function AdminPreview() {
 function CharacterPreview() {
   return (
     <div className="preview-inner preview-character" aria-hidden="true">
-      <svg className="preview-stick" viewBox="0 0 80 120">
-        <circle cx="40" cy="18" r="12" />
-        <line x1="40" y1="30" x2="40" y2="70" />
-        <line x1="40" y1="42" x2="22" y2="58" />
-        <line x1="40" y1="42" x2="58" y2="58" />
-        <line x1="40" y1="70" x2="26" y2="104" />
-        <line x1="40" y1="70" x2="54" y2="104" />
-      </svg>
-      <span className="preview-character-label">Stick</span>
+      <StickFigure
+        phase="idle"
+        styleName="classic"
+        gear="none"
+        size="mini"
+        label="Stick"
+      />
     </div>
   )
 }
@@ -184,22 +182,46 @@ export default function AdminPanel() {
   const [rooms, setRooms] = useState([])
   const [guests, setGuests] = useState([])
   const [wander, setWander] = useState(null)
+  const [knocks, setKnocks] = useState([])
+  const [pops, setPops] = useState([])
   const [confirmGuest, setConfirmGuest] = useState(null)
   const [granting, setGranting] = useState(false)
 
   useEffect(() => {
     let cancelled = false
+    let afterId = 0
+    let primed = false
 
     async function load() {
       try {
-        const [roomsData, guestsData] = await Promise.all([
+        const [roomsData, guestsData, knocksData] = await Promise.all([
           fetchJson('/api/admin/rooms'),
           fetchJson('/api/admin/guests'),
+          fetchJson(`/api/admin/knocks?after=${afterId}`),
         ])
         if (cancelled) return
         setRooms(roomsData.rooms || [])
         setWander(roomsData.wander || null)
         setGuests(guestsData.guests || [])
+
+        const fresh = knocksData.knocks || []
+        if (fresh.length) {
+          afterId = fresh[fresh.length - 1].id
+          setKnocks((prev) => [...prev, ...fresh].slice(-24))
+          // First poll fills the feed quietly; later polls pop toasts.
+          if (primed) {
+            setPops((prev) =>
+              [
+                ...prev,
+                ...fresh.map((k) => ({
+                  ...k,
+                  popKey: `${k.id}-${Date.now()}`,
+                })),
+              ].slice(-6),
+            )
+          }
+        }
+        primed = true
         setError('')
       } catch (err) {
         if (!cancelled) setError(err.message || 'Load failed')
@@ -207,12 +229,20 @@ export default function AdminPanel() {
     }
 
     load()
-    const id = setInterval(load, 3000)
+    const id = setInterval(load, 2000)
     return () => {
       cancelled = true
       clearInterval(id)
     }
   }, [])
+
+  useEffect(() => {
+    if (pops.length === 0) return undefined
+    const timer = setTimeout(() => {
+      setPops((prev) => prev.slice(1))
+    }, 2200)
+    return () => clearTimeout(timer)
+  }, [pops])
 
   async function confirmGrant() {
     if (!confirmGuest?.session || granting) return
@@ -244,6 +274,16 @@ export default function AdminPanel() {
 
       {error ? <p className="error">{error}</p> : null}
       {notice ? <p className="admin-notice">{notice}</p> : null}
+
+      <div className="knock-pop-stage" aria-live="polite">
+        {pops.map((knock) => (
+          <div key={knock.popKey || knock.id} className="knock-pop">
+            <span className="knock-pop-letter">{knock.letter}</span>
+            <span className="knock-pop-text">{knock.text}</span>
+            <span className="knock-pop-who">{knock.guest || 'anon'}</span>
+          </div>
+        ))}
+      </div>
 
       <section className="admin-block rooms-block" aria-labelledby="rooms-heading">
         <div className="admin-block-head">
@@ -313,11 +353,23 @@ export default function AdminPanel() {
       <section className="admin-block knocks-block" aria-labelledby="knocks-heading">
         <div className="admin-block-head">
           <h2 id="knocks-heading">Knocks</h2>
-          <p>Live /data activity comes here next.</p>
+          <p>Live /data letters (buffer under 8).</p>
         </div>
-        <div className="knocks-placeholder">
-          <span>Waiting for knock stream…</span>
-        </div>
+        {knocks.length === 0 ? (
+          <div className="knocks-placeholder">
+            <span>Waiting for /data knocks…</span>
+          </div>
+        ) : (
+          <ul className="knocks-feed">
+            {[...knocks].reverse().map((knock) => (
+              <li key={knock.id} className="knock-row">
+                <span className="knock-row-letter">{knock.letter}</span>
+                <span className="knock-row-text">{knock.text}</span>
+                <span className="knock-row-who">{knock.guest || 'anon'}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <ConfirmGrantModal

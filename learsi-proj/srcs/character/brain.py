@@ -109,13 +109,9 @@ def knock_bad_seq() -> str:
     return 'Knock letters a-z only'
 
 
-def knock_hit(seq: str, key_id) -> str:
-    return f'Knock "{seq}" — matched key {key_id}'
+def knock_too_long() -> str:
+    return 'Knock under 8 letters'
 
 
-def knock_partial(seq: str) -> str:
-    return f'Knock "{seq}" — something nearby…'
-
-
-def knock_miss(seq: str) -> str:
-    return f'Knock "{seq}" — silence'
+def knock_via_data(seq: str) -> str:
+    return f'Knock /data "{seq}"'

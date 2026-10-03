@@ -141,13 +141,11 @@ def handle_command(
     gid: str,
     can_enter,
     home_path: str = CHARACTER_ROOM_PATH,
-    keys_c=None,
 ) -> str:
     """
     Run one command; update per-actor visual status; return caption.
     can_enter(room_id) -> bool — door rights for this actor.
     Does not write to the HQ room chat/DB.
-    keys_c optional — enables read-only `knock <letters>` against keys_t.
     """
     verb, arg = parse_command(raw_message)
     if verb is None:
@@ -225,8 +223,8 @@ def handle_command(
         return caption
 
     if verb == 'knock':
-        # Read-only probe of keys_t (same a-z alphabet as /data knock).
-        # Does not attach keys or mutate guest session.
+        # Debug: same /data/<letter> pipe as guests. Isolated jar — not a formal guest.
+        # Only filter: text below 8 a-z letters.
         raw = (arg or '').strip().lower().replace(' ', '')
         if not raw:
             caption = brain.knock_need_seq()
@@ -236,25 +234,20 @@ def handle_command(
             caption = brain.knock_bad_seq()
             _set_status(gid, caption=caption)
             return caption
-        seq = raw
-        if keys_c is None:
-            caption = brain.knock_miss(seq)
+        if len(raw) >= 8:
+            caption = brain.knock_too_long()
             _set_status(gid, caption=caption)
             return caption
         try:
-            exact = keys_c.find_key(seq, equal=True) or ()
-            if exact:
-                caption = brain.knock_hit(seq, exact[0][0])
-                _set_status(gid, caption=caption)
-                return caption
-            partial = keys_c.find_key(seq, equal=False) or ()
-            if partial:
-                caption = brain.knock_partial(seq)
-                _set_status(gid, caption=caption)
-                return caption
+            from flask import current_app
+
+            # Fresh client so Stick does not mash the asking guest's /data buffer.
+            client = current_app.test_client()
+            for ch in raw:
+                client.get(f'/data/{ch}', follow_redirects=True)
         except Exception as exc:
-            print(f'[CHARACTER] knock failed: {exc}')
-        caption = brain.knock_miss(seq)
+            print(f'[CHARACTER] knock /data failed: {exc}')
+        caption = brain.knock_via_data(raw)
         _set_status(gid, caption=caption)
         return caption
 
@@ -306,7 +299,7 @@ def handle_command(
 
 
 def handle_character_command(
-    rooms_c, raw_message: str, gid: str, can_enter, keys_c=None
+    rooms_c, raw_message: str, gid: str, can_enter
 ) -> dict:
     """
     Execute command for this guest. No writes to the character room chat/DB.
@@ -323,7 +316,6 @@ def handle_character_command(
         gid,
         can_enter,
         home_path=CHARACTER_ROOM_PATH,
-        keys_c=keys_c,
     )
     return get_status(gid)
 

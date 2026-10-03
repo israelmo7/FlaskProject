@@ -1,5 +1,7 @@
 """JSON APIs for React. Auth = same door check as /room/<path>."""
 
+import json
+
 from flask import Blueprint, jsonify, request, session
 
 from srcs.ai.rider import BRAIN_ROOM_PATH, get_brain_status, presence_in_room
@@ -8,6 +10,7 @@ from srcs.character.agent import (
     get_status,
     handle_character_command,
 )
+from srcs.core.knock_log import list_knocks
 from srcs.db import ADMIN_KEY_ID
 from srcs.rooms.routes import ADMIN_ROOM_PATH, has_right_key, path_room_to_id
 
@@ -34,8 +37,6 @@ def _chat_lines(room_id):
     text = raw.strip()
     if text.startswith('{') or text.startswith('['):
         try:
-            import json
-
             json.loads(text)
             return []
         except (TypeError, ValueError):
@@ -108,7 +109,7 @@ def api_character_command():
 
     try:
         status = handle_character_command(
-            rooms_c, message, gid, can_enter, keys_c=keys_c
+            rooms_c, message, gid, can_enter
         )
     except Exception as exc:
         print(f'[CHARACTER] command failed: {exc}')
@@ -203,6 +204,22 @@ def api_admin_guests():
     if not _may_use_admin_panel(gid):
         return jsonify(error='forbidden'), 403
     return jsonify(guests=guests_c.list_guests())
+
+
+@api_bp.route('/admin/knocks', methods=['GET'])
+def api_admin_knocks():
+    """Live /data knock feed for AdminPanel.jsx (text below 8 only)."""
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    if not _may_use_admin_panel(gid):
+        return jsonify(error='forbidden'), 403
+
+    try:
+        after = int(request.args.get('after') or 0)
+    except (TypeError, ValueError):
+        after = 0
+    return jsonify(knocks=list_knocks(after_id=after))
 
 
 @api_bp.route('/admin/grant-admin-key', methods=['POST'])
