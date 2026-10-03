@@ -176,14 +176,34 @@ function ConfirmGrantModal({ guest, busy, onYes, onNo }) {
   )
 }
 
+const LETTERS = 'abcdefghijklmnopqrstuvwxyz'.split('')
+
+function KnockLetterMap({ flashes }) {
+  return (
+    <div className="knock-letter-map" aria-hidden="true">
+      {LETTERS.map((ch) => {
+        const flashId = flashes[ch] || 0
+        return (
+          <span
+            key={`${ch}-${flashId}`}
+            className={`knock-map-letter${flashId ? ' lit' : ''}`}
+            data-letter={ch}
+          >
+            {ch}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function AdminPanel() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [rooms, setRooms] = useState([])
   const [guests, setGuests] = useState([])
   const [wander, setWander] = useState(null)
-  const [knocks, setKnocks] = useState([])
-  const [pops, setPops] = useState([])
+  const [flashes, setFlashes] = useState({})
   const [confirmGuest, setConfirmGuest] = useState(null)
   const [granting, setGranting] = useState(false)
 
@@ -207,18 +227,19 @@ export default function AdminPanel() {
         const fresh = knocksData.knocks || []
         if (fresh.length) {
           afterId = fresh[fresh.length - 1].id
-          setKnocks((prev) => [...prev, ...fresh].slice(-24))
-          // First poll fills the feed quietly; later polls pop toasts.
           if (primed) {
-            setPops((prev) =>
-              [
-                ...prev,
-                ...fresh.map((k) => ({
-                  ...k,
-                  popKey: `${k.id}-${Date.now()}`,
-                })),
-              ].slice(-6),
-            )
+            setFlashes((prev) => {
+              const next = { ...prev }
+              for (const knock of fresh) {
+                const ch = String(knock.letter || '')
+                  .toLowerCase()
+                  .slice(0, 1)
+                if (ch >= 'a' && ch <= 'z') {
+                  next[ch] = (next[ch] || 0) + 1
+                }
+              }
+              return next
+            })
           }
         }
         primed = true
@@ -229,20 +250,12 @@ export default function AdminPanel() {
     }
 
     load()
-    const id = setInterval(load, 2000)
+    const id = setInterval(load, 1500)
     return () => {
       cancelled = true
       clearInterval(id)
     }
   }, [])
-
-  useEffect(() => {
-    if (pops.length === 0) return undefined
-    const timer = setTimeout(() => {
-      setPops((prev) => prev.slice(1))
-    }, 2200)
-    return () => clearTimeout(timer)
-  }, [pops])
 
   async function confirmGrant() {
     if (!confirmGuest?.session || granting) return
@@ -266,6 +279,8 @@ export default function AdminPanel() {
 
   return (
     <main className="admin-shell">
+      <KnockLetterMap flashes={flashes} />
+
       <header className="admin-hero">
         <p className="admin-brand">Knocknok</p>
         <h1>Admin panel</h1>
@@ -274,16 +289,6 @@ export default function AdminPanel() {
 
       {error ? <p className="error">{error}</p> : null}
       {notice ? <p className="admin-notice">{notice}</p> : null}
-
-      <div className="knock-pop-stage" aria-live="polite">
-        {pops.map((knock) => (
-          <div key={knock.popKey || knock.id} className="knock-pop">
-            <span className="knock-pop-letter">{knock.letter}</span>
-            <span className="knock-pop-text">{knock.text}</span>
-            <span className="knock-pop-who">{knock.guest || 'anon'}</span>
-          </div>
-        ))}
-      </div>
 
       <section className="admin-block rooms-block" aria-labelledby="rooms-heading">
         <div className="admin-block-head">
@@ -348,28 +353,6 @@ export default function AdminPanel() {
             ))
           )}
         </div>
-      </section>
-
-      <section className="admin-block knocks-block" aria-labelledby="knocks-heading">
-        <div className="admin-block-head">
-          <h2 id="knocks-heading">Knocks</h2>
-          <p>Live /data letters (buffer under 8).</p>
-        </div>
-        {knocks.length === 0 ? (
-          <div className="knocks-placeholder">
-            <span>Waiting for /data knocks…</span>
-          </div>
-        ) : (
-          <ul className="knocks-feed">
-            {[...knocks].reverse().map((knock) => (
-              <li key={knock.id} className="knock-row">
-                <span className="knock-row-letter">{knock.letter}</span>
-                <span className="knock-row-text">{knock.text}</span>
-                <span className="knock-row-who">{knock.guest || 'anon'}</span>
-              </li>
-            ))}
-          </ul>
-        )}
       </section>
 
       <ConfirmGrantModal
