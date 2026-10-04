@@ -120,7 +120,10 @@ export default function StickFigure({
   size = 'full',
   label = 'Stick',
 }) {
-  const pose = talking ? 'talking' : phase || 'idle'
+  // Walking wins over brief talk flashes so the walk cycle stays visible.
+  const pose =
+    phase === 'walking' ? 'walking' : talking ? 'talking' : phase || 'idle'
+
   const frame = useStickFrame(pose)
   const filterId = useId().replace(/:/g, '')
   const shoulder = ANCHOR.shoulder
