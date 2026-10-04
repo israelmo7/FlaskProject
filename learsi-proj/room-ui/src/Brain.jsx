@@ -20,7 +20,7 @@ export default function Brain() {
   const [lastCommand, setLastCommand] = useState(null)
   const [talking, setTalking] = useState(false)
   const [mood, setMood] = useState('calm')
-  const { styleName, gear } = useRotatingStick(2600)
+  const { styleName, gear } = useRotatingStick(5200)
   const lastCaption = useRef(null)
   const talkTimer = useRef(null)
   const onExpression = useCallback((name) => setMood(name), [])

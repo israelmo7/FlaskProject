@@ -43,7 +43,7 @@ export default function Character() {
   const [caption, setCaption] = useState('At home')
   const [talking, setTalking] = useState(false)
   const [mood, setMood] = useState('calm')
-  const { styleName, gear } = useRotatingStick(2800)
+  const { styleName, gear } = useRotatingStick(5200)
   const lastCaption = useRef(null)
   const talkTimer = useRef(null)
   const onExpression = useCallback((name) => setMood(name), [])

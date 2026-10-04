@@ -24,23 +24,23 @@ export const STICK_EXPRESSIONS = [
   'talk',
 ]
 
-/** Alone-time weights — calm dominates so it stays pleasant, not twitchy. */
+/** Alone-time weights — calm still common, but other moods get real stage time. */
 const ALONE_WEIGHTS = {
-  calm: 42,
-  dreamy: 9,
-  content: 8,
-  bored: 8,
-  think: 7,
-  stretch: 5,
-  fidget: 5,
-  curious: 5,
-  chuckle: 4,
-  goofy: 3,
-  shy: 2,
-  proud: 2,
-  wave: 2,
-  laugh: 2,
-  startle: 1,
+  calm: 16,
+  dreamy: 10,
+  content: 9,
+  bored: 9,
+  think: 9,
+  stretch: 8,
+  fidget: 7,
+  curious: 7,
+  chuckle: 6,
+  goofy: 5,
+  shy: 4,
+  proud: 4,
+  wave: 4,
+  laugh: 4,
+  startle: 3,
 }
 
 /**
