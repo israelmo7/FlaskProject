@@ -86,7 +86,15 @@
   opacity: 0.38;
 }
 
-.pose-idle .ground-shadow {
+.pose-laugh .ground-shadow,
+.pose-goofy .ground-shadow,
+.pose-startle .ground-shadow {
+  opacity: 0.34;
+}
+
+.pose-calm .ground-shadow,
+.pose-dreamy .ground-shadow,
+.pose-content .ground-shadow {
   opacity: 0.22;
 }
 
