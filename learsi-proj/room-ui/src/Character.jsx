@@ -120,8 +120,8 @@ export default function Character() {
         <p className="character-brand">Stick</p>
         <h1>Character room</h1>
         <p className="character-lead">
-          Commands: go · read [n] · say · send · wait · back · knock &lt;letters&gt;.
-          Replies stay on the figure.
+          Commands: go · read [n] · say · send · wait [n] [cmd] · back · knock
+          &lt;letters&gt;. Example: wait 60 knock a. Replies stay on the figure.
         </p>
       </header>
 
