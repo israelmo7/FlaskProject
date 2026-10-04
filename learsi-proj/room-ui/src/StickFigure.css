@@ -1,36 +1,52 @@
-/* Shared stick-man figure (Brain HQ, chat sides, admin mini). */
+/* Stick figure — frame-posed, simple, pleasant. */
 
 .stick-man {
   overflow: visible;
-  transition: filter 0.4s ease, opacity 0.35s ease;
+  display: block;
+  transition: filter 0.45s ease, opacity 0.35s ease;
 }
 
 .stick-man.size-full {
-  width: min(14rem, 46vw);
-  height: min(19.6rem, 64vw);
+  width: min(18rem, 58vw);
+  height: min(27rem, 87vw);
 }
 
 .stick-man.size-side {
-  width: 7.5rem;
-  height: 10.5rem;
+  width: 9rem;
+  height: 13.5rem;
 }
 
 .stick-man.size-mini {
-  width: 2.5rem;
-  height: 3.5rem;
+  width: 3rem;
+  height: 4.5rem;
 }
 
 .stick-man .part {
   fill: none;
   stroke: var(--accent);
-  stroke-width: 3.5;
+  stroke-width: 3.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.stick-man .neck {
+  stroke-width: 3.2;
+}
+
+.stick-man .foot {
+  stroke-width: 3.2;
 }
 
 .stick-man .head {
   fill: var(--panel, #243028);
   stroke: var(--accent);
+  stroke-width: 3.6;
+}
+
+.stick-man .joint {
+  fill: var(--accent);
+  stroke: none;
+  opacity: 0.55;
 }
 
 .stick-man .eye {
@@ -39,13 +55,20 @@
   stroke: none;
 }
 
+.stick-man .eye.blink {
+  opacity: 0.15;
+  transform: scaleY(0.25);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
 .stick-man .hat,
 .stick-man .scarf,
 .stick-man .gear,
 .stick-man .lantern,
 .stick-man .hammer {
   display: none;
-  opacity: 0.9;
+  opacity: 0.92;
 }
 
 .stick-man .pack,
@@ -53,87 +76,86 @@
   display: none;
 }
 
-/* styles */
-.style-classic .part { stroke: var(--accent); stroke-width: 3.5; }
-.style-classic .scarf { display: inline; stroke: #e07a5f; stroke-width: 2.5; }
+.stick-man .ground-shadow {
+  fill: rgba(0, 0, 0, 0.28);
+  stroke: none;
+  transition: opacity 0.2s ease;
+}
 
-.style-chalk .part { stroke: #dce8df; stroke-width: 4.2; stroke-linecap: square; }
+.pose-walking .ground-shadow {
+  opacity: 0.38;
+}
+
+.pose-idle .ground-shadow {
+  opacity: 0.22;
+}
+
+/* —— style skins —— */
+
+.style-classic .part { stroke: var(--accent); stroke-width: 3.8; }
+.style-classic .scarf { display: inline; stroke: #e07a5f; stroke-width: 2.6; }
+.style-classic .joint { fill: var(--accent); }
+
+.style-chalk .part { stroke: #dce8df; stroke-width: 4.6; stroke-linecap: square; }
 .style-chalk .eye { display: inline; fill: #dce8df; }
 .style-chalk .head { fill: #1a1f1c; }
+.style-chalk .joint { fill: #dce8df; opacity: 0.7; }
 
-.style-ink .part { stroke: #9bb0a2; stroke-width: 2.2; }
-.style-ink .hat { display: inline; stroke: #c4a35a; stroke-width: 2.8; }
+.style-ink .part { stroke: #9bb0a2; stroke-width: 2.4; }
+.style-ink .hat { display: inline; stroke: #c4a35a; stroke-width: 3; }
 .style-ink .head { fill: transparent; }
+.style-ink .joint { fill: #9bb0a2; opacity: 0.45; }
 
 .style-neon .part {
   stroke: #7dffb3;
-  stroke-width: 3;
-  filter: drop-shadow(0 0 4px rgba(125, 255, 179, 0.55));
+  stroke-width: 3.2;
+  filter: drop-shadow(0 0 3px rgba(125, 255, 179, 0.45));
 }
 .style-neon .hat,
 .style-neon .scarf { display: inline; stroke: #ffd27a; }
 .style-neon .head { fill: #102018; stroke: #7dffb3; }
+.style-neon .joint { fill: #7dffb3; }
 
-.style-sketch .part { stroke: #e8f0ea; stroke-width: 1.8; stroke-dasharray: 5 3; }
+.style-sketch .part { stroke: #e8f0ea; stroke-width: 2; stroke-dasharray: 6 3.5; }
 .style-sketch .eye { display: inline; fill: #e8f0ea; }
+.style-sketch .joint { fill: #e8f0ea; opacity: 0.4; }
 
-.style-runner .part { stroke: #c4a35a; stroke-width: 3; }
-.style-runner .scarf { display: inline; stroke: #7dffb3; }
+.style-runner .part { stroke: #c4a35a; stroke-width: 3.4; }
+.style-runner .scarf { display: inline; stroke: #7dffb3; stroke-width: 2.8; }
 
-/* gear overlays */
-.gear-pack .pack { display: inline; fill: rgba(196, 163, 90, 0.25); stroke: var(--accent); }
+/* —— gear —— */
+
+.gear-pack .pack {
+  display: inline;
+  fill: rgba(196, 163, 90, 0.22);
+  stroke: var(--accent);
+  stroke-width: 2.6;
+}
 .gear-lantern .lantern { display: inline; }
-.gear-lantern .lantern .accent { fill: rgba(255, 210, 122, 0.35); stroke: #ffd27a; }
-.gear-map .map { display: inline; fill: rgba(232, 240, 234, 0.15); stroke: #dce8df; }
+.gear-lantern .lantern .accent {
+  fill: rgba(255, 210, 122, 0.32);
+  stroke: #ffd27a;
+  stroke-width: 2.4;
+}
+.gear-map .map {
+  display: inline;
+  fill: rgba(232, 240, 234, 0.14);
+  stroke: #dce8df;
+  stroke-width: 2.2;
+}
 .gear-hammer .hammer { display: inline; }
-.gear-hammer .hammer .accent { fill: rgba(196, 163, 90, 0.4); stroke: var(--accent); }
+.gear-hammer .hammer .accent {
+  fill: rgba(196, 163, 90, 0.38);
+  stroke: var(--accent);
+  stroke-width: 2.4;
+}
 
-.stick-figure { transform-origin: 50px 88px; }
+.stick-figure {
+  transition: none;
+}
 
-.pose-idle .stick-figure { animation: stick-sway 2.4s ease-in-out infinite; }
-.pose-idle .arm-l { transform-origin: 50px 56px; animation: arm-idle-l 2.4s ease-in-out infinite; }
-.pose-idle .arm-r { transform-origin: 50px 56px; animation: arm-idle-r 2.4s ease-in-out infinite; }
-
-.pose-walking .leg-l { transform-origin: 50px 88px; animation: leg-walk 0.45s ease-in-out infinite alternate; }
-.pose-walking .leg-r { transform-origin: 50px 88px; animation: leg-walk-r 0.45s ease-in-out infinite alternate; }
-.pose-walking .arm-l,
-.pose-walking .arm-r { transform-origin: 50px 56px; animation: arm-walk 0.45s ease-in-out infinite alternate; }
-.pose-walking .arm-r { animation-direction: alternate-reverse; }
-
-.pose-visiting .stick-figure { transform: rotate(-4deg); }
-
-.pose-talking .head { animation: head-talk 0.35s ease-in-out 2; }
-.pose-talking .arm-r { transform-origin: 50px 56px; animation: wave 0.4s ease-in-out 2; }
-
-@keyframes stick-sway {
-  0%, 100% { transform: rotate(-2deg); }
-  50% { transform: rotate(2deg); }
-}
-@keyframes arm-idle-l {
-  0%, 100% { transform: rotate(4deg); }
-  50% { transform: rotate(-4deg); }
-}
-@keyframes arm-idle-r {
-  0%, 100% { transform: rotate(-4deg); }
-  50% { transform: rotate(4deg); }
-}
-@keyframes leg-walk {
-  from { transform: rotate(18deg); }
-  to { transform: rotate(-14deg); }
-}
-@keyframes leg-walk-r {
-  from { transform: rotate(-14deg); }
-  to { transform: rotate(18deg); }
-}
-@keyframes arm-walk {
-  from { transform: rotate(-16deg); }
-  to { transform: rotate(16deg); }
-}
-@keyframes head-talk {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-}
-@keyframes wave {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(-35deg); }
+@media (prefers-reduced-motion: reduce) {
+  .stick-man .stick-figure {
+    transform: none !important;
+  }
 }
