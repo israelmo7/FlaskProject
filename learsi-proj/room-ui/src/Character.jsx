@@ -42,9 +42,11 @@ export default function Character() {
   const [target, setTarget] = useState(null)
   const [caption, setCaption] = useState('At home')
   const [talking, setTalking] = useState(false)
-  const { styleName, gear } = useRotatingStick(2800)
+  const [mood, setMood] = useState('calm')
+  const { styleName, gear } = useRotatingStick(5200)
   const lastCaption = useRef(null)
   const talkTimer = useRef(null)
+  const onExpression = useCallback((name) => setMood(name), [])
 
   const applyStatus = useCallback((status) => {
     if (!status) return
@@ -131,10 +133,11 @@ export default function Character() {
           gear={gear}
           size="full"
           label="Stick"
+          onExpression={onExpression}
         />
         <p className="character-status">{statusLabel}</p>
         <p className="character-style-tag">
-          {styleName}/{gear} · room {roomPath}
+          {mood} · {styleName}/{gear} · room {roomPath}
         </p>
       </section>
 

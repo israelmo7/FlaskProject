@@ -19,9 +19,11 @@ export default function Brain() {
   const [caption, setCaption] = useState('Waking up…')
   const [lastCommand, setLastCommand] = useState(null)
   const [talking, setTalking] = useState(false)
-  const { styleName, gear } = useRotatingStick(2600)
+  const [mood, setMood] = useState('calm')
+  const { styleName, gear } = useRotatingStick(5200)
   const lastCaption = useRef(null)
   const talkTimer = useRef(null)
+  const onExpression = useCallback((name) => setMood(name), [])
 
   const applyStatus = useCallback((status) => {
     if (!status) return
@@ -87,12 +89,13 @@ export default function Brain() {
           gear={gear}
           size="full"
           label="Wander"
+          onExpression={onExpression}
         />
         <p className="character-status">{caption}</p>
         <p className="character-style-tag">
           {placeLabel}
           {lastCommand ? ` · ${lastCommand}` : ''}
-          {` · ${styleName}/${gear}`}
+          {` · ${mood} · ${styleName}/${gear}`}
         </p>
       </section>
 
