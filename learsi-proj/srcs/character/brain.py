@@ -6,12 +6,14 @@ NAME = 'Stick'
 COMMANDS = ('go', 'send', 'read', 'wait', 'back', 'say', 'knock')
 DEFAULT_READ_LINES = 3
 MAX_READ_LINES = 20
+WAIT_MIN_SECS = 1
+WAIT_MAX_SECS = 120
 
 
 def help_line() -> str:
     return (
         'Commands: go <room> | read [n] | say <text> | send <text> | '
-        'wait | back | knock <letters>'
+        'wait [n] [command] | back | knock <letters>'
     )
 
 
@@ -83,6 +85,21 @@ def wait_ok(room_path: str | None) -> str:
     if room_path:
         return f'Waiting at {room_path}'
     return 'Waiting at home'
+
+
+def wait_bad_secs() -> str:
+    return f'wait <{WAIT_MIN_SECS}–{WAIT_MAX_SECS}> [command]'
+
+
+def wait_for(seconds: int, follow: str | None = None) -> str:
+    if follow:
+        short = follow if len(follow) <= 40 else follow[:37] + '…'
+        return f'Waiting {seconds}s, then: {short}'
+    return f'Waiting {seconds}s…'
+
+
+def wait_done() -> str:
+    return 'Done waiting'
 
 
 def back_ok() -> str:

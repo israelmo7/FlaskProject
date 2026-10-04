@@ -21,6 +21,8 @@ _DEFAULT = {
 }
 # Per actor id — guest session or autonomous '__brain__'.
 _status_by_guest: dict[str, dict] = {}
+# One pending delayed command timer per actor.
+_delay_timers: dict[str, threading.Timer] = {}
 
 
 def get_status(gid: str | None = None):
@@ -133,6 +135,79 @@ def _parse_read_count(arg: str) -> int | None:
     if n < 1 or n > brain.MAX_READ_LINES:
         return None
     return n
+
+
+def _parse_wait_tail(arg: str):
+    """
+    Parse `wait` arguments.
+    Returns:
+      ('plain', None, None) — bare `wait`
+      ('bad', None, None) — seconds out of range / empty junk
+      ('delay', seconds, follow_or_None) — `wait 60` or `wait 60 knock a`
+    """
+    text = (arg or '').strip()
+    if not text:
+        return 'plain', None, None
+    parts = text.split(None, 1)
+    try:
+        secs = int(parts[0])
+    except (TypeError, ValueError):
+        return 'bad', None, None
+    if secs < brain.WAIT_MIN_SECS or secs > brain.WAIT_MAX_SECS:
+        return 'bad', None, None
+    follow = parts[1].strip() if len(parts) > 1 else ''
+    return 'delay', secs, follow or None
+
+
+def _cancel_delay(gid: str):
+    with _lock:
+        timer = _delay_timers.pop(gid, None)
+    if timer is not None:
+        timer.cancel()
+
+
+def _schedule_delayed_command(
+    app,
+    rooms_c,
+    gid: str,
+    can_enter,
+    home_path: str,
+    seconds: int,
+    follow_cmd: str | None,
+):
+    """After `seconds`, run follow_cmd (or mark wait done). Cancels any prior delay."""
+    _cancel_delay(gid)
+    app_obj = app
+
+    def _fire():
+        with _lock:
+            _delay_timers.pop(gid, None)
+        try:
+            with app_obj.app_context():
+                if follow_cmd:
+                    verb, arg = parse_command(follow_cmd)
+                    if verb == 'go' and arg:
+                        _set_status(gid, phase='walking', target=arg.strip())
+                    # Nested wait is allowed but unusual — run through handle_command.
+                    handle_command(
+                        rooms_c,
+                        follow_cmd,
+                        gid,
+                        can_enter,
+                        home_path=home_path,
+                    )
+                else:
+                    caption = brain.wait_done()
+                    _set_status(gid, phase='idle', caption=caption)
+        except Exception as exc:
+            print(f'[CHARACTER] delayed command failed: {exc}')
+            _set_status(gid, caption='Wait failed')
+
+    timer = threading.Timer(seconds, _fire)
+    timer.daemon = True
+    with _lock:
+        _delay_timers[gid] = timer
+    timer.start()
 
 
 def handle_command(
@@ -280,7 +355,38 @@ def handle_command(
         return caption
 
     if verb == 'wait':
-        caption = brain.wait_ok(target_path)
+        kind, secs, follow = _parse_wait_tail(arg)
+        if kind == 'bad':
+            caption = brain.wait_bad_secs()
+            _set_status(gid, caption=caption)
+            return caption
+        if kind == 'plain':
+            caption = brain.wait_ok(target_path)
+            _set_status(gid, phase='idle', target=target_path, caption=caption)
+            return caption
+
+        # wait <n> [command] — schedule follow-up on one line.
+        try:
+            from flask import current_app
+
+            app = current_app._get_current_object()
+        except Exception:
+            app = None
+        if app is None:
+            caption = brain.wait_for(secs, follow)
+            _set_status(gid, phase='idle', target=target_path, caption=caption)
+            return caption
+
+        _schedule_delayed_command(
+            app,
+            rooms_c,
+            gid,
+            can_enter,
+            home_path,
+            secs,
+            follow,
+        )
+        caption = brain.wait_for(secs, follow)
         _set_status(gid, phase='idle', target=target_path, caption=caption)
         return caption
 

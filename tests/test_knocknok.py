@@ -734,6 +734,70 @@ def test_knock_command_hits_data(app):
         core_routes.keys_c = 0
 
 
+def test_wait_parse_and_delay_runs_follow(app):
+    """wait <n> <command> schedules the follow-up on one line."""
+    from srcs.character import agent as character_agent
+    from srcs.character import brain
+
+    assert character_agent._parse_wait_tail('') == ('plain', None, None)
+    assert character_agent._parse_wait_tail('60 knock a') == ('delay', 60, 'knock a')
+    assert character_agent._parse_wait_tail('5 say hi') == ('delay', 5, 'say hi')
+    assert character_agent._parse_wait_tail('0 knock a')[0] == 'bad'
+    assert character_agent._parse_wait_tail('999 knock a')[0] == 'bad'
+
+    class FakeRooms:
+        def list_rooms(self):
+            return [{'id': 1, 'path': 'lobby', 'rtype': 'chat'}]
+
+        def get_room(self, value):
+            return ((2,),) if value == 'character' else ()
+
+        def get_chat_messages(self, rid):
+            return (('{"allow":["lobby"]}',),)
+
+        def set_chat_messages(self, rid, message):
+            raise AssertionError('should not write')
+
+    character_agent._status_by_guest.clear()
+    character_agent._cancel_delay('waitusr')
+    gid = 'waitusr'
+
+    with app.app_context():
+        caption = character_agent.handle_command(
+            FakeRooms(), 'wait 1 say hello there', gid, lambda rid: True
+        )
+    assert caption == brain.wait_for(1, 'say hello there')
+    assert 'Waiting 1s' in caption
+
+    # Let the timer fire.
+    import time
+
+    time.sleep(1.25)
+    status = character_agent.get_status(gid)
+    assert status['caption'] == brain.say_ok('hello there')
+
+
+def test_plain_wait_still_works():
+    from srcs.character import agent as character_agent
+    from srcs.character import brain
+
+    class FakeRooms:
+        def list_rooms(self):
+            return []
+
+        def get_room(self, value):
+            return ((2,),) if value == 'character' else ()
+
+        def get_chat_messages(self, rid):
+            return (('{}',),)
+
+    character_agent._status_by_guest.clear()
+    caption = character_agent.handle_command(
+        FakeRooms(), 'wait', 'w1', lambda rid: True
+    )
+    assert caption == brain.wait_ok(None)
+
+
 def test_admin_knocks_unauthorized(client):
     response = client.get('/api/admin/knocks')
     assert response.status_code == 401
