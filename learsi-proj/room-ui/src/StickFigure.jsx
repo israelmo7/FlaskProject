@@ -10,12 +10,12 @@ export const STICK_GEAR = ['none', 'pack', 'lantern', 'map', 'hammer']
  */
 const FRAMES = {
   idle: [
-    { bob: 0, lean: -1.2, armL: [12, 8], armR: [-10, 6], legL: [3, 2], legR: [-2, 1], blink: false },
-    { bob: 1.2, lean: -0.4, armL: [10, 10], armR: [-8, 8], legL: [2, 2], legR: [-2, 2], blink: false },
-    { bob: 2.2, lean: 0.6, armL: [8, 12], armR: [-6, 10], legL: [1, 3], legR: [-1, 2], blink: false },
-    { bob: 1.4, lean: 1.0, armL: [9, 10], armR: [-7, 8], legL: [2, 2], legR: [-2, 2], blink: true },
-    { bob: 0.4, lean: 0.2, armL: [11, 8], armR: [-9, 6], legL: [3, 2], legR: [-2, 1], blink: false },
-    { bob: -0.3, lean: -0.8, armL: [13, 6], armR: [-11, 5], legL: [3, 1], legR: [-3, 1], blink: false },
+    { bob: 0, lean: -1.2, armL: [14, 10], armR: [-12, 8], legL: [14, 6], legR: [-14, 5], blink: false },
+    { bob: 1.2, lean: -0.4, armL: [12, 12], armR: [-10, 10], legL: [13, 7], legR: [-13, 6], blink: false },
+    { bob: 2.2, lean: 0.6, armL: [10, 14], armR: [-8, 12], legL: [12, 8], legR: [-12, 7], blink: false },
+    { bob: 1.4, lean: 1.0, armL: [11, 12], armR: [-9, 10], legL: [13, 7], legR: [-13, 6], blink: true },
+    { bob: 0.4, lean: 0.2, armL: [13, 10], armR: [-11, 8], legL: [14, 6], legR: [-14, 5], blink: false },
+    { bob: -0.3, lean: -0.8, armL: [15, 8], armR: [-13, 6], legL: [15, 5], legR: [-15, 4], blink: false },
   ],
   walking: [
     { bob: 0, lean: 3, armL: [28, 12], armR: [-24, 10], legL: [-26, 18], legR: [22, 8], blink: false },
@@ -26,17 +26,17 @@ const FRAMES = {
     { bob: -1.4, lean: 1, armL: [8, 8], armR: [-6, 6], legL: [-6, 8], legR: [4, 4], blink: false },
   ],
   visiting: [
-    { bob: 0.4, lean: -5, armL: [18, 14], armR: [-4, 20], legL: [8, 4], legR: [-6, 6], blink: false },
-    { bob: 1.2, lean: -4, armL: [16, 16], armR: [-2, 22], legL: [7, 5], legR: [-5, 6], blink: false },
-    { bob: 0.6, lean: -5.5, armL: [20, 12], armR: [-6, 18], legL: [9, 3], legR: [-7, 5], blink: true },
-    { bob: 1.0, lean: -4.2, armL: [17, 15], armR: [-3, 21], legL: [8, 4], legR: [-6, 6], blink: false },
+    { bob: 0.4, lean: -5, armL: [18, 14], armR: [-4, 20], legL: [16, 6], legR: [-10, 8], blink: false },
+    { bob: 1.2, lean: -4, armL: [16, 16], armR: [-2, 22], legL: [15, 7], legR: [-9, 8], blink: false },
+    { bob: 0.6, lean: -5.5, armL: [20, 12], armR: [-6, 18], legL: [17, 5], legR: [-11, 7], blink: true },
+    { bob: 1.0, lean: -4.2, armL: [17, 15], armR: [-3, 21], legL: [16, 6], legR: [-10, 8], blink: false },
   ],
   talking: [
-    { bob: 0.5, lean: 2, armL: [8, 6], armR: [-38, 28], legL: [4, 2], legR: [-3, 2], blink: false },
-    { bob: 1.8, lean: 3, armL: [10, 8], armR: [-48, 18], legL: [3, 2], legR: [-2, 2], blink: false },
-    { bob: 0.8, lean: 1, armL: [6, 6], armR: [-30, 32], legL: [4, 2], legR: [-3, 2], blink: false },
-    { bob: 2.0, lean: 2.5, armL: [9, 7], armR: [-52, 12], legL: [3, 2], legR: [-2, 2], blink: true },
-    { bob: 1.0, lean: 1.5, armL: [7, 6], armR: [-34, 26], legL: [4, 2], legR: [-3, 2], blink: false },
+    { bob: 0.5, lean: 2, armL: [10, 8], armR: [-38, 28], legL: [14, 5], legR: [-12, 5], blink: false },
+    { bob: 1.8, lean: 3, armL: [12, 10], armR: [-48, 18], legL: [13, 5], legR: [-11, 5], blink: false },
+    { bob: 0.8, lean: 1, armL: [8, 8], armR: [-30, 32], legL: [14, 5], legR: [-12, 5], blink: false },
+    { bob: 2.0, lean: 2.5, armL: [11, 9], armR: [-52, 12], legL: [13, 5], legR: [-11, 5], blink: true },
+    { bob: 1.0, lean: 1.5, armL: [9, 8], armR: [-34, 26], legL: [14, 5], legR: [-12, 5], blink: false },
   ],
 }
 
