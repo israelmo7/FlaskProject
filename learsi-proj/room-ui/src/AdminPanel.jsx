@@ -97,13 +97,13 @@ function CharacterPreview() {
   )
 }
 
-function RoomPreviewCard({ room, wanderHere }) {
+function RoomPreviewCard({ room }) {
   const isAdmin = room.rtype === 'admin'
   const isCharacter = room.rtype === 'character'
   const isAi = room.rtype === 'ai'
   return (
     <a
-      className={`room-preview-card ${wanderHere ? 'has-wander' : ''}`}
+      className="room-preview-card"
       href={`/room/${room.path}`}
       title={`Open ${room.path} (${room.rtype})`}
     >
@@ -115,17 +115,6 @@ function RoomPreviewCard({ room, wanderHere }) {
         ) : (
           <ChatPreview path={room.path} />
         )}
-        {wanderHere ? (
-          <div className="wander-on-card" title={wanderHere.caption || 'Wander'}>
-            <StickFigure
-              phase={wanderHere.phase || 'visiting'}
-              styleName="neon"
-              gear="pack"
-              size="mini"
-              label="Wander"
-            />
-          </div>
-        ) : null}
       </div>
       <div className="room-preview-caption">
         <span className="room-preview-name">{room.path}</span>
@@ -305,17 +294,7 @@ export default function AdminPanel() {
             <p className="admin-empty">No rooms yet.</p>
           ) : (
             rooms.map((room) => (
-              <RoomPreviewCard
-                key={room.id}
-                room={room}
-                wanderHere={
-                  wander?.target &&
-                  String(wander.target).toLowerCase() ===
-                    String(room.path).toLowerCase()
-                    ? wander
-                    : null
-                }
-              />
+              <RoomPreviewCard key={room.id} room={room} />
             ))
           )}
         </div>

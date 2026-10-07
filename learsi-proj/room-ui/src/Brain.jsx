@@ -20,6 +20,7 @@ export default function Brain() {
   const [lastCommand, setLastCommand] = useState(null)
   const [talking, setTalking] = useState(false)
   const [mood, setMood] = useState('calm')
+  const [mindMode, setMindMode] = useState('heuristic')
   const { styleName, gear } = useRotatingStick(5200)
   const lastCaption = useRef(null)
   const talkTimer = useRef(null)
@@ -30,6 +31,7 @@ export default function Brain() {
     setPhase(status.phase || 'idle')
     setTarget(status.target || null)
     setLastCommand(status.last_command || null)
+    setMindMode(status.mind || 'heuristic')
     const nextCaption = status.caption || 'At home'
     setCaption(nextCaption)
     if (nextCaption && nextCaption !== lastCaption.current) {
@@ -77,7 +79,8 @@ export default function Brain() {
         <h1>Brain room</h1>
         <p className="character-lead">
           Full-size Stick body. A mind rides the tools — goes, reads, knocks, says
-          captions. You watch.
+          captions. You watch. Set <code>WANDER_LLM=ollama</code> for local AI;
+          otherwise heuristic.
         </p>
       </header>
 
@@ -95,7 +98,7 @@ export default function Brain() {
         <p className="character-style-tag">
           {placeLabel}
           {lastCommand ? ` · ${lastCommand}` : ''}
-          {` · ${mood} · ${styleName}/${gear}`}
+          {` · mind:${mindMode} · ${mood} · ${styleName}/${gear}`}
         </p>
       </section>
 

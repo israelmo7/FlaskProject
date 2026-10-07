@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import json
+import os
 import random
+import urllib.error
+import urllib.request
 
 # Short stable personality. No world map — only tools + live observation.
 PERSONALITY = (
@@ -18,18 +22,34 @@ TOOLS = (
     'read [n] — peek last n chat lines where you are (caption only)',
     'say <text> — speak a short caption (not written to any chat)',
     'wait — pause where you are',
+    'wait <n> <command> — wait n seconds then run one command',
     'back — return to HQ',
+    'knock <letters> — tap /data letters (debug; under 8 a-z)',
 )
 
-# Heuristic visit steps (swap decide() body for an LM later).
+# Heuristic visit steps (used when no LM, or LM fails).
 _STEP_HOME = 'home'
 _STEP_ARRIVED = 'arrived'
 _STEP_READ = 'read'
 _STEP_SAID = 'said'
 
+# Decisions (defaults):
+# - Where: optional local Ollama (WANDER_LLM=ollama), else heuristic
+# - Output: one Stick command line only
+# - Safety: allowlist enforced by Stick executor, not the mind
+_ALLOWED_VERBS = frozenset({'go', 'read', 'say', 'wait', 'back', 'knock'})
+
 
 def tools_blurb() -> str:
     return '\n'.join(f'- {t}' for t in TOOLS)
+
+
+def mind_mode() -> str:
+    """Active mind backend label for status UI."""
+    flag = (os.environ.get('WANDER_LLM') or '').strip().lower()
+    if flag in ('1', 'true', 'ollama', 'yes'):
+        return 'ollama'
+    return 'heuristic'
 
 
 def build_observation(
@@ -51,6 +71,7 @@ def build_observation(
         'caption': caption or '',
         'phase': phase or 'idle',
         'step': step,
+        'mind': mind_mode(),
     }
 
 
@@ -74,12 +95,7 @@ def _comment_on_lines(here: str | None, lines: list[str]) -> str:
     return random.choice(options)
 
 
-def decide(observation: dict) -> str:
-    """
-    Return one Stick command string.
-    v1: heuristic rider. Later: LM that sees personality + tools + observation
-    and returns the same command shape (no extra teaching).
-    """
+def _decide_heuristic(observation: dict) -> str:
     here = observation.get('here')
     can_go = [p for p in (observation.get('can_go') or []) if p]
     lines = observation.get('last_lines') or []
@@ -106,7 +122,99 @@ def decide(observation: dict) -> str:
             return 'wait'
         return 'back'
 
-    # Unknown step — wander or wait.
     if can_go and random.random() < 0.6:
         return f'go {random.choice(can_go)}'
     return 'wait'
+
+
+def _parse_llm_command(text: str, can_go: list[str]) -> str | None:
+    """Extract a single allowed Stick command from model text."""
+    if not text:
+        return None
+    for raw_line in str(text).splitlines():
+        line = raw_line.strip().strip('`"')
+        if not line:
+            continue
+        # Drop leading labels like "Command:"
+        lower = line.lower()
+        for prefix in ('command:', 'cmd:', 'output:'):
+            if lower.startswith(prefix):
+                line = line[len(prefix) :].strip()
+                lower = line.lower()
+                break
+        parts = line.split(None, 1)
+        verb = parts[0].lower()
+        if verb not in _ALLOWED_VERBS:
+            continue
+        arg = parts[1].strip() if len(parts) > 1 else ''
+        if verb == 'go':
+            room = arg.split()[0].lower() if arg else ''
+            if room not in {p.lower() for p in can_go}:
+                continue
+            return f'go {room}'
+        if verb == 'read':
+            return f'read {arg}' if arg else 'read 3'
+        if verb == 'say':
+            if not arg:
+                continue
+            return f'say {arg[:80]}'
+        if verb == 'knock':
+            letters = arg.replace(' ', '').lower()
+            if letters and all('a' <= c <= 'z' for c in letters) and len(letters) < 8:
+                return f'knock {letters}'
+            continue
+        if verb == 'wait':
+            return f'wait {arg}'.strip() if arg else 'wait'
+        if verb == 'back':
+            return 'back'
+    return None
+
+
+def _decide_ollama(observation: dict) -> str | None:
+    """
+    Ask local Ollama for one Stick command.
+    Env: WANDER_LLM=ollama, OLLAMA_URL (default 127.0.0.1:11434),
+         OLLAMA_MODEL (default llama3.2).
+    """
+    can_go = list(observation.get('can_go') or [])
+    base = (os.environ.get('OLLAMA_URL') or 'http://127.0.0.1:11434').rstrip('/')
+    model = os.environ.get('OLLAMA_MODEL') or 'llama3.2'
+    prompt = (
+        f"{PERSONALITY}\n\n"
+        f"Tools:\n{tools_blurb()}\n\n"
+        f"Observation JSON:\n{json.dumps(observation, ensure_ascii=True)}\n\n"
+        'Reply with ONLY one command line, nothing else.'
+    )
+    body = json.dumps(
+        {
+            'model': model,
+            'prompt': prompt,
+            'stream': False,
+            'options': {'temperature': 0.4, 'num_predict': 48},
+        }
+    ).encode('utf-8')
+    req = urllib.request.Request(
+        f'{base}/api/generate',
+        data=body,
+        headers={'Content-Type': 'application/json'},
+        method='POST',
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            payload = json.loads(resp.read().decode('utf-8'))
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as exc:
+        print(f'[BRAIN] Ollama unavailable, using heuristic: {exc}')
+        return None
+    return _parse_llm_command(payload.get('response') or '', can_go)
+
+
+def decide(observation: dict) -> str:
+    """
+    Return one Stick command string.
+    Prefer Ollama when WANDER_LLM is set; always fall back to heuristic.
+    """
+    if mind_mode() == 'ollama':
+        cmd = _decide_ollama(observation)
+        if cmd:
+            return cmd
+    return _decide_heuristic(observation)

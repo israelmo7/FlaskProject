@@ -45,6 +45,7 @@ def get_brain_status():
         status['echo_cooldown'] = (
             max(0, int(until - now)) if talking and until else 0
         )
+        status['mind'] = mind.mind_mode()
     return status
 
 
@@ -279,5 +280,6 @@ def start_brain_rider(app):
     threading.Thread(target=_loop, name='brain-rider', daemon=True).start()
     print(
         f'[BRAIN] Rider started '
-        f'(cycle={interval}s, echo_silence={ECHO_SILENCE_SECONDS}s)'
+        f'(cycle={interval}s, echo_silence={ECHO_SILENCE_SECONDS}s, '
+        f'mind={mind.mind_mode()})'
     )

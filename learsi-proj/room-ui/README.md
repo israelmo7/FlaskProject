@@ -16,9 +16,9 @@ from `data-room-type` and fetches JSON from `/api/...`.
 Flask sets `data-room-type` from `rooms.rtype`. `App.jsx` switches:
 
 - `chat` → `Chat.jsx` → `/api/<path>/messages`
-- `admin` → `AdminPanel.jsx` → room preview cards + guests
+- `admin` → `AdminPanel.jsx` → room preview cards + guests + knock letter map (no Wander mini-stick on cards)
 - `character` → `Character.jsx` → command UI + visual status (no chat log)
-- `ai` → `Brain.jsx` → watch Wander ride Stick tools
+- `ai` → `Brain.jsx` → watch Wander ride Stick tools (`WANDER_LLM=ollama` optional)
 
 ## Learn by reading
 

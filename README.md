@@ -9,8 +9,10 @@ Session-based knock authentication with Flask, MySQL, and a React room UI.
 - Progressive knock sequence in Flask sessions
 - Rooms typed by `rtype` (`chat` → Chat, `admin` → AdminPanel, `character` → Character, `ai` → Brain)
 - Character Stick: manual command UI; visual-only replies
-- Brain / Wander: autonomous mind rides the same Stick tools (`go` `read` `say` `wait` `back`)
+- Brain / Wander: autonomous mind rides the same Stick tools (`go` `read` `say` `wait` `back` `knock`)
+- Mind defaults to heuristic; set `WANDER_LLM=ollama` for optional local Ollama (falls back if down)
 - Stick/Wander may only visit allowlisted rooms (guest keys for Stick; allowlist for Wander)
+- Wander travels in chat rooms (presence rail); admin previews stay text-only (no mini-stick overlay)
 - Admin panel can grant key `999` to a guest (yes/no confirm)
 - Admin key is attached manually (not via knock)
 
@@ -97,16 +99,18 @@ pytest
 
 - New `rtype=character`: SVG stick-man HQ at `/room/character`
 - Command UI (`go` `read [n]` `say` `send` `wait` `back`); replies are visual captions only
-- New `rtype=ai` room `/room/brain`: Wander mind rides Stick tools autonomously (heuristic; LM-ready)
+- New `rtype=ai` room `/room/brain`: Wander mind rides Stick tools autonomously
+- Mind: heuristic by default; optional `WANDER_LLM=ollama` (+ `OLLAMA_URL` / `OLLAMA_MODEL`); output is one Stick command; allowlist enforced by Stick
 - Stick visits = guest door rights ∩ allowlist; Wander = allowlist only (server rider)
 - Extra seed rooms: `garden`, `studio`, `brain`
 - Rotating stick styles (classic / chalk / ink / neon / sketch)
 - `GET /api/character/status`, `POST /api/character/command`, `GET /api/brain/status`
-- Wander appears in chat rooms he visits (`GET /api/<room>/presence`)
+- Wander appears in chat rooms he visits (`GET /api/<room>/presence`) — not as a flying overlay on admin cards
 - While present: guest messages start an echo loop (caption `Ha Ha…`); ends after **60s silence** with `What a waste of talk - no point!`, then normal roam
-- Stick tools: `go <room>` · `read [n]` · `say <text>` · `send <text>` · `wait` · `back` · `knock <a-z>` (read-only key probe)
-- Admin room cards show Wander on the preview of the room he currently occupies
+- Stick tools: `go <room>` · `read [n]` · `say <text>` · `send <text>` · `wait [n] [cmd]` · `back` · `knock <a-z>` (under 8 letters via `/data`)
+- Admin letter-map flash for knocks from `/data`; admin text line notes Wander’s room
 - Admin: `POST /api/admin/grant-admin-key` + yes/no confirm popup on guest chips
+- Door/key encoding polish deferred (fix later)
 
 ## Changelog (0.13)
 

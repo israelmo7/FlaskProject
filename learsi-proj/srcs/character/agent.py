@@ -113,6 +113,26 @@ def _find_room_by_path(rooms_c, path: str):
     return None
 
 
+def _visit_gate(rooms_c, path, allow, can_enter, home_path: str):
+    """
+    Shared door checks for go/read/send.
+    Returns (room_dict, None) or (None, error_caption).
+    """
+    if not path:
+        return None, brain.read_need_target()
+    needle = str(path).strip().lower()
+    if needle not in allow:
+        return None, brain.go_not_allowed(path)
+    room = _find_room_by_path(rooms_c, path)
+    if room is None:
+        if needle in HQ_RTYPES or needle == home_path.lower():
+            return None, brain.go_denied(path)
+        return None, brain.go_not_found(path)
+    if not can_enter(room['id']):
+        return None, brain.go_forbidden(path)
+    return room, None
+
+
 def parse_command(raw: str):
     """Split guest line into (verb, arg_string). verb lowercased; None if empty."""
     text = (raw or '').strip()
@@ -237,22 +257,10 @@ def handle_command(
             caption = brain.go_missing_arg()
             _set_status(gid, phase='idle', caption=caption)
             return caption
-        needle = arg.strip().lower()
-        if needle not in allow:
-            caption = brain.go_not_allowed(arg.strip())
-            _set_status(gid, phase='idle', caption=caption)
-            return caption
-        room = _find_room_by_path(rooms_c, arg)
-        if room is None:
-            caption = (
-                brain.go_denied(arg.strip())
-                if needle in HQ_RTYPES or needle == home_path.lower()
-                else brain.go_not_found(arg.strip())
-            )
-            _set_status(gid, phase='idle', caption=caption)
-            return caption
-        if not can_enter(room['id']):
-            caption = brain.go_forbidden(arg.strip())
+        room, err = _visit_gate(rooms_c, arg, allow, can_enter, home_path)
+        if err:
+            # go_missing uses different copy when empty; gate covers the rest.
+            caption = err if err != brain.read_need_target() else brain.go_missing_arg()
             _set_status(gid, phase='idle', caption=caption)
             return caption
         path = room.get('path') or arg.strip()
@@ -266,26 +274,19 @@ def handle_command(
             caption = brain.read_bad_count()
             _set_status(gid, caption=caption)
             return caption
-        if not target_path:
-            caption = brain.read_need_target()
-            _set_status(gid, phase='idle', caption=caption)
-            return caption
-        if target_path.lower() not in allow:
-            caption = brain.go_not_allowed(target_path)
-            _set_status(gid, phase='idle', target=None, caption=caption)
-            return caption
-        room = _find_room_by_path(rooms_c, target_path)
-        if room is None:
-            caption = brain.go_not_found(target_path)
-            _set_status(gid, phase='idle', target=None, caption=caption)
-            return caption
-        if not can_enter(room['id']):
-            caption = brain.go_forbidden(target_path)
-            _set_status(gid, phase='idle', target=None, caption=caption)
-            return caption
+        room, err = _visit_gate(rooms_c, target_path, allow, can_enter, home_path)
+        if err:
+            _set_status(
+                gid,
+                phase='idle',
+                target=None if err != brain.read_need_target() else target_path,
+                caption=err,
+            )
+            return err
+        path = room.get('path') or target_path
         lines = _chat_lines(rooms_c, room['id'])
-        caption = brain.read_report(target_path, lines, max_show=count)
-        _set_status(gid, phase='visiting', target=target_path, caption=caption)
+        caption = brain.read_report(path, lines, max_show=count)
+        _set_status(gid, phase='visiting', target=path, caption=caption)
         return caption
 
     if verb == 'say':
@@ -298,8 +299,7 @@ def handle_command(
         return caption
 
     if verb == 'knock':
-        # Debug: same /data/<letter> pipe as guests. Isolated jar — not a formal guest.
-        # Only filter: text below 8 a-z letters.
+        # Same /data/<letter> pipe as guests. Isolated jar — not a formal guest.
         raw = (arg or '').strip().lower().replace(' ', '')
         if not raw:
             caption = brain.knock_need_seq()
@@ -316,7 +316,6 @@ def handle_command(
         try:
             from flask import current_app
 
-            # Fresh client so Stick does not mash the asking guest's /data buffer.
             client = current_app.test_client()
             for ch in raw:
                 client.get(f'/data/{ch}', follow_redirects=True)
@@ -327,31 +326,29 @@ def handle_command(
         return caption
 
     if verb == 'send':
-        if not target_path:
-            caption = brain.send_need_target()
-            _set_status(gid, phase='idle', caption=caption)
-            return caption
         if not arg:
             caption = brain.send_need_text()
             _set_status(gid, caption=caption)
             return caption
-        if target_path.lower() not in allow:
-            caption = brain.go_not_allowed(target_path)
-            _set_status(gid, phase='idle', target=None, caption=caption)
+        room, err = _visit_gate(rooms_c, target_path, allow, can_enter, home_path)
+        if err:
+            caption = (
+                brain.send_need_target()
+                if err == brain.read_need_target()
+                else err
+            )
+            _set_status(
+                gid,
+                phase='idle',
+                target=None if err != brain.read_need_target() else target_path,
+                caption=caption,
+            )
             return caption
-        room = _find_room_by_path(rooms_c, target_path)
-        if room is None:
-            caption = brain.go_not_found(target_path)
-            _set_status(gid, phase='idle', target=None, caption=caption)
-            return caption
-        if not can_enter(room['id']):
-            caption = brain.go_forbidden(target_path)
-            _set_status(gid, phase='idle', target=None, caption=caption)
-            return caption
+        path = room.get('path') or target_path
         stamped = f'{brain.NAME}: {arg}'
         rooms_c.set_chat_messages(room['id'], stamped)
-        caption = brain.send_ok(target_path, arg)
-        _set_status(gid, phase='visiting', target=target_path, caption=caption)
+        caption = brain.send_ok(path, arg)
+        _set_status(gid, phase='visiting', target=path, caption=caption)
         return caption
 
     if verb == 'wait':

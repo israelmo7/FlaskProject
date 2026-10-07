@@ -860,3 +860,48 @@ def test_room_presence_endpoint(client, monkeypatch):
     data = response.get_json()['wander']
     assert data['present'] is True
     assert data['phase'] == 'walking'
+
+
+def test_mind_mode_default_and_ollama(monkeypatch):
+    from srcs.ai import mind
+
+    monkeypatch.delenv('WANDER_LLM', raising=False)
+    assert mind.mind_mode() == 'heuristic'
+    monkeypatch.setenv('WANDER_LLM', 'ollama')
+    assert mind.mind_mode() == 'ollama'
+
+
+def test_mind_parse_llm_command_allowlist():
+    from srcs.ai import mind
+
+    can = ['lobby', 'garden']
+    assert mind._parse_llm_command('go lobby', can) == 'go lobby'
+    assert mind._parse_llm_command('Command: go garden', can) == 'go garden'
+    assert mind._parse_llm_command('go adminPanel', can) is None
+    assert mind._parse_llm_command('say hello there', can) == 'say hello there'
+    assert mind._parse_llm_command('knock ab', can) == 'knock ab'
+    assert mind._parse_llm_command('knock abcdefgh', can) is None
+    assert mind._parse_llm_command('wait 5 knock a', can) == 'wait 5 knock a'
+    assert mind._parse_llm_command('back', can) == 'back'
+    assert mind._parse_llm_command('rm -rf /', can) is None
+
+
+def test_mind_decide_ollama_falls_back(monkeypatch):
+    from srcs.ai import mind
+
+    monkeypatch.setenv('WANDER_LLM', 'ollama')
+
+    def boom(_obs):
+        return None
+
+    monkeypatch.setattr(mind, '_decide_ollama', boom)
+    obs = mind.build_observation(
+        here=None,
+        can_go=['lobby'],
+        last_lines=[],
+        caption='At home',
+        phase='idle',
+        step=mind._STEP_HOME,
+    )
+    assert obs['mind'] == 'ollama'
+    assert mind.decide(obs) == 'go lobby'
