@@ -21,6 +21,8 @@ export default function Brain() {
   const [talking, setTalking] = useState(false)
   const [mood, setMood] = useState('calm')
   const [mindMode, setMindMode] = useState('heuristic')
+  const [roomExpr, setRoomExpr] = useState(null)
+  const [vibe, setVibe] = useState('quiet')
   const { styleName, gear } = useRotatingStick(5200)
   const lastCaption = useRef(null)
   const talkTimer = useRef(null)
@@ -32,6 +34,8 @@ export default function Brain() {
     setTarget(status.target || null)
     setLastCommand(status.last_command || null)
     setMindMode(status.mind || 'heuristic')
+    setRoomExpr(status.expression || null)
+    setVibe(status.vibe || 'quiet')
     const nextCaption = status.caption || 'At home'
     setCaption(nextCaption)
     if (nextCaption && nextCaption !== lastCaption.current) {
@@ -88,6 +92,7 @@ export default function Brain() {
         <StickFigure
           phase={phase}
           talking={talking}
+          expression={talking ? null : roomExpr}
           styleName={styleName}
           gear={gear}
           size="full"
@@ -98,7 +103,7 @@ export default function Brain() {
         <p className="character-style-tag">
           {placeLabel}
           {lastCommand ? ` · ${lastCommand}` : ''}
-          {` · mind:${mindMode} · ${mood} · ${styleName}/${gear}`}
+          {` · mind:${mindMode} · vibe:${vibe} · ${mood} · ${styleName}/${gear}`}
         </p>
       </section>
 

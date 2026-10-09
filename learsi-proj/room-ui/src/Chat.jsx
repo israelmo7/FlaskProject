@@ -45,13 +45,14 @@ async function fetchPresence(roomPath) {
   return data.wander || null
 }
 
-function WanderRail({ phase, caption, side }) {
+function WanderRail({ phase, caption, expression, talking, side }) {
   const { styleName, gear } = useRotatingStick(3000)
   return (
     <aside className={`wander-rail wander-rail-${side}`} aria-live="polite">
       <StickFigure
         phase={phase || 'visiting'}
-        talking={Boolean(caption)}
+        talking={Boolean(talking)}
+        expression={talking ? null : expression || null}
         styleName={styleName}
         gear={gear}
         size="side"
@@ -132,6 +133,8 @@ export default function Chat() {
           <WanderRail
             phase={wander.phase}
             caption={wander.caption}
+            expression={wander.expression}
+            talking={wander.talking}
             side="left"
           />
         ) : null}
@@ -169,6 +172,8 @@ export default function Chat() {
           <WanderRail
             phase={wander.phase}
             caption={wander.caption}
+            expression={wander.expression}
+            talking={wander.talking}
             side="right"
           />
         ) : null}

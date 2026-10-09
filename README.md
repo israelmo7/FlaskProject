@@ -1,4 +1,4 @@
-Knocknok 0.15v
+Knocknok 0.16v
 --------------
 
 Session-based knock authentication with Flask, MySQL, and a React room UI.
@@ -107,6 +107,7 @@ pytest
 - `GET /api/character/status`, `POST /api/character/command`, `GET /api/brain/status`
 - Wander appears in chat rooms he visits (`GET /api/<room>/presence`) — not as a flying overlay on admin cards
 - While present: guest messages start an echo loop (caption `Ha Ha…`); ends after **60s silence** with `What a waste of talk - no point!`, then normal roam
+- Presence extras: mood-from-room vibe/expression, soft exit goodbye before leave, rare knock tease, mirror caption when Stick shares the room
 - Stick tools: `go <room>` · `read [n]` · `say <text>` · `send <text>` · `wait [n] [cmd]` · `back` · `knock <a-z>` (under 8 letters via `/data`)
 - Admin letter-map flash for knocks from `/data`; admin text line notes Wander’s room
 - Admin: `POST /api/admin/grant-admin-key` + yes/no confirm popup on guest chips

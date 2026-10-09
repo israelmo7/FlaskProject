@@ -33,6 +33,22 @@ def get_status(gid: str | None = None):
         return dict(_status_by_guest.get(gid, _DEFAULT))
 
 
+def actors_visiting(room_path: str, *, exclude: str | None = None) -> list[str]:
+    """Actor ids whose current target matches room_path (optional exclude)."""
+    needle = (room_path or '').strip().lower()
+    if not needle:
+        return []
+    with _lock:
+        found = []
+        for gid, st in _status_by_guest.items():
+            if exclude is not None and gid == exclude:
+                continue
+            target = (st.get('target') or '').strip().lower()
+            if target == needle:
+                found.append(gid)
+        return found
+
+
 def _set_status(gid: str, **kwargs):
     with _lock:
         cur = _status_by_guest.setdefault(gid, dict(_DEFAULT))

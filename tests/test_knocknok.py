@@ -542,9 +542,13 @@ def test_brain_tick_runs_go_then_read(monkeypatch):
         echo_seen=0,
         echo_talking=False,
         echo_silence_until=0.0,
+        pending_leave=None,
+        mirror_room=None,
+        knock_tease_until=0.0,
     )
     # Deterministic: first decide goes to lobby (only real room in fixture).
     monkeypatch.setattr(mind, 'decide', lambda obs: 'go lobby')
+    monkeypatch.setattr(rider.random, 'random', lambda: 1.0)  # no knock tease
 
     status = rider.run_brain_tick(rooms)
     assert status['target'] == 'lobby'
@@ -612,7 +616,11 @@ def test_brain_echoes_new_chat_line_caption_only(monkeypatch):
         echo_seen=1,  # "old line" already there at arrival
         echo_talking=False,
         echo_silence_until=0.0,
+        pending_leave=None,
+        mirror_room=None,
+        knock_tease_until=0.0,
     )
+    monkeypatch.setattr(rider.random, 'random', lambda: 1.0)
 
     status = rider.run_brain_tick(rooms)
     assert status['last_command'].startswith('say ')
@@ -650,8 +658,11 @@ def test_brain_echoes_new_chat_line_caption_only(monkeypatch):
     assert status['echo_talking'] is False
     assert status['caption'] == rider.ECHO_WASTE_LINE
 
-    # Next tick can roam normally
+    # Soft exit: leave becomes goodbye say, then back next tick
     monkeypatch.setattr(mind, 'decide', lambda obs: 'back')
+    status = rider.run_brain_tick(rooms)
+    assert status['last_command'].startswith('say ')
+    assert rider._memory.get('pending_leave') == 'back'
     status = rider.run_brain_tick(rooms)
     assert status['last_command'] == 'back'
 
@@ -905,3 +916,117 @@ def test_mind_decide_ollama_falls_back(monkeypatch):
     )
     assert obs['mind'] == 'ollama'
     assert mind.decide(obs) == 'go lobby'
+
+
+def _fake_rooms_lobby():
+    class FakeRooms:
+        def __init__(self):
+            self.rooms = [
+                {'id': 1, 'path': 'lobby', 'rtype': 'chat'},
+                {'id': 5, 'path': 'brain', 'rtype': 'ai'},
+            ]
+            self.chats = {1: '', 5: '{"allow":["lobby"]}'}
+
+        def list_rooms(self):
+            return list(self.rooms)
+
+        def get_room(self, value):
+            for r in self.rooms:
+                if r['path'] == value:
+                    return ((r['id'],),)
+            return ()
+
+        def get_chat_messages(self, rid):
+            return ((self.chats.get(rid, ''),),)
+
+        def set_chat_messages(self, rid, message):
+            self.chats[rid] = self.chats.get(rid, '') + message + '\n'
+
+    return FakeRooms()
+
+
+def test_brain_mirror_notices_stick_once(monkeypatch):
+    from srcs.ai import mind, rider
+    from srcs.character import agent as stick
+
+    rooms = _fake_rooms_lobby()
+    stick._status_by_guest.clear()
+    stick._set_status(
+        rider.BRAIN_ACTOR_ID,
+        phase='visiting',
+        target='lobby',
+        caption='here',
+    )
+    stick._set_status('guest1', phase='visiting', target='lobby', caption='hi')
+    rider._set_memory(
+        step=mind._STEP_SAID,
+        last_command=None,
+        echo_room='lobby',
+        echo_seen=0,
+        echo_talking=False,
+        echo_silence_until=0.0,
+        pending_leave=None,
+        mirror_room=None,
+        knock_tease_until=0.0,
+    )
+    monkeypatch.setattr(rider.random, 'random', lambda: 1.0)
+    monkeypatch.setattr(mind, 'decide', lambda obs: 'wait')
+
+    status = rider.run_brain_tick(rooms)
+    assert status['last_command'].startswith('say ')
+    assert rider._memory.get('mirror_room') == 'lobby'
+
+    # Second tick: already noticed — mind runs (wait), no second mirror.
+    status = rider.run_brain_tick(rooms)
+    assert status['last_command'] == 'wait'
+
+
+def test_brain_knock_tease_when_waiting(monkeypatch):
+    from srcs.ai import mind, rider
+    from srcs.character import agent as stick
+
+    rooms = _fake_rooms_lobby()
+    rooms.chats[1] = 'alpha says hi\n'
+    stick._status_by_guest.clear()
+    stick._set_status(
+        rider.BRAIN_ACTOR_ID,
+        phase='visiting',
+        target='lobby',
+        caption='here',
+    )
+    rider._set_memory(
+        step=mind._STEP_SAID,
+        last_command=None,
+        echo_room='lobby',
+        echo_seen=1,
+        echo_talking=False,
+        echo_silence_until=0.0,
+        pending_leave=None,
+        mirror_room=None,
+        knock_tease_until=0.0,
+    )
+    monkeypatch.setattr(mind, 'decide', lambda obs: 'wait')
+    monkeypatch.setattr(rider.random, 'random', lambda: 0.0)  # always tease
+    # Skip real /data pipe — only assert rider chose knock tease.
+    monkeypatch.setattr(
+        stick,
+        'handle_command',
+        lambda *a, **k: stick._set_status(
+            rider.BRAIN_ACTOR_ID, caption='knocked'
+        ),
+    )
+
+    status = rider.run_brain_tick(rooms)
+    assert status['last_command'] == 'knock a'
+    assert rider._memory.get('knock_tease_until', 0) > 0
+
+
+def test_mind_room_vibe_and_expression():
+    from srcs.ai import mind
+
+    assert mind.room_vibe([]) == 'quiet'
+    assert mind.room_vibe(['a', 'b', 'c']) == 'lively'
+    assert mind.room_vibe(['a'], echo_talking=True) == 'lively'
+    assert mind.expression_for_vibe('quiet') in ('bored', 'dreamy')
+    assert mind.expression_for_vibe('lively') in ('curious', 'chuckle')
+    assert 'lobby' in mind.soft_exit_line('lobby', 'quiet')

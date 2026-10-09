@@ -52,6 +52,51 @@ def mind_mode() -> str:
     return 'heuristic'
 
 
+def room_vibe(last_lines: list[str], *, echo_talking: bool = False) -> str:
+    """quiet | lively — room energy for mood captions / expression."""
+    if echo_talking:
+        return 'lively'
+    n = len(last_lines or [])
+    if n >= 3:
+        return 'lively'
+    return 'quiet'
+
+
+def expression_for_vibe(vibe: str) -> str:
+    if vibe == 'lively':
+        return random.choice(('curious', 'chuckle'))
+    return random.choice(('bored', 'dreamy'))
+
+
+def soft_exit_line(here: str | None, vibe: str) -> str:
+    place = here or 'here'
+    if vibe == 'lively':
+        return random.choice(
+            (
+                f'moving on from {place}',
+                f'bye {place} — loud enough',
+                f'slipping out of {place}',
+            )
+        )
+    return random.choice(
+        (
+            f'quiet goodbye, {place}',
+            f'leaving the dust in {place}',
+            f'onward from {place}',
+        )
+    )
+
+
+def mirror_line() -> str:
+    return random.choice(
+        (
+            'another stick?',
+            'oh — twin silhouette',
+            'you look like me…',
+        )
+    )
+
+
 def build_observation(
     *,
     here: str | None,
@@ -60,38 +105,44 @@ def build_observation(
     caption: str,
     phase: str,
     step: str,
+    vibe: str | None = None,
 ) -> dict:
     """Structured observation passed into decide()."""
+    lines = list(last_lines)[-5:]
+    room_energy = vibe or room_vibe(lines)
     return {
         'personality': PERSONALITY,
         'tools': list(TOOLS),
         'here': here,
         'can_go': list(can_go),
-        'last_lines': list(last_lines)[-5:],
+        'last_lines': lines,
         'caption': caption or '',
         'phase': phase or 'idle',
         'step': step,
         'mind': mind_mode(),
+        'vibe': room_energy,
     }
 
 
-def _comment_on_lines(here: str | None, lines: list[str]) -> str:
+def _comment_on_lines(here: str | None, lines: list[str], vibe: str = 'quiet') -> str:
     place = here or 'here'
-    if not lines:
+    if vibe == 'quiet' or not lines:
         options = (
             f'quiet in {place}…',
             f'{place} holds its breath',
+            f'dust collecting in {place}',
             f'nothing on the wall in {place}',
         )
-    else:
-        snippet = lines[-1]
-        if len(snippet) > 28:
-            snippet = snippet[:25] + '…'
-        options = (
-            f'hm — "{snippet}"',
-            f'{place} is talking',
-            f'noted: {snippet}',
-        )
+        return random.choice(options)
+    snippet = lines[-1]
+    if len(snippet) > 28:
+        snippet = snippet[:25] + '…'
+    options = (
+        f'hm — "{snippet}"',
+        f'{place} is talking',
+        f'noted: {snippet}',
+        f'buzz in {place}',
+    )
     return random.choice(options)
 
 
@@ -100,6 +151,7 @@ def _decide_heuristic(observation: dict) -> str:
     can_go = [p for p in (observation.get('can_go') or []) if p]
     lines = observation.get('last_lines') or []
     step = observation.get('step') or _STEP_HOME
+    vibe = observation.get('vibe') or room_vibe(lines)
 
     if not here:
         if can_go:
@@ -110,7 +162,7 @@ def _decide_heuristic(observation: dict) -> str:
         return 'read 3'
 
     if step == _STEP_READ:
-        return f'say {_comment_on_lines(here, lines)}'
+        return f'say {_comment_on_lines(here, lines, vibe)}'
 
     if step == _STEP_SAID:
         roll = random.random()

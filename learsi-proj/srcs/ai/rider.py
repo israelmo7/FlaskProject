@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 import threading
 import time
 
@@ -17,6 +18,10 @@ ECHO_QUOTE_MAX = 40
 ECHO_WASTE_LINE = 'What a waste of talk - no point!'
 # Back-compat alias for tests / config readers.
 ECHO_WAIT_SECONDS = ECHO_SILENCE_SECONDS
+# Rare knock when alone/quiet (seconds between teases).
+KNOCK_TEASE_COOLDOWN = 90
+KNOCK_TEASE_CHANCE = 0.22
+KNOCK_SIGNATURE = 'w'
 
 _started = False
 _lock = threading.Lock()
@@ -28,6 +33,15 @@ _memory = {
     'echo_seen': 0,
     'echo_talking': False,
     'echo_silence_until': 0.0,
+    # Soft exit: say goodbye, then run leave next tick.
+    'pending_leave': None,
+    # Mirror: noticed Stick in this room already.
+    'mirror_room': None,
+    # Knock tease cooldown timestamp.
+    'knock_tease_until': 0.0,
+    # Mood from room (expression hint for UI).
+    'vibe': 'quiet',
+    'expression': 'calm',
 }
 
 
@@ -46,6 +60,8 @@ def get_brain_status():
             max(0, int(until - now)) if talking and until else 0
         )
         status['mind'] = mind.mind_mode()
+        status['vibe'] = _memory.get('vibe') or 'quiet'
+        status['expression'] = _memory.get('expression') or 'calm'
     return status
 
 
@@ -65,6 +81,8 @@ def presence_in_room(room_path: str) -> dict:
         'caption': status.get('caption') if present else None,
         'target': status.get('target') if present else None,
         'talking': bool(status.get('echo_talking')) if present else False,
+        'expression': status.get('expression') if present else None,
+        'vibe': status.get('vibe') if present else None,
     }
 
 
@@ -118,13 +136,20 @@ def _sync_echo_tracking(rooms_c, here: str | None):
         )
 
 
+def _update_mood(lines: list[str], echo_talking: bool):
+    vibe = mind.room_vibe(lines, echo_talking=echo_talking)
+    expression = mind.expression_for_vibe(vibe)
+    _set_memory(vibe=vibe, expression=expression)
+    return vibe
+
+
 def _echo_or_none(rooms_c, here: str | None) -> str | None:
     """
     Echo conversation loop while present:
     - Guest message after arrival → start/continue talking, caption echo
     - While talking and messages keep coming → keep echoing (reset silence clock)
     - While talking and quiet → wait (stay put, only communicate)
-    - After 30s silence → end talking; return None so normal decide() can leave etc.
+    - After silence → end talking; return None so normal decide() can leave etc.
     """
     if not here:
         return None
@@ -162,7 +187,67 @@ def _echo_or_none(rooms_c, here: str | None) -> str | None:
     return None
 
 
-def _observe(rooms_c) -> dict:
+def _mirror_or_none(here: str | None) -> str | None:
+    """One caption when Stick visits the same room; ignore until they separate."""
+    if not here:
+        return None
+    others = stick.actors_visiting(here, exclude=BRAIN_ACTOR_ID)
+    with _lock:
+        noticed = _memory.get('mirror_room')
+    if not others:
+        if noticed and str(noticed).lower() == here.lower():
+            _set_memory(mirror_room=None)
+        return None
+    if noticed and str(noticed).lower() == here.lower():
+        return None
+    _set_memory(mirror_room=here)
+    return f'say {mind.mirror_line()}'
+
+
+def _soft_exit_wrap(command: str, here: str | None, vibe: str) -> str:
+    """Before leaving a room, say a soft goodbye; leave runs next tick."""
+    with _lock:
+        pending = _memory.get('pending_leave')
+    if pending:
+        _set_memory(pending_leave=None)
+        return pending
+
+    verb, _arg = stick.parse_command(command)
+    if here and verb in ('go', 'back'):
+        _set_memory(pending_leave=command)
+        return f'say {mind.soft_exit_line(here, vibe)}'
+    return command
+
+
+def _knock_letter_from_lines(lines: list[str]) -> str:
+    for line in reversed(lines or []):
+        for ch in str(line).lower():
+            if 'a' <= ch <= 'z':
+                return ch
+    return KNOCK_SIGNATURE
+
+
+def _knock_tease_or_none(command: str, here: str | None, lines: list[str]) -> str:
+    """Rare knock when waiting alone/quiet — flashes admin letter map."""
+    verb, _arg = stick.parse_command(command)
+    if verb != 'wait' or not here:
+        return command
+    with _lock:
+        talking = bool(_memory.get('echo_talking'))
+        until = float(_memory.get('knock_tease_until') or 0)
+    if talking:
+        return command
+    now = time.time()
+    if now < until:
+        return command
+    if random.random() >= KNOCK_TEASE_CHANCE:
+        return command
+    letter = _knock_letter_from_lines(lines)
+    _set_memory(knock_tease_until=now + KNOCK_TEASE_COOLDOWN)
+    return f'knock {letter}'
+
+
+def _observe(rooms_c, vibe: str) -> dict:
     status = stick.get_status(BRAIN_ACTOR_ID)
     here = status.get('target')
     allow = sorted(stick.get_allowlist(rooms_c, BRAIN_ROOM_PATH))
@@ -178,6 +263,7 @@ def _observe(rooms_c) -> dict:
         caption=status.get('caption') or '',
         phase=status.get('phase') or 'idle',
         step=step,
+        vibe=vibe,
     )
 
 
@@ -197,20 +283,39 @@ def _advance_step(command: str):
             # Only reset to home when Wander has no room target.
             if not stick.get_status(BRAIN_ACTOR_ID).get('target'):
                 step = mind._STEP_HOME
+        elif verb == 'knock':
+            # Stay in current visit step; knock is a side tease.
+            pass
         _memory['step'] = step
         _memory['last_command'] = command
 
 
 def run_brain_tick(rooms_c) -> dict:
-    """One observe → (echo loop?) → decide → execute cycle."""
+    """One observe → (echo / mirror / decide) → soft-exit / knock → execute."""
     status = stick.get_status(BRAIN_ACTOR_ID)
     here = status.get('target')
     _sync_echo_tracking(rooms_c, here)
 
-    observation = _observe(rooms_c)
-    command = _echo_or_none(rooms_c, here)
-    if command is None:
-        command = mind.decide(observation)
+    lines = _room_lines(rooms_c, here) if here else []
+    with _lock:
+        echo_talking = bool(_memory.get('echo_talking'))
+    vibe = _update_mood(lines, echo_talking)
+
+    with _lock:
+        pending = _memory.get('pending_leave')
+
+    if pending:
+        _set_memory(pending_leave=None)
+        command = pending
+    else:
+        command = _echo_or_none(rooms_c, here)
+        if command is None:
+            command = _mirror_or_none(here)
+        if command is None:
+            observation = _observe(rooms_c, vibe)
+            command = mind.decide(observation)
+        command = _soft_exit_wrap(command, here, vibe)
+        command = _knock_tease_or_none(command, here, lines)
 
     verb, arg = stick.parse_command(command)
     allow = stick.get_allowlist(rooms_c, BRAIN_ROOM_PATH)
@@ -239,15 +344,17 @@ def run_brain_tick(rooms_c) -> dict:
     # After a successful go, baseline this room's chat so only later lines echo.
     new_here = stick.get_status(BRAIN_ACTOR_ID).get('target')
     if verb == 'go' and new_here:
-        lines = _room_lines(rooms_c, new_here)
+        new_lines = _room_lines(rooms_c, new_here)
         _set_memory(
             echo_room=new_here,
-            echo_seen=len(lines),
+            echo_seen=len(new_lines),
             echo_talking=False,
             echo_silence_until=0.0,
+            mirror_room=None,
         )
     elif verb == 'back':
         _clear_echo_state()
+        _set_memory(mirror_room=None)
 
     return get_brain_status()
 
