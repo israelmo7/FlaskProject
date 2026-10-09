@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import StickFigure from './StickFigure'
 import './AdminPanel.css'
 
+/** Bump the patch digit (0.1X) on every commit from now. */
+export const KNOCKNOK_VERSION = '0.15'
+
 async function fetchJson(url) {
   const res = await fetch(url, { credentials: 'include' })
   if (!res.ok) {
@@ -269,6 +272,10 @@ export default function AdminPanel() {
   return (
     <main className="admin-shell">
       <KnockLetterMap flashes={flashes} />
+
+      <p className="admin-version" title="Knocknok version (0.1X; +1 per commit)">
+        {KNOCKNOK_VERSION}
+      </p>
 
       <header className="admin-hero">
         <p className="admin-brand">Knocknok</p>
