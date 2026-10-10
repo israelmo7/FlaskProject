@@ -1,5 +1,16 @@
 *.json
+!config.example.json
+!learsi-proj/room-ui/package.json
+!learsi-proj/room-ui/package-lock.json
 .env/
 /instance/
 *.pyc
 /__pycache__/
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+config.json
+node_modules/
+learsi-proj/room-ui/node_modules/

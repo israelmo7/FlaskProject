@@ -1,0 +1,251 @@
+"""JSON APIs for React. Auth = same door check as /room/<path>."""
+
+import json
+
+from flask import Blueprint, jsonify, request, session
+
+from srcs.ai.rider import BRAIN_ROOM_PATH, get_brain_status, presence_in_room
+from srcs.character.agent import (
+    CHARACTER_ROOM_PATH,
+    get_status,
+    handle_character_command,
+)
+from srcs.core.knock_log import list_knocks
+from srcs.db import ADMIN_KEY_ID
+from srcs.rooms.routes import ADMIN_ROOM_PATH, has_right_key, path_room_to_id
+
+api_bp = Blueprint(
+    'api_bp', __name__, template_folder='templates', static_folder='static'
+)
+rooms_c, keys_c, guests_c = 0, 0, 0
+
+
+def init_db_a(r, k, g):
+    global rooms_c, keys_c, guests_c
+    rooms_c, keys_c, guests_c = r, k, g
+
+
+def _chat_lines(room_id):
+    """Split rooms.chat blob into non-empty lines (still one DB string column)."""
+    data = rooms_c.get_chat_messages(room_id)
+    raw = ""
+    if data and data[0] and data[0][0] is not None:
+        raw = data[0][0]
+        if not isinstance(raw, str):
+            raw = str(raw)
+    # Character HQ stores JSON allowlist in chat — not a message log.
+    text = raw.strip()
+    if text.startswith('{') or text.startswith('['):
+        try:
+            json.loads(text)
+            return []
+        except (TypeError, ValueError):
+            pass
+    return [line for line in raw.split('\n') if line]
+
+
+def _require_guest():
+    gid = session.get('id')
+    if not gid:
+        return None
+    return gid[:8]
+
+
+def _may_use_admin_panel(gid):
+    """Same as entering /room/adminPanel — has_right_key on that room."""
+    admin_id = path_room_to_id(ADMIN_ROOM_PATH)
+    if admin_id is None:
+        return False
+    return has_right_key(admin_id, gid) is not None
+
+
+def _may_use_character_room(gid):
+    """Same door check as entering /room/character."""
+    char_id = path_room_to_id(CHARACTER_ROOM_PATH)
+    if char_id is None:
+        return False
+    return has_right_key(char_id, gid) is not None
+
+
+def _may_use_brain_room(gid):
+    """Same door check as entering /room/brain."""
+    brain_id = path_room_to_id(BRAIN_ROOM_PATH)
+    if brain_id is None:
+        return False
+    return has_right_key(brain_id, gid) is not None
+
+
+@api_bp.route('/character/status', methods=['GET'])
+def api_character_status():
+    """Pose + visual caption for Character.jsx (per asking guest)."""
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    if not _may_use_character_room(gid):
+        return jsonify(error='forbidden'), 403
+    return jsonify(get_status(gid))
+
+
+@api_bp.route('/character/command', methods=['POST'])
+def api_character_command():
+    """
+    Run a Stick command for this guest. Visual-only reply (status caption).
+    Does not write to the character room chat/DB.
+    Stick may only visit allowlisted rooms the guest can open.
+    """
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    if not _may_use_character_room(gid):
+        return jsonify(error='forbidden'), 403
+
+    payload = request.get_json(silent=True) or {}
+    message = payload.get('message') or payload.get('command') or ''
+    if not str(message).strip():
+        return jsonify(error='empty'), 400
+
+    def can_enter(room_id):
+        return has_right_key(room_id, gid) is not None
+
+    try:
+        status = handle_character_command(
+            rooms_c, message, gid, can_enter
+        )
+    except Exception as exc:
+        print(f'[CHARACTER] command failed: {exc}')
+        return jsonify(error='character_error'), 500
+    return jsonify(status=status), 200
+
+
+@api_bp.route('/brain/status', methods=['GET'])
+def api_brain_status():
+    """Watch Wander (autonomous Stick rider) — caption + last tool command."""
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    if not _may_use_brain_room(gid):
+        return jsonify(error='forbidden'), 403
+    return jsonify(get_brain_status())
+
+
+@api_bp.route('/<room_path>/presence', methods=['GET'])
+def api_room_presence(room_path):
+    """Is Wander in this room? Used by Chat.jsx to draw the visiting stick-man."""
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    room_id = path_room_to_id(room_path)
+    if room_id is None or has_right_key(room_id, gid) is None:
+        return jsonify(error='forbidden'), 403
+    return jsonify(wander=presence_in_room(room_path))
+
+
+@api_bp.route('/<room_path>/messages', methods=['GET'])
+def api_get_messages(room_path):
+    """JSON list of chat lines for Chat.jsx."""
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    room_id = path_room_to_id(room_path)
+    if room_id is None or has_right_key(room_id, gid) is None:
+        return jsonify(error='forbidden'), 403
+
+    return jsonify(messages=_chat_lines(room_id))
+
+
+@api_bp.route('/<room_path>/messages', methods=['POST'])
+def api_send_message(room_path):
+    """Append one plain message; returns updated line list."""
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    # Character / AI HQ store JSON allowlist in chat — not a message log.
+    if room_path in (CHARACTER_ROOM_PATH, BRAIN_ROOM_PATH):
+        return jsonify(error='hq_has_no_chat_log'), 400
+    room_id = path_room_to_id(room_path)
+    if room_id is None or has_right_key(room_id, gid) is None:
+        return jsonify(error='forbidden'), 403
+
+    payload = request.get_json(silent=True) or {}
+    message = payload.get('message') or request.form.get('message', '')
+    if not str(message).strip():
+        return jsonify(error='empty'), 400
+
+    rooms_c.set_chat_messages(room_id, message)
+    return jsonify(messages=_chat_lines(room_id)), 201
+
+
+@api_bp.route('/admin/rooms', methods=['GET'])
+def api_admin_rooms():
+    """Live room list for AdminPanel.jsx (+ where Wander is right now)."""
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    if not _may_use_admin_panel(gid):
+        return jsonify(error='forbidden'), 403
+    wander = get_brain_status()
+    return jsonify(
+        rooms=rooms_c.list_rooms(),
+        wander={
+            'target': wander.get('target'),
+            'phase': wander.get('phase'),
+            'caption': wander.get('caption'),
+            'talking': bool(wander.get('echo_talking')),
+        },
+    )
+
+
+@api_bp.route('/admin/guests', methods=['GET'])
+def api_admin_guests():
+    """Live guest list for AdminPanel.jsx."""
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    if not _may_use_admin_panel(gid):
+        return jsonify(error='forbidden'), 403
+    return jsonify(guests=guests_c.list_guests())
+
+
+@api_bp.route('/admin/knocks', methods=['GET'])
+def api_admin_knocks():
+    """Live /data knock feed for AdminPanel.jsx (text below 8 only)."""
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    if not _may_use_admin_panel(gid):
+        return jsonify(error='forbidden'), 403
+
+    try:
+        after = int(request.args.get('after') or 0)
+    except (TypeError, ValueError):
+        after = 0
+    return jsonify(knocks=list_knocks(after_id=after))
+
+
+@api_bp.route('/admin/grant-admin-key', methods=['POST'])
+def api_admin_grant_admin_key():
+    """Attach admin key 999 to a guest session. Caller must already hold admin access."""
+    gid = _require_guest()
+    if not gid:
+        return jsonify(error='unauthorized'), 401
+    if not _may_use_admin_panel(gid):
+        return jsonify(error='forbidden'), 403
+
+    payload = request.get_json(silent=True) or {}
+    target = str(payload.get('session') or '').strip()
+    if not target:
+        return jsonify(error='empty'), 400
+    target = target[:8]
+
+    if not guests_c.get_guest(target):
+        return jsonify(error='guest_not_found'), 404
+
+    keys_c.set_key(ADMIN_KEY_ID, target)
+    guests_c.update_guest(target, str(ADMIN_KEY_ID))
+    return jsonify(ok=True, session=target, key=ADMIN_KEY_ID), 200
+
+
+@api_bp.route('/', methods=['GET'])
+@api_bp.route('/<value>', methods=['GET'])
+def aindex(value=None):
+    return '', 404

@@ -1,0 +1,98 @@
+/* Character / Brain HQ chrome (figure styles live in StickFigure.css). */
+
+.character-shell {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.character-shell-wide {
+  max-width: 56rem;
+}
+
+.character-hero {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(140deg, rgba(196, 163, 90, 0.14), transparent 50%),
+    transparent;
+}
+
+.character-brand {
+  margin: 0 0 0.25rem;
+  font-family: "IBM Plex Serif", "Georgia", serif;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+}
+
+.character-hero h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.character-lead {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  max-width: 32rem;
+}
+
+.character-stage-wrap {
+  margin: 0 0 1rem;
+}
+
+.character-style-tag {
+  margin: 0.5rem 0 0;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--line);
+  text-align: center;
+}
+
+.character-composer {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.character-composer input {
+  flex: 1;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+}
+
+.character-composer button {
+  padding: 0.65rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #1a1f1c;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.character-composer button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.character-shell .error {
+  color: var(--danger);
+  margin: 0 0 0.75rem;
+}
+
+@media (max-width: 520px) {
+  .character-brand {
+    font-size: 1.65rem;
+  }
+}
