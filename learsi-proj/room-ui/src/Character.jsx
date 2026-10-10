@@ -130,6 +130,7 @@ export default function Character() {
         <CartoonStage
           phase={phase}
           size="full"
+          room={roomPath}
           name="Stick"
           caption={statusLabel}
         >

@@ -93,6 +93,7 @@ export default function Brain() {
         <CartoonStage
           phase={phase}
           size="full"
+          room="brain"
           name="Wander"
           caption={caption}
         >

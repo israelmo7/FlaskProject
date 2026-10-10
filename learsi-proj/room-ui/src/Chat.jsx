@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import StickFigure, { useRotatingStick } from './StickFigure'
 import CartoonStage from './CartoonStage'
 import './chat.css'
@@ -46,19 +46,64 @@ async function fetchPresence(roomPath) {
   return data.wander || null
 }
 
-function WanderStage({ phase, caption, expression, talking }) {
+/** Out exploring the room sketch (not stuck in the mini card). */
+function canJumpOut(wander) {
+  if (!wander?.present) return false
+  const phase = wander.phase || 'idle'
+  return phase === 'walking' || phase === 'visiting'
+}
+
+function MiniWanderCard({ roomPath, wander, jumpedOut }) {
   const { styleName, gear } = useRotatingStick(3000)
+  const phase = wander?.phase || 'idle'
+  return (
+    <div
+      className={`wander-mini-card ${jumpedOut ? 'is-away' : 'is-here'}`}
+      aria-live="polite"
+    >
+      <p className="wander-mini-label">
+        {jumpedOut ? 'Wander · out in the room' : 'Wander · peeking in'}
+      </p>
+      {jumpedOut ? (
+        <div className="wander-mini-ghost" title="Jumped into the room sketch">
+          <span className="ghost-outline" />
+          <span className="ghost-text">jumped out →</span>
+        </div>
+      ) : (
+        <StickFigure
+          phase={phase}
+          talking={Boolean(wander?.talking)}
+          expression={wander?.talking ? null : wander?.expression || null}
+          styleName={styleName}
+          gear={gear}
+          size="mini"
+          label="Wander"
+        />
+      )}
+      <p className="wander-mini-caption">
+        {wander?.caption || `Waiting near ${roomPath}…`}
+      </p>
+    </div>
+  )
+}
+
+function WorldWander({ roomPath, wander, jumping }) {
+  const { styleName, gear } = useRotatingStick(3200)
+  const phase = wander?.phase || 'visiting'
   return (
     <CartoonStage
-      phase={phase || 'visiting'}
-      size="side"
+      phase={phase}
+      size="bleed"
+      room={roomPath}
       name="Wander"
-      caption={caption || 'Looking around…'}
+      caption={wander?.caption || 'Looking around…'}
+      showActor
+      jumping={jumping}
     >
       <StickFigure
-        phase={phase || 'visiting'}
-        talking={Boolean(talking)}
-        expression={talking ? null : expression || null}
+        phase={phase}
+        talking={Boolean(wander?.talking)}
+        expression={wander?.talking ? null : wander?.expression || null}
         styleName={styleName}
         gear={gear}
         size="side"
@@ -75,6 +120,8 @@ export default function Chat() {
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
   const [wander, setWander] = useState(null)
+  const [jumping, setJumping] = useState(false)
+  const wasOut = useRef(false)
 
   const load = useCallback(async () => {
     try {
@@ -95,6 +142,21 @@ export default function Chat() {
     const id = setInterval(load, 2000)
     return () => clearInterval(id)
   }, [load])
+
+  const jumpedOut = canJumpOut(wander)
+
+  useEffect(() => {
+    if (jumpedOut && !wasOut.current) {
+      setJumping(true)
+      const t = window.setTimeout(() => setJumping(false), 750)
+      wasOut.current = true
+      return () => window.clearTimeout(t)
+    }
+    if (!jumpedOut) {
+      wasOut.current = false
+    }
+    return undefined
+  }, [jumpedOut])
 
   async function handleOpenWindow() {
     const url = `/room/${roomPath}/app`
@@ -122,27 +184,36 @@ export default function Chat() {
   }
 
   return (
-    <main className={`chat ${wander ? 'chat-with-wander' : ''}`}>
-      <header>
-        <h1>Room chat</h1>
-        <p className="meta">room {roomPath}</p>
-      </header>
+    <main className={`chat-world room-${roomPath}`}>
+      {/* Full-screen room sketch — always, themed by room name */}
+      {jumpedOut && wander ? (
+        <WorldWander roomPath={roomPath} wander={wander} jumping={jumping} />
+      ) : (
+        <CartoonStage
+          phase="idle"
+          size="bleed"
+          room={roomPath}
+          showActor={false}
+        />
+      )}
 
-      {error ? <p className="error">{error}</p> : null}
+      <div className="chat-overlay">
+        <header className="chat-overlay-head">
+          <h1>Room chat</h1>
+          <p className="meta">room {roomPath}</p>
+        </header>
 
-      <div className="chat-body">
-        {wander ? (
-          <div className="wander-stage-wrap">
-            <WanderStage
-              phase={wander.phase}
-              caption={wander.caption}
-              expression={wander.expression}
-              talking={wander.talking}
+        {error ? <p className="error">{error}</p> : null}
+
+        <div className="chat-panel">
+          {wander ? (
+            <MiniWanderCard
+              roomPath={roomPath}
+              wander={wander}
+              jumpedOut={jumpedOut}
             />
-          </div>
-        ) : null}
+          ) : null}
 
-        <div className="chat-main">
           <ul className="log" aria-live="polite">
             {messages.length === 0 ? (
               <li className="empty">No messages yet. Say hello.</li>
@@ -166,7 +237,7 @@ export default function Chat() {
               Send
             </button>
           </form>
-          <button type="button" onClick={handleOpenWindow}>
+          <button type="button" className="chat-open-btn" onClick={handleOpenWindow}>
             Open in new window
           </button>
         </div>
