@@ -3,7 +3,7 @@ import StickFigure from './StickFigure'
 import './AdminPanel.css'
 
 /** Bump the patch digit (0.1X) on every commit from now. */
-export const KNOCKNOK_VERSION = '0.16'
+export const KNOCKNOK_VERSION = '0.17'
 
 async function fetchJson(url) {
   const res = await fetch(url, { credentials: 'include' })

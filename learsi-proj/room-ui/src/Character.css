@@ -42,43 +42,17 @@
   max-width: 32rem;
 }
 
-.character-stage {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 14rem;
+.character-stage-wrap {
   margin: 0 0 1rem;
-  padding: 1.5rem 1rem 1.25rem;
-  background:
-    radial-gradient(ellipse at 50% 78%, rgba(196, 163, 90, 0.08), transparent 55%),
-    linear-gradient(180deg, #2a3530 0%, var(--panel) 55%);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.character-stage-full {
-  min-height: 30rem;
-  padding: 2rem 1.25rem 1.5rem;
-}
-
-.character-status {
-  margin: 0.75rem 0 0;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 0.95rem;
-  color: var(--muted);
-  text-align: center;
-  max-width: 32rem;
-  min-height: 2.4em;
 }
 
 .character-style-tag {
-  margin: 0.35rem 0 0;
+  margin: 0.5rem 0 0;
   font-size: 0.65rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--line);
+  text-align: center;
 }
 
 .character-composer {
@@ -120,9 +94,5 @@
 @media (max-width: 520px) {
   .character-brand {
     font-size: 1.65rem;
-  }
-
-  .character-stage-full {
-    min-height: 22rem;
   }
 }

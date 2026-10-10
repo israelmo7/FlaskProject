@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import StickFigure, { useRotatingStick } from './StickFigure'
+import CartoonStage from './CartoonStage'
 import './Character.css'
 
 async function fetchBrainStatus() {
@@ -88,18 +89,24 @@ export default function Brain() {
         </p>
       </header>
 
-      <section className="character-stage character-stage-full" aria-live="polite">
-        <StickFigure
+      <section className="character-stage-wrap" aria-live="polite">
+        <CartoonStage
           phase={phase}
-          talking={talking}
-          expression={talking ? null : roomExpr}
-          styleName={styleName}
-          gear={gear}
           size="full"
-          label="Wander"
-          onExpression={onExpression}
-        />
-        <p className="character-status">{caption}</p>
+          name="Wander"
+          caption={caption}
+        >
+          <StickFigure
+            phase={phase}
+            talking={talking}
+            expression={talking ? null : roomExpr}
+            styleName={styleName}
+            gear={gear}
+            size="full"
+            label="Wander"
+            onExpression={onExpression}
+          />
+        </CartoonStage>
         <p className="character-style-tag">
           {placeLabel}
           {lastCommand ? ` · ${lastCommand}` : ''}

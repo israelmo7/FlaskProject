@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import StickFigure, { useRotatingStick } from './StickFigure'
+import CartoonStage from './CartoonStage'
 import './Character.css'
 
 function readRoomPath() {
@@ -125,17 +126,23 @@ export default function Character() {
         </p>
       </header>
 
-      <section className="character-stage character-stage-full" aria-live="polite">
-        <StickFigure
+      <section className="character-stage-wrap" aria-live="polite">
+        <CartoonStage
           phase={phase}
-          talking={talking}
-          styleName={styleName}
-          gear={gear}
           size="full"
-          label="Stick"
-          onExpression={onExpression}
-        />
-        <p className="character-status">{statusLabel}</p>
+          name="Stick"
+          caption={statusLabel}
+        >
+          <StickFigure
+            phase={phase}
+            talking={talking}
+            styleName={styleName}
+            gear={gear}
+            size="full"
+            label="Stick"
+            onExpression={onExpression}
+          />
+        </CartoonStage>
         <p className="character-style-tag">
           {mood} · {styleName}/{gear} · room {roomPath}
         </p>

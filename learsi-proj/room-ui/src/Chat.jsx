@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import StickFigure, { useRotatingStick } from './StickFigure'
+import CartoonStage from './CartoonStage'
 import './chat.css'
 
 function readRoomPath() {
@@ -45,10 +46,15 @@ async function fetchPresence(roomPath) {
   return data.wander || null
 }
 
-function WanderRail({ phase, caption, expression, talking, side }) {
+function WanderStage({ phase, caption, expression, talking }) {
   const { styleName, gear } = useRotatingStick(3000)
   return (
-    <aside className={`wander-rail wander-rail-${side}`} aria-live="polite">
+    <CartoonStage
+      phase={phase || 'visiting'}
+      size="side"
+      name="Wander"
+      caption={caption || 'Looking around…'}
+    >
       <StickFigure
         phase={phase || 'visiting'}
         talking={Boolean(talking)}
@@ -58,11 +64,7 @@ function WanderRail({ phase, caption, expression, talking, side }) {
         size="side"
         label="Wander"
       />
-      <div className="wander-visit-copy">
-        <span className="wander-visit-name">Wander</span>
-        <span className="wander-visit-caption">{caption || 'Looking around…'}</span>
-      </div>
-    </aside>
+    </CartoonStage>
   )
 }
 
@@ -130,13 +132,14 @@ export default function Chat() {
 
       <div className="chat-body">
         {wander ? (
-          <WanderRail
-            phase={wander.phase}
-            caption={wander.caption}
-            expression={wander.expression}
-            talking={wander.talking}
-            side="left"
-          />
+          <div className="wander-stage-wrap">
+            <WanderStage
+              phase={wander.phase}
+              caption={wander.caption}
+              expression={wander.expression}
+              talking={wander.talking}
+            />
+          </div>
         ) : null}
 
         <div className="chat-main">
@@ -167,16 +170,6 @@ export default function Chat() {
             Open in new window
           </button>
         </div>
-
-        {wander ? (
-          <WanderRail
-            phase={wander.phase}
-            caption={wander.caption}
-            expression={wander.expression}
-            talking={wander.talking}
-            side="right"
-          />
-        ) : null}
       </div>
     </main>
   )
